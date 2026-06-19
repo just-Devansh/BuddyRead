@@ -1,8 +1,8 @@
 rules_version = '2';
 
 // BuddyRead Firestore security rules.
-// Tight by default — readers touch only their own data. Friend-visibility and
-// reads/{readId} rules are added in later milestones (M2, M4).
+// Tight by default — readers touch only their own data, and a friendship can
+// only exist with both parties' consent. reads/{readId} rules arrive in M4.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -12,9 +12,14 @@ service cloud.firestore {
     function isSelf(uid) {
       return signedIn() && request.auth.uid == uid;
     }
+    // Deterministic pair id — uids sorted so direction doesn't matter. Must
+    // match pairId() in src/lib/friends.ts.
+    function pairId(a, b) {
+      return a < b ? a + '__' + b : b + '__' + a;
+    }
 
-    // A reader's own profile. For M1, only the owner can read or write it;
-    // M2 will widen reads to a reader's friends' minimal public fields.
+    // A reader's own profile. Only the owner reads or writes it; buddies never
+    // need to read it directly (display data is denormalized onto requests).
     match /users/{uid} {
       allow read: if isSelf(uid);
       allow create: if isSelf(uid);
@@ -22,13 +27,49 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // invite code -> uid lookup, used to claim a unique code (and, in M2, to
-    // resolve a code to a user without listing the whole users collection).
+    // invite code -> owner lookup (uid + denormalized name/photo). Readable by
+    // any signed-in reader (you only learn it if a code is shared with you);
+    // only the owner may create or refresh it, and the uid can never change.
     match /inviteCodes/{code} {
       allow read: if signedIn();
       allow create: if signedIn()
                     && request.resource.data.uid == request.auth.uid;
-      allow update, delete: if false; // codes are immutable in v0
+      allow update: if signedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.uid == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // The single source of truth for a relationship, keyed by sorted pair id.
+    // Statuses are pending | accepted; declining/cancelling/unfriending all
+    // just delete the doc, so re-requesting is a clean create.
+    match /friendRequests/{reqId} {
+      allow read: if signedIn()
+                  && request.auth.uid in resource.data.participants;
+
+      // Only the sender creates it, only as pending, only at the correct id,
+      // and only with both parties (and not to themselves).
+      allow create: if signedIn()
+                    && request.auth.uid == request.resource.data.fromUid
+                    && request.resource.data.fromUid != request.resource.data.toUid
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.participants
+                       == [request.resource.data.fromUid, request.resource.data.toUid]
+                    && reqId == pairId(request.resource.data.fromUid,
+                                       request.resource.data.toUid);
+
+      // Only the recipient accepts; parties can't change, only pending->accepted.
+      allow update: if signedIn()
+                    && request.auth.uid == resource.data.toUid
+                    && resource.data.status == 'pending'
+                    && request.resource.data.status == 'accepted'
+                    && request.resource.data.fromUid == resource.data.fromUid
+                    && request.resource.data.toUid == resource.data.toUid
+                    && request.resource.data.participants == resource.data.participants;
+
+      // Either party can delete (decline / cancel / unfriend).
+      allow delete: if signedIn()
+                    && request.auth.uid in resource.data.participants;
     }
   }
 }

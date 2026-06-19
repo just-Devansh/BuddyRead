@@ -38,14 +38,21 @@ function defaultUsername(user: User): string {
  * M2's "add by invite code" a rule-friendly lookup (code -> uid) without
  * opening the whole users collection to listing.
  */
-async function claimInviteCode(uid: string): Promise<string> {
+async function claimInviteCode(user: User): Promise<string> {
   for (let attempt = 0; attempt < 6; attempt++) {
     const code = generateInviteCode()
     const ref = doc(db, 'inviteCodes', code)
     const claimed = await runTransaction(db, async (tx) => {
       const snap = await tx.get(ref)
       if (snap.exists()) return false
-      tx.set(ref, { uid, createdAt: serverTimestamp() })
+      // Name + photo are denormalized here so a friend who types this code can
+      // preview "Send request to <name>?" without reading the owner's profile.
+      tx.set(ref, {
+        uid: user.uid,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        createdAt: serverTimestamp(),
+      })
       return true
     })
     if (claimed) return code
@@ -55,14 +62,27 @@ async function claimInviteCode(uid: string): Promise<string> {
 
 /**
  * Create the user's doc on first sign-in (idempotent). Snapshots the Google
- * profile, assigns a unique invite code, and defaults theme to 'system'.
+ * profile, assigns a unique invite code, and defaults theme to 'system'. For
+ * a returning reader, refreshes the denormalized name/photo on their invite
+ * lookup doc so requests preview the current profile.
  */
 export async function ensureUserDoc(user: User): Promise<void> {
   const ref = doc(db, 'users', user.uid)
   const snap = await getDoc(ref)
-  if (snap.exists()) return
 
-  const inviteCode = await claimInviteCode(user.uid)
+  if (snap.exists()) {
+    const code = (snap.data() as UserDoc).inviteCode
+    if (code) {
+      await setDoc(
+        doc(db, 'inviteCodes', code),
+        { uid: user.uid, displayName: user.displayName, photoURL: user.photoURL },
+        { merge: true },
+      )
+    }
+    return
+  }
+
+  const inviteCode = await claimInviteCode(user)
   // Note: createdAt is written as a server timestamp (a FieldValue), which is
   // why this isn't typed directly as UserDoc — it resolves to a Timestamp on read.
   await setDoc(ref, {

@@ -1,0 +1,301 @@
+import { useState } from 'react'
+import { AppShell } from '../components/AppShell'
+import { Avatar } from '../components/Avatar'
+import { useAuth } from '../auth/useAuth'
+import { useFriends } from '../friends/useFriends'
+import {
+  acceptFriendRequest,
+  normalizeInviteCode,
+  otherParty,
+  pairId,
+  removeRelationship,
+  resolveInviteCode,
+  sendFriendRequest,
+  type InviteTarget,
+  type Relationship,
+} from '../lib/friends'
+
+/** A reader row: avatar + name, with an action slot on the right. */
+function PersonRow({
+  name,
+  photoURL,
+  subtitle,
+  children,
+}: {
+  name: string | null
+  photoURL: string | null
+  subtitle?: string
+  children?: React.ReactNode
+}) {
+  return (
+    <li className="flex items-center gap-3 py-3">
+      <Avatar src={photoURL} name={name} />
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-medium text-text">{name ?? 'A reader'}</p>
+        {subtitle && (
+          <p className="truncate text-xs text-text-muted">{subtitle}</p>
+        )}
+      </div>
+      <div className="flex shrink-0 items-center gap-2">{children}</div>
+    </li>
+  )
+}
+
+const PILL =
+  'rounded-full px-4 py-1.5 text-sm font-medium transition-colors disabled:opacity-50'
+const PILL_SOLID = `${PILL} bg-accent text-accent-contrast hover:opacity-90`
+const PILL_QUIET = `${PILL} border border-border text-text-muted hover:text-text`
+
+export function Friends() {
+  const { user } = useAuth()
+  const { friends, incoming, outgoing, loading, error } = useFriends()
+
+  // --- Add-by-code flow ----------------------------------------------------
+  const [code, setCode] = useState('')
+  const [resolving, setResolving] = useState(false)
+  const [target, setTarget] = useState<InviteTarget | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [sending, setSending] = useState(false)
+  // ids being acted on, to disable their buttons briefly
+  const [busyIds, setBusyIds] = useState<Set<string>>(new Set())
+
+  const setBusy = (id: string, on: boolean) =>
+    setBusyIds((prev) => {
+      const next = new Set(prev)
+      if (on) next.add(id)
+      else next.delete(id)
+      return next
+    })
+
+  const lookUp = async () => {
+    if (!user) return
+    setTarget(null)
+    setNotice(null)
+    const clean = normalizeInviteCode(code)
+    if (clean.length < 6) {
+      setNotice('Invite codes are six characters.')
+      return
+    }
+    setResolving(true)
+    try {
+      const found = await resolveInviteCode(clean)
+      if (!found) {
+        setNotice('No reader carries that code. Mind the spelling?')
+        return
+      }
+      if (found.uid === user.uid) {
+        setNotice("That's your own code — share it with a friend.")
+        return
+      }
+      const existingId = pairId(user.uid, found.uid)
+      if (friends.some((f) => f.id === existingId)) {
+        setNotice("You're already reading together.")
+        return
+      }
+      if (outgoing.some((o) => o.id === existingId)) {
+        setNotice('You already have a request out to them.')
+        return
+      }
+      if (incoming.some((i) => i.id === existingId)) {
+        setNotice('They beat you to it — their request is waiting below.')
+        return
+      }
+      setTarget(found)
+    } catch {
+      setNotice('That lookup failed. Try again in a moment?')
+    } finally {
+      setResolving(false)
+    }
+  }
+
+  const send = async () => {
+    if (!user || !target) return
+    setSending(true)
+    try {
+      await sendFriendRequest(user, target)
+      setTarget(null)
+      setCode('')
+      setNotice('Request sent. The ball is in their court.')
+    } catch {
+      setNotice("That didn't send. Try again?")
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const act = async (id: string, fn: () => Promise<void>) => {
+    setBusy(id, true)
+    try {
+      await fn()
+    } finally {
+      setBusy(id, false)
+    }
+  }
+
+  const friendName = (rel: Relationship) =>
+    otherParty(rel, user?.uid ?? '').displayName
+
+  return (
+    <AppShell>
+      <h1 className="font-display text-3xl text-text">Friends</h1>
+      <p className="mt-1 text-text-muted">
+        The people you read alongside. Add one with their invite code.
+      </p>
+
+      {/* Add by code */}
+      <section className="mt-6 rounded-2xl border border-border bg-surface p-5">
+        <label htmlFor="invite" className="font-display text-lg text-text">
+          Add by invite code
+        </label>
+        <div className="mt-3 flex gap-2">
+          <input
+            id="invite"
+            value={code}
+            onChange={(e) => {
+              setCode(e.target.value)
+              setTarget(null)
+              setNotice(null)
+            }}
+            onKeyDown={(e) => e.key === 'Enter' && void lookUp()}
+            placeholder="e.g. K7M2QP"
+            maxLength={8}
+            autoCapitalize="characters"
+            autoCorrect="off"
+            spellCheck={false}
+            className="min-w-0 flex-1 rounded-xl border border-border bg-surface-alt px-4 py-2.5 font-display text-lg uppercase tracking-[0.15em] text-text placeholder:tracking-normal placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent"
+          />
+          <button
+            type="button"
+            onClick={() => void lookUp()}
+            disabled={resolving || !code.trim()}
+            className={PILL_SOLID}
+          >
+            {resolving ? '…' : 'Find'}
+          </button>
+        </div>
+
+        {notice && <p className="mt-3 text-sm text-text-muted">{notice}</p>}
+
+        {target && (
+          <div className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-surface-alt p-3">
+            <Avatar src={target.photoURL} name={target.displayName} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-medium text-text">
+                {target.displayName ?? 'A reader'}
+              </p>
+              <p className="text-xs text-text-muted">Send a reading request?</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void send()}
+              disabled={sending}
+              className={PILL_SOLID}
+            >
+              {sending ? 'Sending…' : 'Send'}
+            </button>
+          </div>
+        )}
+      </section>
+
+      {loading && (
+        <p className="mt-8 text-center text-sm text-text-muted">
+          Gathering your circle…
+        </p>
+      )}
+
+      {error && (
+        <p className="mt-6 rounded-lg border border-border bg-surface px-4 py-3 text-sm text-text-muted">
+          Couldn't load your friends: {error}
+        </p>
+      )}
+
+      {/* Incoming requests */}
+      {incoming.length > 0 && (
+        <section className="mt-8">
+          <h2 className="font-display text-lg text-text">Wanting to read with you</h2>
+          <ul className="mt-1 divide-y divide-border">
+            {incoming.map((r) => (
+              <PersonRow key={r.id} name={r.fromName} photoURL={r.fromPhotoURL}>
+                <button
+                  type="button"
+                  onClick={() => void act(r.id, () => acceptFriendRequest(r.id))}
+                  disabled={busyIds.has(r.id)}
+                  className={PILL_SOLID}
+                >
+                  Accept
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void act(r.id, () => removeRelationship(r.id))}
+                  disabled={busyIds.has(r.id)}
+                  className={PILL_QUIET}
+                >
+                  Decline
+                </button>
+              </PersonRow>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* The circle */}
+      <section className="mt-8">
+        <h2 className="font-display text-lg text-text">Your circle</h2>
+        {!loading && friends.length === 0 ? (
+          <div className="mt-3 rounded-2xl border border-dashed border-border bg-surface/60 p-8 text-center">
+            <p className="text-pretty text-sm leading-relaxed text-text-muted">
+              No one here yet. Trade invite codes with a friend and you'll both
+              show up — ready to pick a book.
+            </p>
+          </div>
+        ) : (
+          <ul className="mt-1 divide-y divide-border">
+            {friends.map((r) => (
+              <PersonRow
+                key={r.id}
+                name={friendName(r)}
+                photoURL={otherParty(r, user?.uid ?? '').photoURL}
+                subtitle="Reading buddy"
+              >
+                <button
+                  type="button"
+                  onClick={() => void act(r.id, () => removeRelationship(r.id))}
+                  disabled={busyIds.has(r.id)}
+                  className={PILL_QUIET}
+                >
+                  Remove
+                </button>
+              </PersonRow>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* Outgoing requests */}
+      {outgoing.length > 0 && (
+        <section className="mt-8">
+          <h2 className="font-display text-lg text-text">Waiting on a reply</h2>
+          <ul className="mt-1 divide-y divide-border">
+            {outgoing.map((r) => (
+              <PersonRow
+                key={r.id}
+                name={r.toName}
+                photoURL={r.toPhotoURL}
+                subtitle="Request sent"
+              >
+                <button
+                  type="button"
+                  onClick={() => void act(r.id, () => removeRelationship(r.id))}
+                  disabled={busyIds.has(r.id)}
+                  className={PILL_QUIET}
+                >
+                  Cancel
+                </button>
+              </PersonRow>
+            ))}
+          </ul>
+        </section>
+      )}
+    </AppShell>
+  )
+}
