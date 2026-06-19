@@ -58,11 +58,12 @@ src/
   App.tsx             Auth + Theme providers + DeviceFrame + Router
   index.css           Tailwind import + design tokens (@theme) + dark variant
   vite-env.d.ts       env typings + PWA client types
-  lib/                firebase.ts (init), users.ts (user doc + invite code), inviteCode.ts
-  auth/               auth-context.ts, AuthProvider.tsx, useAuth.ts, RequireAuth.tsx
+  lib/                firebase.ts (init), users.ts (user doc + invite code), inviteCode.ts, friends.ts (relationships)
+  auth/               auth-context.ts, AuthProvider.tsx, useAuth.ts, RequireAuth.tsx (mounts FriendsProvider)
+  friends/            friends-context.ts, FriendsProvider.tsx (one live listener), useFriends.ts
   theme/              theme-context.ts, ThemeProvider.tsx, useTheme.ts, ThemeToggle.tsx, ThemeSync.tsx
-  components/         DeviceFrame.tsx (mobile/iPad cap), AppShell.tsx, Logo.tsx, Avatar.tsx, Splash.tsx
-  pages/              Welcome.tsx (/), Home.tsx (/home), Profile.tsx (/profile), NotFound.tsx (*)
+  components/         DeviceFrame.tsx (mobile/iPad cap), AppShell.tsx (+ BottomNav), BottomNav.tsx, Logo.tsx, Avatar.tsx, Splash.tsx
+  pages/              Welcome.tsx (/), Home.tsx (/home), Friends.tsx (/friends), Profile.tsx (/profile), NotFound.tsx (*)
 public/               favicon.svg, icon.svg, icon-maskable.svg
 firestore.rules       Firestore security rules (deploy to console)
 ```
@@ -73,11 +74,14 @@ Theme: preference (`light|dark|system`) lives in `localStorage` under `buddyread
 
 ## Data model (Firestore)
 
-Implemented (M1):
-- `users/{uid}` — `displayName, email, photoURL, username, inviteCode, theme, createdAt`.
-- `inviteCodes/{code}` — `{ uid, createdAt }`. A lookup/uniqueness doc (claimed in a transaction) so invite codes are unique and M2 can resolve code→uid without listing `users`. *(Addition beyond the original kickoff model — kept tiny and rule-friendly.)*
+Implemented (M1–M2):
+- `users/{uid}` — `displayName, email, photoURL, username, inviteCode, theme, createdAt`. Owner-only read/write.
+- `inviteCodes/{code}` — `{ uid, displayName, photoURL, createdAt }`. Lookup/uniqueness doc (claimed in a transaction); name/photo denormalized so a sender previews "Send request to <name>?" without reading the target's profile. Owner-refreshed on each sign-in.
+- `friendRequests/{pairId}` — **single source of truth for a relationship** (no `friends` subcollection — deliberate deviation). `pairId` = the two uids sorted + `__`-joined. Fields: `participants:[from,to]`, `fromUid/toUid`, `fromName/fromPhotoURL`, `toName/toPhotoURL`, `status: pending|accepted`, `createdAt/respondedAt`. Friends/incoming/outgoing are all derived from one `participants array-contains uid` listener, partitioned client-side. Decline/cancel/unfriend = delete the doc.
 
-Planned (later): `users/{uid}/friends/{friendUid}` + `friendRequests/{id}` (M2); `reads/{id}` unified solo+buddy with flat `participantUids` array + per-person `participants` map (M4). Snapshot book metadata into the read at creation.
+Planned (later): `reads/{id}` unified solo+buddy with flat `participantUids` array + per-person `participants` map (M4). Snapshot book metadata into the read at creation.
+
+**Indexes:** none required so far — the friends query uses a single `array-contains` (auto-indexed); ordering is done client-side to avoid a composite index.
 
 ## Layout — mobile/iPad-first (CORNERSTONE)
 
@@ -96,7 +100,8 @@ Dark academia, "3 Cs" (cohesive, classy, consistent). Warm brown/olive/cream, ca
 
 - **Done — M0:** scaffold, tokens + theme toggle, app shell, routing skeleton, PWA (installable, SW), docs, Vercel config. Build + lint green.
 - **Done — layout cornerstone:** mobile/iPad-first, two layouts only, `DeviceFrame` caps the app at iPad width; default breakpoints removed in favour of `ipad:`. On `main` via GitHub `origin`.
-- **Done — M1:** Firebase init, Google sign-in, `RequireAuth` guard, user-doc creation with a unique invite code (`inviteCodes` transaction), Profile page (avatar, invite code + copy, theme toggle, sign out), theme account-sync. Build + lint green.
-- **Next — M2:** friends — add by invite code, friend requests (send/accept/decline), friends list, + security rules.
-- Pending external (user): **enable Google sign-in provider**, **create Firestore database**, **deploy `firestore.rules`** (console Rules tab or `firebase deploy --only firestore:rules`) — needed before sign-in works end to end. Later: Vercel deploy; Google Books key (M3).
+- **Done — M1:** Firebase init, Google sign-in, `RequireAuth` guard, user-doc creation with a unique invite code, Profile page, theme account-sync. Build + lint green.
+- **Done — M2:** friends — bottom tab bar (Shelf · Friends · You), add-by-code (resolve → confirm → send), incoming/outgoing requests, the circle, remove-friend, all live via one `onSnapshot`; `friendRequests` security rules. Build + lint green.
+- **Next — M3:** catalog — Google Books search + book detail, cover handling with Open Library fallback.
+- Pending external (user): **re-publish `firestore.rules`** (now includes `friendRequests` + `inviteCodes` update). Later: Vercel deploy; Google Books key (M3).
 - Known debt: JS bundle ~245 kB gzip (Firebase). Code-split / lazy-load routes in M7.

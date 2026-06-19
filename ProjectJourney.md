@@ -146,3 +146,54 @@ Concretely:
 
 - **Q: How does theme follow a reader across devices without flicker?**
   The painted theme is local (localStorage) for an instant, offline-safe first render. On sign-in the account's stored theme is adopted once; subsequent local toggles are written back to `users/{uid}.theme`. So device A's change reaches device B on its next sign-in, but no render ever waits on the network.
+
+---
+
+## Chapter 2 — Friends (M2)
+
+### What we built and why
+
+Reading "together" needs a someone. M2 adds the relationship layer: a bottom tab bar (**Shelf · Friends · You**), and a Friends screen where you type a buddy's invite code → preview "Send request to *Name*?" → they see it under **Friends** → **Accept**, and you're both in each other's circle, ready to start a shared read in M4. Decline, cancel, and remove-friend are all there too. Everything is live — one `onSnapshot` keeps requests and the circle current without a refresh, and the Friends tab carries a small count badge for pending invites.
+
+### The headline decision: derive friends from requests, no subcollection
+
+The kickoff modelled friendships as a `users/{uid}/friends/{friendUid}` subcollection on **both** readers. Making that reciprocal on the client (without the Cloud Functions v0 excludes) runs straight into a Firestore rules limitation: **rules can't see other writes in the same batch.** So the obvious "flip the request to `accepted` *and* write both friend edges atomically" fails — when the rule evaluates the edge write, it still sees the request as `pending`.
+
+We sidestepped the whole problem by making **`friendRequests/{pairId}` the single source of truth** and deriving everything from it:
+
+- **Deterministic id** = the two uids sorted and `__`-joined, so a pair can only ever have one doc — duplicate and reverse requests are impossible by construction.
+- **Friends / incoming / outgoing** are computed from one listener (`participants array-contains me`), partitioned in JS by `status` and direction.
+- **No cross-user writes ever.** Accept updates one field on one doc the recipient is allowed to touch. There are no two edges to keep consistent.
+- **No `declined` state.** Decline, cancel, and unfriend are all a single `delete`, which also means re-requesting is a clean `create` rather than a special-cased revival.
+
+This is simpler *and* safer than the subcollection design, and it needs no Cloud Function. The product owner signed off on the deviation.
+
+### Other decisions & trade-offs
+
+- **Denormalize name/photo onto `inviteCodes` (and onto each request).** To preview "Send request to *Devansh*?" the sender needs the target's name — but we keep `users` locked to owner-only reads. So the invite-code lookup doc carries `displayName`/`photoURL` (refreshed on each sign-in), and both parties' display data is copied onto the request. Net effect: nobody ever reads anyone else's `users` doc, yet every list renders from a single query. Cost: a little duplicated profile data that can go stale until next sign-in — fine for v0.
+- **No composite indexes.** Querying `participants array-contains me` *and* `orderBy(createdAt)` would force a composite index; sorting client-side keeps us on the free single-field `array-contains` index. With a two-person circle the in-memory sort is free.
+- **One shared `FriendsProvider` behind `RequireAuth`.** A single listener feeds both the Friends page and the nav badge, and it only runs while signed in. Rejected: a hook with its own listener per consumer (duplicate reads, duplicate cost).
+- **`NotFound` left the `AppShell`.** Once `AppShell` grew a `BottomNav` that reads `useFriends`, the public 404 (outside the provider) would have thrown. The 404 is now a standalone screen — which is right anyway: a not-found page shouldn't wear the app's tab bar.
+
+### Notable details & gotchas
+
+- **react-hooks lint: no `setState` directly in an effect body.** Resetting `loading` synchronously at the top of the subscribe effect tripped the rule; since `loading` already starts `true` and the snapshot clears it, the line was simply removed.
+- **Rules validate the id, not just the data.** `create` checks `reqId == pairId(fromUid, toUid)` and that `participants == [fromUid, toUid]`, so a client can't smuggle a relationship in under the wrong key or with a mismatched member list.
+- **Accept can't rewrite the parties.** The `update` rule pins `fromUid`/`toUid`/`participants` to their existing values and only allows `pending → accepted`, so accepting can't quietly swap who's involved.
+
+### Questions an interviewer might ask
+
+- **Q: Why not store friendships as a subcollection on each user, like the original design?**
+  Reciprocity would require the accepter to write into the other user's subcollection, which needs either a Cloud Function (excluded in v0) or rules that can validate an in-batch status change — but Firestore rules can't see sibling writes in the same batch. Deriving both readers' view from one `friendRequests` doc removes the dual-write entirely, so there's nothing to keep consistent and the rules stay trivial.
+
+- **Q: How do you prevent duplicate or reverse friend requests?**
+  The request's document id is the two uids sorted and joined, so A→B and B→A map to the same id. A second request just hits the existing doc, and the create rule enforces that the id matches `pairId(from, to)`.
+
+- **Q: A sender previews the recipient's name before they're friends — doesn't that leak profiles?**
+  Only to someone who already holds your invite code, which you chose to share. The name/photo live on the `inviteCodes` lookup doc, not the `users` doc, so the actual profile stays owner-only-readable. There's no way to enumerate users.
+
+- **Q: Why no composite index for the friends query?**
+  We filter on a single `array-contains` field (auto-indexed) and sort in memory rather than adding `orderBy` to the query, which would have forced a composite index. At a two-person scale the client-side sort is negligible.
+
+- **Q: What happens to the buddy's view when someone unfriends?**
+  Unfriend deletes the one shared `friendRequests` doc; both readers' listeners fire and the relationship drops out of both circles live. There's no second record to clean up.
