@@ -1,8 +1,8 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="BuddyRead">
   <!-- Full-bleed background so platform masks have something to crop into. -->
-  <rect width="512" height="512" fill="#211A14"/>
+  <rect width="512" height="512" fill="#1c130a"/>
   <!-- Glyph kept inside the central ~70% safe zone. -->
-  <g stroke="#9A8A6B" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" fill="none">
+  <g stroke="#bd9356" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <path d="M256 196C231 179 203 171 172 171C166 171 161 176 161 182V330C161 336 166 341 172 341C203 341 231 350 256 366"/>
     <path d="M256 196C281 179 309 171 340 171C346 171 351 176 351 182V330C351 336 346 341 340 341C309 341 281 350 256 366"/>
     <line x1="256" y1="196" x2="256" y2="366"/>

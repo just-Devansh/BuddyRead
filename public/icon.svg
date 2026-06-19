@@ -1,7 +1,7 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="BuddyRead">
-  <rect width="512" height="512" rx="112" fill="#211A14"/>
+  <rect width="512" height="512" rx="112" fill="#1c130a"/>
   <!-- An open book: two facing pages on a dark spine, candlelit brass. -->
-  <g stroke="#9A8A6B" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none">
+  <g stroke="#bd9356" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <path d="M256 168C224 146 188 136 148 136C140 136 134 142 134 150V346C134 354 140 360 148 360C188 360 224 372 256 392"/>
     <path d="M256 168C288 146 324 136 364 136C372 136 378 142 378 150V346C378 354 372 360 364 360C324 360 288 372 256 392"/>
     <line x1="256" y1="168" x2="256" y2="392"/>

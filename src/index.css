@@ -9,31 +9,31 @@
    whole theme is one class swap; exposed to Tailwind utilities via @theme.
 --------------------------------------------------------------------------- */
 :root {
-  /* Light — "Parchment" */
-  --bg: #ede6d6;
-  --surface: #f6f1e7;
-  --surface-alt: #e4dac6;
-  --text: #2c241b;
-  --text-muted: #6e6052;
-  --border: #d8cdb8;
-  --accent: #6b6b47; /* muted olive — the only accent */
-  --accent-contrast: #f6f1e7; /* text/icon sitting on the accent */
-  --bar-track: #e4dac6;
-  --bar-fill: #8c8a5e; /* progress bar */
+  /* Light — "Parchment": deeper, warmer — aged paper, not dusty taupe. */
+  --bg: #e6d8bd;
+  --surface: #f2e8d4;
+  --surface-alt: #d8c6a4;
+  --text: #2a1c0f; /* rich espresso */
+  --text-muted: #6c5a40;
+  --border: #c9b693;
+  --accent: #5f5a31; /* deeper muted olive — the only accent */
+  --accent-contrast: #f2e8d4; /* text/icon sitting on the accent */
+  --bar-track: #d8c6a4;
+  --bar-fill: #847338; /* progress bar */
 }
 
 .dark {
-  /* Dark — "Library at Night" */
-  --bg: #211a14;
-  --surface: #2c241c;
-  --surface-alt: #362c22;
-  --text: #ece3d2;
-  --text-muted: #a89a85;
-  --border: #3d3327;
-  --accent: #9a8a6b; /* aged brass — muted */
-  --accent-contrast: #211a14;
-  --bar-track: #362c22;
-  --bar-fill: #8a8a5c;
+  /* Dark — "Library at Night": deep walnut & candlelit brass. */
+  --bg: #1c130a; /* deep, warm espresso-walnut */
+  --surface: #281b10;
+  --surface-alt: #352616;
+  --text: #f1e7d3;
+  --text-muted: #b39d7f;
+  --border: #43321f;
+  --accent: #bd9356; /* richer aged brass */
+  --accent-contrast: #1c130a;
+  --bar-track: #352616;
+  --bar-fill: #a17e47;
 }
 
 @theme inline {
