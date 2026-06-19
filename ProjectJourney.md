@@ -61,3 +61,34 @@ Concretely, M0 delivers:
 
 - **Q: Where will real authentication slot in?**
   M1: Firebase Google sign-in, a route guard wrapping `/home` and friends, and user-doc creation with a generated invite code. The Welcome CTA and the public routes are placeholders shaped to receive that with minimal churn.
+
+---
+
+## Chapter 0.5 — Layout cornerstone: mobile/iPad-first
+
+### What changed and why
+
+After the M0 skeleton, the user set a hard product rule: **BuddyRead targets exactly two layouts — a phone and an iPad — and a laptop/desktop simply renders the iPad screen.** No bespoke desktop design, ever. The only real readers use a phone and an iPad, so a desktop layout would be wasted effort and would dilute the focus. This is a cornerstone, applied to every page, component, and the theme toggle from here on.
+
+### How we enforced it (not just styled for it)
+
+- **Two layouts, one breakpoint.** Base Tailwind styles target the phone; a single custom `ipad:` breakpoint (768px) switches to the iPad layout. To make the rule structural rather than a matter of discipline, we *cleared* Tailwind's default breakpoints (`--breakpoint-*: initial`) so `sm/md/lg/xl/2xl` no longer exist — a stray `lg:` can't silently introduce a third layout; only `ipad:` compiles.
+- **Desktop = the iPad screen.** A new `DeviceFrame` wraps every route: it fills the viewport with the themed background and caps the app at `max-w-app` (`--container-app`, ~832px ≈ iPad portrait), centred. Phones run full-width; iPads run ≈ full-width; anything wider gets the iPad column centred with hairline side borders so the cap reads as intentional, not stranded.
+- **Pages stopped capping themselves.** `AppShell` and `Welcome` dropped their own `max-w-*`/background wrappers and now just fill the frame, with padding stepping up slightly at `ipad:`. Readability caps on prose (e.g. `max-w-md`) stay, since an 832px-wide line of text is too long regardless of device.
+
+### Trade-offs considered
+
+- **Clearing default breakpoints vs. just "not using them."** Clearing them is mildly unconventional and means any future contributor must learn the `ipad:`-only convention — but it turns a guideline into a guarantee, which is exactly what a "cornerstone" deserves.
+- **Capping at the frame level vs. per-page.** A single `DeviceFrame` means every current and future screen inherits the device behaviour for free, at the cost of pages no longer being self-contained full-screen units. Worth it: it makes the two-layout rule the path of least resistance.
+- **Where to set the iPad cap.** 832px (52rem) covers iPad portrait widths up to the 11" Pro, so real iPads render essentially full-bleed while desktops letterbox to that same width — the "show the iPad screen on desktop" goal, precisely.
+
+### Questions an interviewer might ask
+
+- **Q: How do you guarantee only two layouts exist?**
+  By removing Tailwind's default responsive breakpoints entirely and defining a single `ipad:` breakpoint. There's literally no `lg:`/`xl:` to reach for, so the design can't fork into a third layout, and the app's max width is capped at iPad size by one wrapper component.
+
+- **Q: What does a desktop user actually see?**
+  The iPad layout, centred, capped at ~832px, with hairline side borders framing it. We deliberately don't build a wide desktop view — the audience is a phone-and-iPad pair, so a desktop design would be effort spent on a screen no one reads on.
+
+- **Q: Why cap at the frame instead of styling each page responsively?**
+  One `DeviceFrame` makes the device behaviour automatic and uniform for every screen we'll build (friends, search, the split card, history), so no page can accidentally stretch on desktop. It trades per-page independence for a guarantee that the cornerstone holds everywhere.

@@ -55,7 +55,7 @@ src/
   index.css           Tailwind import + design tokens (@theme) + dark variant
   vite-env.d.ts       env typings + PWA client types
   theme/              theme-context.ts, ThemeProvider.tsx, useTheme.ts, ThemeToggle.tsx
-  components/         Logo.tsx, AppShell.tsx
+  components/         DeviceFrame.tsx (mobile/iPad cap), Logo.tsx, AppShell.tsx
   pages/              Welcome.tsx (/), Home.tsx (/home), NotFound.tsx (*)
 public/               favicon.svg, icon.svg, icon-maskable.svg
 ```
@@ -66,6 +66,15 @@ Theme: preference (`light|dark|system`) lives in `localStorage` under `buddyread
 
 Firestore collections planned: `users/{uid}` (+ `friends` subcollection), `friendRequests/{id}`, `reads/{id}` (unified solo + buddy, flat `participantUids` array for rules/queries, per-person `participants` map). Snapshot book metadata into the read at creation. Tight security rules from M1. Full shape in the kickoff prompt / `ProjectJourney.md`.
 
+## Layout — mobile/iPad-first (CORNERSTONE)
+
+**Exactly two layouts, chosen by screen width: phone and iPad. A laptop/desktop renders the iPad screen — never a bespoke desktop layout.** This is a hard product rule; honour it on every page, component, and the theme toggle.
+
+- Base Tailwind styles = **phone**. The single custom **`ipad:`** breakpoint (`--breakpoint-ipad`, 768px) switches to the **iPad** layout. **Do not use `sm/md/lg/xl/2xl`** — they're cleared from the theme (`--breakpoint-*: initial`), so only `ipad:` exists. Think in two devices.
+- App chrome is capped at **`max-w-app`** (`--container-app`, 52rem ≈ iPad portrait) and centred by **`components/DeviceFrame.tsx`**, which wraps all routes. Phone = full width; iPad ≈ full width; desktop = the iPad column centred with hairline side borders.
+- Keep prose/text blocks capped narrower (e.g. `max-w-md`) for readability inside the iPad column.
+- Manifest is portrait-locked, consistent with this.
+
 ## Design system
 
 Dark academia, "3 Cs" (cohesive, classy, consistent). Warm brown/olive/cream, candlelit. **One muted accent, never bright.** Display serif **Fraunces**, body sans **Inter**. Tokens: `bg, surface, surface-alt, text, text-muted, border, accent, accent-contrast, bar-track, bar-fill` — used as Tailwind colors (`bg-bg`, `text-text-muted`, etc.). Generous whitespace, hairline borders over shadows, restrained motion (`prefers-reduced-motion` honoured).
@@ -73,5 +82,6 @@ Dark academia, "3 Cs" (cohesive, classy, consistent). Warm brown/olive/cream, ca
 ## Current focus / next up
 
 - **Done — M0:** scaffold, tokens + theme toggle, app shell, routing skeleton, PWA (installable, SW), docs, Vercel config. Build + lint green.
+- **Done — layout cornerstone:** mobile/iPad-first, two layouts only, `DeviceFrame` caps the app at iPad width; default breakpoints removed in favour of `ipad:`. On `main` via GitHub `origin`.
 - **Next — M1:** Firebase init, Google sign-in, protected routes, user-doc creation with generated invite code, basic profile page.
 - Pending external (user): create Firebase project; create Vercel project + deploy to prove the pipeline; later, Google Books key.
