@@ -92,3 +92,57 @@ After the M0 skeleton, the user set a hard product rule: **BuddyRead targets exa
 
 - **Q: Why cap at the frame instead of styling each page responsively?**
   One `DeviceFrame` makes the device behaviour automatic and uniform for every screen we'll build (friends, search, the split card, history), so no page can accidentally stretch on desktop. It trades per-page independence for a guarantee that the cornerstone holds everywhere.
+
+---
+
+## Chapter 1 — Auth & profile (M1)
+
+### What we built and why
+
+M1 turns the skeleton into something you sign in to. A reader now: lands on Welcome → **Continue with Google** → gets a `users/{uid}` document created with a unique, human-typeable **invite code** → arrives at a guarded `/home` → can open a **Profile** page (avatar, invite code with copy, theme toggle, sign out). Everything behind `/home` and `/profile` requires auth; the rest of the app (friends, reads) builds on this identity layer.
+
+Concretely:
+
+- **Firebase initialised** from the `VITE_FIREBASE_*` env (`lib/firebase.ts`) — Auth (Google provider, `prompt: 'select_account'`) + Firestore.
+- **`AuthProvider`** tracks `onAuthStateChanged`, ensures the user doc on first sign-in, and subscribes to it live with `onSnapshot` so the invite code and theme are always current.
+- **`RequireAuth`** route guard waits for auth to resolve (a `Splash`), then redirects signed-out readers to the landing — no flash of the wrong screen on reload.
+- **Unique invite codes** via an `inviteCodes/{code}` lookup doc claimed in a Firestore **transaction**.
+- **Profile page** + an **Avatar** with an initial fallback (Google photos are loaded with `referrerPolicy="no-referrer"` so they don't 403).
+- **Theme account-sync** (`ThemeSync`): the per-device theme and `users/{uid}.theme` are reconciled — account wins once on sign-in, then local changes write back up.
+- **Tight Firestore rules** (`firestore.rules`): a reader can read/write only their own `users/{uid}`; invite-code docs are readable by any signed-in user but can only be created pointing at your own uid, and are immutable.
+
+### Decisions & trade-offs (and what we rejected)
+
+- **An `inviteCodes` lookup collection — a deliberate addition to the kickoff data model.** The original model put `inviteCode` only on the user doc. But two needs push for a dedicated collection: (1) guaranteeing uniqueness, and (2) letting M2 resolve a typed-in code → uid. Doing that against the `users` collection would require granting *list/query* permission over all users — leaking everyone's profile. A tiny `inviteCodes/{code} → { uid }` doc, claimed in a transaction, gives atomic uniqueness and a rule-friendly point lookup (`get` by id, not a query) without opening `users` at all. The cost is one extra write at signup and a second collection to reason about — well worth it. (Flagged to the product owner since it extends the agreed model.)
+
+- **Invite-code alphabet.** 6 chars from a 31-symbol set with `0/O/1/I/L` removed (~887M combinations). Ambiguous glyphs are dropped because the code gets read off a screen or spoken to a friend; collision odds at two-user scale are negligible, and the transaction handles the rare clash by retrying.
+
+- **`signInWithPopup` over `signInWithRedirect`.** Popup keeps the SPA state intact and is simpler to reason about for a phone/iPad PWA; redirect's whole-page round-trip and its known quirks inside standalone PWAs weren't worth it for v0. Revisit only if a target browser blocks the popup.
+
+- **Theme: account-wins-once, then local-wins.** Rather than make either store the permanent source of truth, the account value is adopted a single time per sign-in (so your iPad inherits your phone's choice), after which on-device toggles propagate upward. A `hydratedForUid` ref prevents the two `onSnapshot`/effect loops from ping-ponging. Rejected: making Firestore the live source for every paint (a network hop before first render, and a flicker offline).
+
+- **Provider order.** `AuthProvider` wraps `ThemeProvider` wraps `ThemeSync`, so the sync bridge can consume both without coupling the two providers to each other.
+
+### Notable details & gotchas
+
+- **`serverTimestamp()` is a `FieldValue`, not a `Timestamp`.** The write payload therefore can't be typed directly as `UserDoc` (whose `createdAt` is the resolved `Timestamp`); the field is written as a server timestamp and read back as a `Timestamp`.
+- **Vite reads env only at startup** — adding `.env.local` required a dev-server restart before sign-in could see the config.
+- **Bundle size jumped** to ~245 kB gzip once Firebase Auth + Firestore were imported. Acceptable for now; route-level code-splitting / lazy Firebase is queued for the M7 polish pass.
+- **Firebase web config isn't a secret** — it ships in the client. Data is protected by Firestore rules + the Auth domain allowlist, which is why writing tight rules in this milestone matters more than hiding keys.
+
+### Questions an interviewer might ask
+
+- **Q: How do you guarantee invite codes are unique?**
+  Each code is also a document id in an `inviteCodes` collection, claimed inside a Firestore transaction that fails if the id already exists; on a clash we generate another and retry. Document-id uniqueness + transactional create gives atomicity without a server.
+
+- **Q: Why not just query `users` by `inviteCode`?**
+  A query needs list permission over the collection, which would expose every user's profile to any signed-in reader. A keyed `get` on `inviteCodes/{code}` returns only the uid, so rules stay tight and the lookup is a single document read.
+
+- **Q: How does the route guard avoid a flash of the login screen?**
+  `AuthProvider` starts in a `loading` state until the first `onAuthStateChanged` (and the user doc) resolve; `RequireAuth` renders a quiet splash during that window instead of deciding too early, so a reload doesn't briefly show Welcome before redirecting.
+
+- **Q: What stops one reader from editing another's data?**
+  Firestore rules: `users/{uid}` is read/write only when `request.auth.uid == uid`, and an `inviteCodes` doc can only be created with `uid == request.auth.uid` and never updated or deleted. The per-read participant rules come in M4, but the principle — every write authorised against `request.auth.uid` — is set here.
+
+- **Q: How does theme follow a reader across devices without flicker?**
+  The painted theme is local (localStorage) for an instant, offline-safe first render. On sign-in the account's stored theme is adopted once; subsequent local toggles are written back to `users/{uid}.theme`. So device A's change reaches device B on its next sign-in, but no render ever waits on the network.

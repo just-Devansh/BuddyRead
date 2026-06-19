@@ -38,11 +38,15 @@ npm run lint      # eslint
 
 ## Env vars
 
-All client keys are `VITE_*` (see `.env.example`). Copy to `.env.local` for local dev; set the same in the Vercel project. Firebase + Google Books keys land in M1/M3.
+All client keys are `VITE_*` (see `.env.example`). Copy to `.env.local` for local dev; set the same in the Vercel project. Firebase keys are set (`buddyread-1121`); Google Books key lands in M3.
 
-## Setup steps (deferred until their milestone)
+## Setup steps
 
-- **Firebase (M1):** create project → enable Google Auth provider → create Firestore (production mode) → copy web-app config into `VITE_FIREBASE_*`. Add Vercel domain to Auth > Authorized domains.
+- **Firebase (M1) — config DONE (`buddyread-1121`).** Still required in the console to work end to end:
+  1. **Authentication → Sign-in method → enable Google** (set a support email).
+  2. **Firestore Database → create** in production mode (region e.g. `asia-south1`).
+  3. **Deploy `firestore.rules`:** paste into Firestore → Rules tab and Publish, or `firebase deploy --only firestore:rules`.
+  4. `localhost` is an authorized domain by default; add the Vercel domain when deployed.
 - **Google Books (M3):** create API key in Google Cloud → **restrict by HTTP referrer** (localhost + Vercel domains) → put in `VITE_GOOGLE_BOOKS_API_KEY`.
 - **Firestore composite indexes:** record here as queries demand them (none yet).
 
@@ -51,20 +55,29 @@ All client keys are `VITE_*` (see `.env.example`). Copy to `.env.local` for loca
 ```
 src/
   main.tsx            React root
-  App.tsx             ThemeProvider + Router (all routes public for now)
+  App.tsx             Auth + Theme providers + DeviceFrame + Router
   index.css           Tailwind import + design tokens (@theme) + dark variant
   vite-env.d.ts       env typings + PWA client types
-  theme/              theme-context.ts, ThemeProvider.tsx, useTheme.ts, ThemeToggle.tsx
-  components/         DeviceFrame.tsx (mobile/iPad cap), Logo.tsx, AppShell.tsx
-  pages/              Welcome.tsx (/), Home.tsx (/home), NotFound.tsx (*)
+  lib/                firebase.ts (init), users.ts (user doc + invite code), inviteCode.ts
+  auth/               auth-context.ts, AuthProvider.tsx, useAuth.ts, RequireAuth.tsx
+  theme/              theme-context.ts, ThemeProvider.tsx, useTheme.ts, ThemeToggle.tsx, ThemeSync.tsx
+  components/         DeviceFrame.tsx (mobile/iPad cap), AppShell.tsx, Logo.tsx, Avatar.tsx, Splash.tsx
+  pages/              Welcome.tsx (/), Home.tsx (/home), Profile.tsx (/profile), NotFound.tsx (*)
 public/               favicon.svg, icon.svg, icon-maskable.svg
+firestore.rules       Firestore security rules (deploy to console)
 ```
 
-Theme: preference (`light|dark|system`) lives in `localStorage` under `buddyread:theme`; `ThemeProvider` resolves `system` live and toggles `.dark` on `<html>`. M1 will mirror this into `users/{uid}.theme`.
+Auth: `AuthProvider` tracks `onAuthStateChanged`, ensures the `users/{uid}` doc on first sign-in, and subscribes to it live. `/home` and `/profile` sit behind `RequireAuth`; `/` redirects to `/home` when signed in.
 
-## Data model (target — not yet built)
+Theme: preference (`light|dark|system`) lives in `localStorage` under `buddyread:theme`; `ThemeProvider` resolves `system` live and toggles `.dark` on `<html>`. `ThemeSync` mirrors it to/from `users/{uid}.theme` — account wins once on sign-in, local changes write back up.
 
-Firestore collections planned: `users/{uid}` (+ `friends` subcollection), `friendRequests/{id}`, `reads/{id}` (unified solo + buddy, flat `participantUids` array for rules/queries, per-person `participants` map). Snapshot book metadata into the read at creation. Tight security rules from M1. Full shape in the kickoff prompt / `ProjectJourney.md`.
+## Data model (Firestore)
+
+Implemented (M1):
+- `users/{uid}` — `displayName, email, photoURL, username, inviteCode, theme, createdAt`.
+- `inviteCodes/{code}` — `{ uid, createdAt }`. A lookup/uniqueness doc (claimed in a transaction) so invite codes are unique and M2 can resolve code→uid without listing `users`. *(Addition beyond the original kickoff model — kept tiny and rule-friendly.)*
+
+Planned (later): `users/{uid}/friends/{friendUid}` + `friendRequests/{id}` (M2); `reads/{id}` unified solo+buddy with flat `participantUids` array + per-person `participants` map (M4). Snapshot book metadata into the read at creation.
 
 ## Layout — mobile/iPad-first (CORNERSTONE)
 
@@ -83,5 +96,7 @@ Dark academia, "3 Cs" (cohesive, classy, consistent). Warm brown/olive/cream, ca
 
 - **Done — M0:** scaffold, tokens + theme toggle, app shell, routing skeleton, PWA (installable, SW), docs, Vercel config. Build + lint green.
 - **Done — layout cornerstone:** mobile/iPad-first, two layouts only, `DeviceFrame` caps the app at iPad width; default breakpoints removed in favour of `ipad:`. On `main` via GitHub `origin`.
-- **Next — M1:** Firebase init, Google sign-in, protected routes, user-doc creation with generated invite code, basic profile page.
-- Pending external (user): create Firebase project; create Vercel project + deploy to prove the pipeline; later, Google Books key.
+- **Done — M1:** Firebase init, Google sign-in, `RequireAuth` guard, user-doc creation with a unique invite code (`inviteCodes` transaction), Profile page (avatar, invite code + copy, theme toggle, sign out), theme account-sync. Build + lint green.
+- **Next — M2:** friends — add by invite code, friend requests (send/accept/decline), friends list, + security rules.
+- Pending external (user): **enable Google sign-in provider**, **create Firestore database**, **deploy `firestore.rules`** (console Rules tab or `firebase deploy --only firestore:rules`) — needed before sign-in works end to end. Later: Vercel deploy; Google Books key (M3).
+- Known debt: JS bundle ~245 kB gzip (Firebase). Code-split / lazy-load routes in M7.
