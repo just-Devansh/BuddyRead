@@ -197,3 +197,44 @@ This is simpler *and* safer than the subcollection design, and it needs no Cloud
 
 - **Q: What happens to the buddy's view when someone unfriends?**
   Unfriend deletes the one shared `friendRequests` doc; both readers' listeners fire and the relationship drops out of both circles live. There's no second record to clean up.
+
+---
+
+## Chapter 3 — Catalog: search & book detail (M3)
+
+### What we built and why
+
+The Shelf has been empty since M0 — there was no way to *find* a book. M3 fills that gap with the catalog: a debounced search over the **Google Books API**, a per-book detail page, and cover art that degrades gracefully. It's deliberately read-only — browsing, not committing. Choosing a book and snapshotting it into a *read* is M4's job; here the "Start a read" button is a quiet, disabled promise.
+
+- **`lib/books.ts`** — a thin typed client. `searchBooks` / `getBook` hit Google Books, and both funnel through one `normalizeVolume` that flattens Google's sprawling `volumeInfo` into a small `Book` we control. Google's HTML blurb is run through `htmlToText` (DOMParser → `textContent`, never `innerHTML`) so descriptions are injection-safe plain text.
+- **`components/BookCover.tsx`** — a 2:3 frame that tries Google's image, then Open Library by ISBN, then settles into a title-bearing placeholder. A missing cover still reads as a book.
+- **`pages/Search.tsx`** (`/search`) and **`pages/Book.tsx`** (`/book/:id`), both behind `RequireAuth`. The empty Shelf's "Find a book" CTA is now a real link.
+
+### Decisions & trade-offs (and what we rejected)
+
+- **Keyless to start.** Google Books volume queries work without an API key at a lower, *shared anonymous* quota. We ship keyless and treat the `.env.example` placeholder as unset, appending `&key=` only when a real key is present. Trade-off surfaced immediately: a test call from a shared CI IP returned **HTTP 429** (the anonymous quota is pooled per source). A home browser gets its own fresh quota, but this is exactly why a free, referrer-restricted key is the recommended next step — it moves us off the shared pool. The error path already handles 429 like any failed fetch.
+- **Normalize at the edge.** Every Google volume is mapped to our `Book` the moment it arrives, so pages never touch `volumeInfo.imageLinks.thumbnail`-shaped paths. One place to fix when Google's shape shifts.
+- **Cover fallback as a data list, not branching JSX.** `coverCandidates(book)` returns an ordered `[google, openLibrary]`; `BookCover` walks the index on each `onError`. Open Library is requested with `default=false` so it 404s (firing `onError`) instead of serving a blank, which is what makes the chain reach the placeholder.
+- **No new dependencies.** No HTTP client, no HTML sanitizer, no image library — `fetch`, `DOMParser`, and an `<img>` error chain cover it.
+
+### Notable details & gotchas
+
+- **react-hooks lint, again: no synchronous `setState` in an effect body** (it bit us in M2 too). Two different fixes for two different shapes:
+  - *Search* moves **all** state writes inside the debounce `setTimeout` callback — a callback isn't the effect body, and the 350 ms debounce wanted to own the "searching/idle" transitions anyway.
+  - *Book detail* has no debounce to hide behind, so instead of resetting state on `id` change it **derives** status: state holds `{ id, book }` (with `book === null` meaning that id failed), and `loading`/`done`/`error` are computed by comparing the stored id to the current route param. A new id reads as "loading" until its own fetch lands — no reset write needed.
+- **`AbortController` on every effect.** Both pages abort in their cleanup, so a fast-typing search or a quick back-navigation can't land a stale response over a newer one.
+- **PWA was ready for this.** M0 had already added a `CacheFirst` runtime rule for `books.google` / `googleusercontent` / `openlibrary` hosts, so covers cache offline with no further work.
+
+### Questions an interviewer might ask
+
+- **Q: Why normalize Google's response instead of using it directly?**
+  `volumeInfo` is large, deeply optional, and not ours to control. Mapping to a small `Book` at the fetch boundary means components depend on a stable shape, optional-field handling lives in one function, and a future swap of catalog provider touches only `normalizeVolume`.
+
+- **Q: How do you render Google's HTML description safely?**
+  Block tags are turned into newlines, then `DOMParser` parses the string and we read `textContent` — never `innerHTML`. The result is plain text shown with `whitespace-pre-line`, so there's no path for injected markup to execute.
+
+- **Q: A cover image 404s — what does the user see?**
+  `BookCover` advances through an ordered candidate list (Google, then Open Library) on each `onError`, and when the list is exhausted falls back to a placeholder showing the title. Open Library is asked with `default=false` precisely so a missing cover errors rather than returning a blank image, keeping the fallback chain working.
+
+- **Q: Why keyless, and what's the catch?**
+  It lets two friends use the app before anyone touches Google Cloud. The catch is a shared anonymous quota that can 429 under load (we saw it from a shared IP). The fix is a free API key restricted by HTTP referrer, which is the documented M3 setup step.

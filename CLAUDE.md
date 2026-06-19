@@ -58,17 +58,19 @@ src/
   App.tsx             Auth + Theme providers + DeviceFrame + Router
   index.css           Tailwind import + design tokens (@theme) + dark variant
   vite-env.d.ts       env typings + PWA client types
-  lib/                firebase.ts (init), users.ts (user doc + invite code), inviteCode.ts, friends.ts (relationships)
+  lib/                firebase.ts (init), users.ts (user doc + invite code), inviteCode.ts, friends.ts (relationships), books.ts (Google Books client + cover helpers)
   auth/               auth-context.ts, AuthProvider.tsx, useAuth.ts, RequireAuth.tsx (mounts FriendsProvider)
   friends/            friends-context.ts, FriendsProvider.tsx (one live listener), useFriends.ts
   theme/              theme-context.ts, ThemeProvider.tsx, useTheme.ts, ThemeToggle.tsx, ThemeSync.tsx
-  components/         DeviceFrame.tsx (mobile/iPad cap), AppShell.tsx (+ BottomNav), BottomNav.tsx, Logo.tsx, Avatar.tsx, Splash.tsx
-  pages/              Welcome.tsx (/), Home.tsx (/home), Friends.tsx (/friends), Profile.tsx (/profile), NotFound.tsx (*)
+  components/         DeviceFrame.tsx (mobile/iPad cap), AppShell.tsx (+ BottomNav), BottomNav.tsx, Logo.tsx, Avatar.tsx, BookCover.tsx (Google→OpenLibrary→placeholder), Splash.tsx
+  pages/              Welcome.tsx (/), Home.tsx (/home), Search.tsx (/search), Book.tsx (/book/:id), Friends.tsx (/friends), Profile.tsx (/profile), NotFound.tsx (*)
 public/               favicon.svg, icon.svg, icon-maskable.svg
 firestore.rules       Firestore security rules (deploy to console)
 ```
 
-Auth: `AuthProvider` tracks `onAuthStateChanged`, ensures the `users/{uid}` doc on first sign-in, and subscribes to it live. `/home` and `/profile` sit behind `RequireAuth`; `/` redirects to `/home` when signed in.
+Auth: `AuthProvider` tracks `onAuthStateChanged`, ensures the `users/{uid}` doc on first sign-in, and subscribes to it live. `/home`, `/search`, `/book/:id`, `/friends`, `/profile` sit behind `RequireAuth`; `/` redirects to `/home` when signed in.
+
+Catalog (M3): `lib/books.ts` wraps Google Books — `searchBooks`/`getBook` normalize each volume into a small `Book`; HTML blurbs flattened via DOMParser `textContent` (injection-safe). Keyless by default (shared anonymous quota; `&key=` appended only when a real key is set). Covers: `BookCover` walks `coverCandidates` (Google image → Open Library by ISBN with `default=false` → title placeholder) on `<img>` onError. Search is debounced (350ms) + AbortController; reads are M4.
 
 Theme: preference (`light|dark|system`) lives in `localStorage` under `buddyread:theme`; `ThemeProvider` resolves `system` live and toggles `.dark` on `<html>`. `ThemeSync` mirrors it to/from `users/{uid}.theme` — account wins once on sign-in, local changes write back up.
 
@@ -102,6 +104,7 @@ Dark academia, "3 Cs" (cohesive, classy, consistent). Warm brown/olive/cream, ca
 - **Done — layout cornerstone:** mobile/iPad-first, two layouts only, `DeviceFrame` caps the app at iPad width; default breakpoints removed in favour of `ipad:`. On `main` via GitHub `origin`.
 - **Done — M1:** Firebase init, Google sign-in, `RequireAuth` guard, user-doc creation with a unique invite code, Profile page, theme account-sync. Build + lint green.
 - **Done — M2:** friends — bottom tab bar (Shelf · Friends · You), add-by-code (resolve → confirm → send), incoming/outgoing requests, the circle, remove-friend, all live via one `onSnapshot`; `friendRequests` security rules. Build + lint green.
-- **Next — M3:** catalog — Google Books search + book detail, cover handling with Open Library fallback.
-- Pending external (user): **re-publish `firestore.rules`** (now includes `friendRequests` + `inviteCodes` update). Later: Vercel deploy; Google Books key (M3).
-- Known debt: JS bundle ~245 kB gzip (Firebase). Code-split / lazy-load routes in M7.
+- **Done — M3:** catalog — debounced Google Books search (`/search`), book detail (`/book/:id`), `BookCover` with Open Library + placeholder fallback, Shelf "Find a book" CTA wired. Keyless (works without an API key); no Firestore writes yet. Build + lint green.
+- **Next — M4:** reads — `reads/{id}` (solo + buddy), snapshot book metadata at creation, wire the disabled "Start a read" button.
+- Pending external (user): **re-publish `firestore.rules`** (includes `friendRequests` + `inviteCodes` update). Recommended now: **Google Books API key** (keyless shares an anonymous quota that can 429 under load) — create in Google Cloud, restrict by HTTP referrer, set `VITE_GOOGLE_BOOKS_API_KEY`. Later: Vercel deploy.
+- Known debt: JS bundle ~251 kB gzip (Firebase). Code-split / lazy-load routes in M7. Keyless Google Books can 429 on a shared quota until a key is added.

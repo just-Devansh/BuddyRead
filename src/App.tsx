@@ -6,6 +6,8 @@ import { ThemeSync } from './theme/ThemeSync'
 import { DeviceFrame } from './components/DeviceFrame'
 import { Welcome } from './pages/Welcome'
 import { Home } from './pages/Home'
+import { Search } from './pages/Search'
+import { BookDetail } from './pages/Book'
 import { Friends } from './pages/Friends'
 import { Profile } from './pages/Profile'
 import { NotFound } from './pages/NotFound'
@@ -26,6 +28,8 @@ export default function App() {
               <Route path="/" element={<Welcome />} />
               <Route element={<RequireAuth />}>
                 <Route path="/home" element={<Home />} />
+                <Route path="/search" element={<Search />} />
+                <Route path="/book/:id" element={<BookDetail />} />
                 <Route path="/friends" element={<Friends />} />
                 <Route path="/profile" element={<Profile />} />
               </Route>
