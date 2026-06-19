@@ -5,21 +5,22 @@ import { ThemeToggle } from '../theme/ThemeToggle'
 /**
  * The signed-out landing. Quietly handsome on purpose — it sets the tone before
  * anyone reads a word. In M1 the CTA becomes Google sign-in; for now it walks
- * into the (stub) app so the skeleton is navigable.
+ * into the (stub) app so the skeleton is navigable. Lives inside the DeviceFrame,
+ * so it fills a phone or the centred iPad column.
  */
 export function Welcome() {
   return (
-    <div className="flex min-h-dvh flex-col bg-bg">
-      <header className="mx-auto flex w-full max-w-2xl items-center justify-between px-5 py-3">
+    <div className="flex flex-1 flex-col">
+      <header className="flex items-center justify-between px-5 py-3 ipad:px-8">
         <Logo />
         <ThemeToggle />
       </header>
 
-      <main className="mx-auto flex w-full max-w-xl flex-1 flex-col items-center justify-center px-5 text-center">
+      <main className="flex flex-1 flex-col items-center justify-center px-5 text-center">
         <p className="mb-5 text-sm uppercase tracking-[0.2em] text-text-muted">
           A reading ritual for two
         </p>
-        <h1 className="font-display text-4xl leading-tight text-text sm:text-5xl">
+        <h1 className="font-display text-4xl leading-tight text-text ipad:text-5xl">
           Read the same book,
           <br />
           <span className="text-accent">across the distance.</span>
@@ -40,7 +41,7 @@ export function Welcome() {
         </p>
       </main>
 
-      <footer className="mx-auto w-full max-w-2xl px-5 py-6 text-center text-xs text-text-muted">
+      <footer className="px-5 py-6 text-center text-xs text-text-muted">
         Made for two readers, one in Gurgaon and one in Hyderabad.
       </footer>
     </div>

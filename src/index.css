@@ -50,6 +50,15 @@
 
   --font-display: 'Fraunces', ui-serif, Georgia, serif;
   --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /* ---- Layout: mobile/iPad-first, exactly two layouts ----------------------
+     Base styles target a phone. The single `ipad:` breakpoint switches to the
+     iPad layout; we deliberately don't use sm/md/lg/xl — there are only two
+     devices. App chrome caps at --container-app (max-w-app) and centres, so a
+     laptop/desktop simply renders the iPad screen. */
+  --breakpoint-*: initial; /* drop sm/md/lg/xl/2xl — there are only two devices */
+  --breakpoint-ipad: 48rem; /* 768px — phone below, iPad at/above */
+  --container-app: 52rem; /* ~832px — iPad portrait width; the hard cap */
 }
 
 html {
