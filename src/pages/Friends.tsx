@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AppShell } from '../components/AppShell'
 import { Avatar } from '../components/Avatar'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useAuth } from '../auth/useAuth'
 import { useFriends } from '../friends/useFriends'
 import {
@@ -58,6 +59,8 @@ export function Friends() {
   const [sending, setSending] = useState(false)
   // ids being acted on, to disable their buttons briefly
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set())
+  // the friend a removal is being confirmed for, if any
+  const [removing, setRemoving] = useState<Relationship | null>(null)
 
   const setBusy = (id: string, on: boolean) =>
     setBusyIds((prev) => {
@@ -259,7 +262,7 @@ export function Friends() {
               >
                 <button
                   type="button"
-                  onClick={() => void act(r.id, () => removeRelationship(r.id))}
+                  onClick={() => setRemoving(r)}
                   disabled={busyIds.has(r.id)}
                   className={PILL_QUIET}
                 >
@@ -296,6 +299,21 @@ export function Friends() {
           </ul>
         </section>
       )}
+
+      <ConfirmDialog
+        open={removing !== null}
+        title={`Remove ${removing ? (friendName(removing) ?? 'this reader') : ''}?`}
+        message="You'll drop out of each other's circle and stop seeing each other's reading. You can always swap codes again later."
+        confirmLabel="Remove"
+        cancelLabel="Keep"
+        destructive
+        onConfirm={() => {
+          const r = removing
+          setRemoving(null)
+          if (r) void act(r.id, () => removeRelationship(r.id))
+        }}
+        onCancel={() => setRemoving(null)}
+      />
     </AppShell>
   )
 }
