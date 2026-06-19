@@ -1,0 +1,84 @@
+@import 'tailwindcss';
+
+/* Class-based dark mode: `.dark` on <html> flips every token below. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------
+   Design tokens — "dark academia". Warm brown / olive / cream, candlelit.
+   A single muted accent, never a bright one. Defined as CSS variables so the
+   whole theme is one class swap; exposed to Tailwind utilities via @theme.
+--------------------------------------------------------------------------- */
+:root {
+  /* Light — "Parchment" */
+  --bg: #ede6d6;
+  --surface: #f6f1e7;
+  --surface-alt: #e4dac6;
+  --text: #2c241b;
+  --text-muted: #6e6052;
+  --border: #d8cdb8;
+  --accent: #6b6b47; /* muted olive — the only accent */
+  --accent-contrast: #f6f1e7; /* text/icon sitting on the accent */
+  --bar-track: #e4dac6;
+  --bar-fill: #8c8a5e; /* progress bar */
+}
+
+.dark {
+  /* Dark — "Library at Night" */
+  --bg: #211a14;
+  --surface: #2c241c;
+  --surface-alt: #362c22;
+  --text: #ece3d2;
+  --text-muted: #a89a85;
+  --border: #3d3327;
+  --accent: #9a8a6b; /* aged brass — muted */
+  --accent-contrast: #211a14;
+  --bar-track: #362c22;
+  --bar-fill: #8a8a5c;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-bar-track: var(--bar-track);
+  --color-bar-fill: var(--bar-fill);
+
+  --font-display: 'Fraunces', ui-serif, Georgia, serif;
+  --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Quiet, type-led defaults. */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+/* Honour the reader who prefers stillness. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
