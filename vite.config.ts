@@ -5,6 +5,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Pinned dev port — 5173 is taken by another project. strictPort means it
+  // fails loudly rather than silently hopping to another port.
+  server: { port: 5180, strictPort: true },
+  preview: { port: 5180, strictPort: true },
   plugins: [
     react(),
     tailwindcss(),
@@ -15,8 +19,8 @@ export default defineConfig({
         name: 'BuddyRead',
         short_name: 'BuddyRead',
         description: 'Read the same book as a friend, across the distance.',
-        theme_color: '#1c130a',
-        background_color: '#1c130a',
+        theme_color: '#1c1813',
+        background_color: '#1c1813',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',

@@ -11,7 +11,7 @@ import { BottomNav } from './BottomNav'
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="sticky top-0 z-10 border-b border-border bg-bg/80 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-border-soft bg-bg/80 backdrop-blur">
         <div className="flex items-center justify-between px-5 py-3 ipad:px-8">
           <Link
             to="/home"

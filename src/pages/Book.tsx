@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { BookCover } from '../components/BookCover'
+import { Eyebrow } from '../components/Eyebrow'
 import { authorLine, getBook, type Book } from '../lib/books'
 
 /** A small muted fact, shown only when we actually have it. */
@@ -9,17 +10,15 @@ function Meta({ label, value }: { label: string; value: string | null }) {
   if (!value) return null
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wide text-text-muted/70">
-        {label}
-      </dt>
-      <dd className="text-sm text-text">{value}</dd>
+      <Eyebrow as="dt">{label}</Eyebrow>
+      <dd className="mt-0.5 text-text">{value}</dd>
     </div>
   )
 }
 
 /**
  * A single book's page: cover, title, the facts worth knowing, and its blurb.
- * "Start a read" is the hook M4 fills — for now it's a quiet promise.
+ * "Read this together" leads to the invite flow (presentational until M4 reads).
  */
 export function BookDetail() {
   const { id } = useParams<{ id: string }>()
@@ -49,9 +48,9 @@ export function BookDetail() {
     <AppShell>
       <Link
         to="/search"
-        className="text-sm text-text-muted transition-colors hover:text-text"
+        className="font-mono text-[11px] uppercase tracking-[0.1em] text-text-muted transition-colors hover:text-text"
       >
-        ← Back to search
+        ‹ Back to search
       </Link>
 
       {status === 'loading' && (
@@ -70,9 +69,13 @@ export function BookDetail() {
       {book && (
         <article className="mt-5">
           <div className="flex gap-5">
-            <BookCover book={book} className="w-28 shrink-0 ipad:w-36" />
+            <BookCover
+              book={book}
+              author={book.authors[0]}
+              className="w-28 shrink-0 ipad:w-36"
+            />
             <div className="min-w-0 flex-1">
-              <h1 className="text-pretty font-display text-2xl leading-tight text-text ipad:text-3xl">
+              <h1 className="text-pretty font-display text-3xl leading-tight text-text ipad:text-4xl">
                 {book.title}
               </h1>
               {book.subtitle && (
@@ -88,7 +91,7 @@ export function BookDetail() {
             type="button"
             disabled
             title="Coming in the next chapter"
-            className="mt-6 w-full cursor-not-allowed rounded-full border border-border bg-surface px-5 py-3 text-sm font-medium text-text-muted ipad:w-auto ipad:px-8"
+            className="mt-6 w-full cursor-not-allowed rounded-xl border border-border bg-surface px-5 py-3.5 font-medium text-text-muted ipad:w-auto ipad:px-10"
           >
             Start a read
           </button>
@@ -108,7 +111,7 @@ export function BookDetail() {
 
           {book.description && (
             <section className="mt-7">
-              <h2 className="font-display text-lg text-text">About</h2>
+              <Eyebrow className="block">About</Eyebrow>
               <p className="mt-2 max-w-md whitespace-pre-line text-pretty leading-relaxed text-text-muted">
                 {book.description}
               </p>

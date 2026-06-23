@@ -238,3 +238,43 @@ The Shelf has been empty since M0 — there was no way to *find* a book. M3 fill
 
 - **Q: Why keyless, and what's the catch?**
   It lets two friends use the app before anyone touches Google Cloud. The catch is a shared anonymous quota that can 429 under load (we saw it from a shared IP). The fix is a free API key restricted by HTTP referrer, which is the documented M3 setup step.
+
+## Chapter 3.5 — UI revamp: anchoring the dark academia
+
+### What we built and why
+
+Three milestones of features had accumulated against a placeholder skin — Fraunces + Inter, a single olive accent, the right *instincts* but never the actual *vibe*. This chapter anchors the look. Working from a nine-screen Claude Design mockup (imported via the `claude_design` MCP), we adopted a real design system and applied it across the whole app: **Cormorant Garamond** for display, **EB Garamond** for body (serif now, not sans), **IBM Plex Mono** for the uppercase micro-labels that thread through every screen. Parchment by day, espresso by night, with **terracotta** as the primary accent and **gold** reserved for pace and ratings.
+
+Crucially, the mockup shows screens the data model can't back yet — the co-read split card (the heart of the app), logging a session, inviting a buddy, the activity inbox, the finished-books history. All of those are **M4 work**. So the revamp split cleanly in two:
+
+- **The six real screens** (Welcome, Shelf, Search, Book, Friends, Profile) were restyled in place — markup and classes only, not a line of logic, routing, or Firebase touched. Google sign-in, friend add-by-code, invite-code copy, and the debounced search all still work exactly as before.
+- **The five M4-vision screens** were built as **presentational mocks** fed by an isolated `src/demo/` folder. They make the whole product legible today; when M4 lands, `src/demo/` is deleted and the pages read from Firestore.
+
+### Decisions & trade-offs (and what we rejected)
+
+- **Two accents, deliberately.** CLAUDE.md had said "one muted accent, never bright." The mockup introduces a second — gold — specifically for a buddy's pace and for star ratings. We adopted it because it *serves the thesis*: terracotta is you/your action, gold is the other reader, and the two never compete on the same bar. Updated the design-system rule rather than quietly breaking it.
+- **Keep Google sign-in; drop the mockup's code entry.** The Welcome mock shows a friend's-code field and a "Begin together" button — a different auth model than the one that's actually built (M1 Google). We kept the working sign-in and took only the *look* (the wordmark, the "Est. MMXXVI · a reading compact" framing, the fleuron). Building a non-functional code field would have been a lie on the most important first screen.
+- **Mocks over stubs over nothing.** We could have shipped only the design system, or only the real screens. Mocking the M4 screens with throwaway demo data costs a little now and gets deleted later — but it's the only way the co-read card, the thing the entire app exists for, is visible before the backend for it exists.
+- **Fluid, not 390px.** The mockup is pixel-fixed at one phone size. We translated proportions into the existing phone/`ipad:` system rather than hardcoding widths, and dropped the mockup's fake iOS status bar and phone bezel — those are presentation chrome; a real PWA gets the OS status bar and the existing `DeviceFrame` cap.
+
+### Notable details & gotchas
+
+- **`text-transform` collisions.** An early `Eyebrow` (always uppercase) was reused for date lines with a `normal-case` override — but both utilities set `text-transform`, so the winner depends on CSS source order, not class order. Swapped those spots to plain mono spans. A reminder that "just add the override class" isn't reliable when two utilities target the same property.
+- **Spine placeholders carry the demo.** The finished-books and demo covers have no ISBN, so `coverCandidates` returns `[]` and `BookCover` lands on its placeholder immediately — which we upgraded from a flat box to a gradient "spine" with the title set in Cormorant. A missing cover now reads as a bound book, and the demo screens get their art for free.
+- **Avatars gained a `tone`.** Real users have photos; the demo readers don't. `Avatar` now takes an optional gradient `tone` (terracotta = you, gold = Meher, green = Aisha) so people stay legible at a glance without a single fetched image.
+- **Honest about verification.** Build, typecheck, and lint are green and the dev server boots clean, but a full visual walkthrough across both themes hadn't been done at commit time — noted as such rather than claimed.
+
+### Questions an interviewer might ask
+
+- **Q: Why build screens you know you'll throw away?**
+  Because the split progress card is the product, and it had never been visible. A design system on top of empty screens doesn't communicate the idea; mocked screens do. The throwaway cost is bounded — one `src/demo/` folder and a one-line note in CLAUDE.md telling M4 to delete it — and the payoff is that everyone can see what we're building before the data model for it exists.
+
+- **Q: How do you keep a visual revamp from breaking working features?**
+  Touch markup, not logic. The six real screens kept their hooks, effects, routing, and Firebase calls byte-for-byte; only JSX structure and class names changed. The build's typecheck is the backstop — if a restyle had dropped a prop or a handler, `tsc` would have caught it.
+
+- **Q: You changed the body font from sans to serif. Isn't that a readability risk?**
+  EB Garamond is a text-grade serif designed for body copy, and the app is short-form by nature — progress cards, notes, lists, not long articles. The serif body is what makes the "old library" feeling cohere rather than reading as a sans app wearing a serif hat. Headings, body, and labels are now three deliberate voices (Cormorant, EB Garamond, Plex Mono) instead of two.
+
+### Addendum — clean slate
+
+Seeing the mocks in the running app, we pulled them. Fabricated activity, a fake finished-books shelf, and a demo co-read with invented names (Meher, "The Secret History" at 35%) read as clutter, not vision — and risked looking like real state. So we deleted `src/demo/` and the mock-only pages (co-read, invite, history) and components (SplitProgressCard, LogSessionSheet, ProgressBar, StarRating). The Shelf and Activity are now honest empty states; the design system and the six real screens stand on their own. The co-read split card returns in M4, built against the real `reads` model rather than a demo shape. The lesson kept: mocks earn their keep only while they clarify more than they mislead — past that point, an honest empty state says more.
