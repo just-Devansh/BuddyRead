@@ -1,9 +1,11 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
-import { BookCover } from '../components/BookCover'
+import { StarterBook } from '../components/StarterBook'
 import { Eyebrow } from '../components/Eyebrow'
+import { ProgressBar } from '../components/ProgressBar'
 import { useAuth } from '../auth/useAuth'
+import { useReads } from '../reads/useReads'
+import { fractionFor, otherReader, type Read } from '../lib/reads'
 import { STARTERS, starterCover } from '../lib/starters'
 
 /** Time-of-day greeting — warm, and a little knowing past midnight. */
@@ -16,29 +18,65 @@ function greeting(): string {
   return 'Good night'
 }
 
+/** One reader's mini progress row inside a shelf card. */
+function MiniRow({ label, frac, tone }: { label: string; frac: number | null; tone: 'accent' | 'gold' }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="w-14 truncate font-mono text-[10px] text-text-faint">{label}</span>
+      {frac == null ? (
+        <span className="flex-1 font-mono text-[10px] text-text-faint">yet to begin</span>
+      ) : (
+        <ProgressBar value={frac} tone={tone} className="flex-1" />
+      )}
+    </div>
+  )
+}
+
+/** An active buddy read on the shelf. */
+function ReadCard({ read, uid }: { read: Read; uid: string }) {
+  const buddy = otherReader(read, uid)
+  const buddyName = buddy.displayName ?? 'Your buddy'
+  return (
+    <Link
+      to={`/read/${read.id}`}
+      className="flex gap-4 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-accent/40"
+    >
+      <div
+        className="flex h-[88px] w-[60px] shrink-0 items-center justify-center rounded-sm px-2 text-center"
+        style={{
+          background: 'linear-gradient(160deg,#46503a,#353d2c)',
+          boxShadow: 'inset 0 0 0 1px rgba(198,162,78,0.25)',
+        }}
+      >
+        <span className="font-display text-[11px] font-medium leading-tight text-[#d8c79a]">
+          {read.book.title}
+        </span>
+      </div>
+      <div className="min-w-0 flex-1">
+        <h3 className="font-display text-xl leading-tight text-text">{read.book.title}</h3>
+        <Eyebrow className="mt-1 block">with {buddyName}</Eyebrow>
+        <div className="mt-3 space-y-2">
+          <MiniRow label="You" frac={fractionFor(read, uid)} tone="accent" />
+          <MiniRow label={buddyName} frac={fractionFor(read, buddy.uid)} tone="gold" />
+        </div>
+      </div>
+    </Link>
+  )
+}
+
 /**
- * The signed-in home — a quiet hub while the shelf is empty (reads are M4). A
- * warm greeting, the shelf's honest "nothing yet", a curated row to begin a read
- * with, and a nudge to bring a buddy in. M4 fills the shelf with active reads.
+ * The signed-in home — a warm greeting, your active buddy reads, and a curated
+ * row to begin another. Active reads are live via ReadsProvider; the curated
+ * picks are an editorial starter set.
  */
 export function Home() {
   const { user, userDoc } = useAuth()
-  const [copied, setCopied] = useState(false)
+  const { active } = useReads()
+  const uid = user?.uid ?? ''
 
   const firstName = (userDoc?.displayName ?? user?.displayName ?? 'reader')
     .trim()
     .split(' ')[0]
-
-  const copyInvite = async () => {
-    if (!userDoc?.inviteCode) return
-    try {
-      await navigator.clipboard.writeText(userDoc.inviteCode)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1800)
-    } catch {
-      // Clipboard blocked — the code is on screen to copy by hand.
-    }
-  }
 
   return (
     <AppShell>
@@ -50,37 +88,46 @@ export function Home() {
         <h1 className="mt-1 font-display text-4xl text-text">Your shelf</h1>
       </section>
 
-      {/* Shelf status — honest empty until M4 */}
-      <Link
-        to="/search"
-        className="mt-6 flex items-center gap-4 rounded-2xl border border-dashed border-border bg-surface/50 p-5 transition-colors hover:border-accent/40"
-      >
-        <span
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border text-2xl text-accent"
-          aria-hidden="true"
+      {active.length > 0 ? (
+        <section className="mt-6">
+          <Eyebrow className="mb-3 block">Reading now</Eyebrow>
+          <ul className="space-y-3">
+            {active.map((r) => (
+              <li key={r.id}>
+                <ReadCard read={r} uid={uid} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : (
+        <Link
+          to="/search"
+          className="mt-6 flex items-center gap-4 rounded-2xl border border-dashed border-border bg-surface/50 p-5 transition-colors hover:border-accent/40"
         >
-          +
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block font-display text-xl text-text">
-            Nothing on the go yet
+          <span
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border text-2xl text-accent"
+            aria-hidden="true"
+          >
+            +
           </span>
-          <span className="block text-pretty text-sm leading-relaxed text-text-muted">
-            Start a read — alone or with a buddy — and it'll settle in here.
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-xl text-text">
+              Nothing on the go yet
+            </span>
+            <span className="block text-pretty text-sm leading-relaxed text-text-muted">
+              Find a book and ask a buddy to read it with you.
+            </span>
           </span>
-        </span>
-        <span
-          className="font-mono text-lg text-text-faint"
-          aria-hidden="true"
-        >
-          ›
-        </span>
-      </Link>
+          <span className="font-mono text-lg text-text-faint" aria-hidden="true">
+            ›
+          </span>
+        </Link>
+      )}
 
       {/* Curated picks */}
       <section className="mt-9">
         <div className="flex items-baseline justify-between">
-          <Eyebrow>A few to begin with</Eyebrow>
+          <Eyebrow>{active.length > 0 ? 'Begin another' : 'A few to begin with'}</Eyebrow>
           <Link
             to="/search"
             className="font-mono text-[10px] uppercase tracking-[0.1em] text-text-muted transition-colors hover:text-accent"
@@ -88,61 +135,23 @@ export function Home() {
             Search all ›
           </Link>
         </div>
-        <ul className="-mx-5 mt-3 flex gap-4 overflow-x-auto px-5 pb-2 ipad:-mx-8 ipad:px-8">
+        <ul className="-mx-5 mt-3 flex gap-4 overflow-x-auto px-5 pt-3 pb-5 ipad:-mx-8 ipad:px-8">
           {STARTERS.map((s) => (
             <li key={s.title} className="w-28 shrink-0">
-              <Link
+              <StarterBook
+                title={s.title}
+                author={s.author}
+                coverUrl={starterCover(s.coverId)}
+                tone={s.tone}
                 to={`/search?q=${encodeURIComponent(`${s.title} ${s.author}`)}`}
-                className="group block"
-              >
-                <BookCover
-                  book={{
-                    title: s.title,
-                    coverUrl: starterCover(s.coverId),
-                    isbn13: null,
-                    isbn10: null,
-                  }}
-                  author={s.author}
-                  tone={s.tone}
-                  className="w-full transition-transform group-hover:-translate-y-0.5"
-                />
-                <p className="mt-2 line-clamp-2 font-display text-sm font-medium leading-tight text-text">
-                  {s.title}
-                </p>
-                <p className="truncate text-xs text-text-muted">{s.author}</p>
-              </Link>
+              />
+              <p className="mt-2 line-clamp-2 font-display text-sm font-medium leading-tight text-text">
+                {s.title}
+              </p>
+              <p className="truncate text-xs text-text-muted">{s.author}</p>
             </li>
           ))}
         </ul>
-      </section>
-
-      {/* Bring a buddy in */}
-      <section className="mt-8 rounded-2xl border border-border bg-surface p-5">
-        <Eyebrow className="block">Read with someone</Eyebrow>
-        <p className="mt-2 text-pretty leading-relaxed text-text-muted">
-          BuddyRead is better with a buddy. Share your code, or add theirs.
-        </p>
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={copyInvite}
-            disabled={!userDoc?.inviteCode}
-            className="inline-flex items-center gap-2 rounded-full border border-dashed border-border bg-surface-alt px-4 py-2 transition-colors hover:border-accent/50 disabled:opacity-50"
-          >
-            <span className="font-mono text-sm tracking-[0.16em] text-accent">
-              {userDoc?.inviteCode ?? '••••••'}
-            </span>
-            <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-text-faint">
-              {copied ? '✓ copied' : '⧉ copy'}
-            </span>
-          </button>
-          <Link
-            to="/friends"
-            className="inline-flex items-center justify-center rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-contrast transition-opacity hover:opacity-90"
-          >
-            Find a friend
-          </Link>
-        </div>
       </section>
     </AppShell>
   )

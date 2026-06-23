@@ -71,5 +71,56 @@ service cloud.firestore {
       allow delete: if signedIn()
                     && request.auth.uid in resource.data.participants;
     }
+
+    // A buddy read between two friends. Auto-id (a pair can have many reads).
+    // pending = a request; active = accepted. Decline/cancel/leave = delete.
+    match /reads/{readId} {
+      function friendDoc() {
+        return get(/databases/$(database)/documents/friendRequests/$(pairId(
+          request.resource.data.fromUid, request.resource.data.toUid)));
+      }
+
+      allow read: if signedIn()
+                  && request.auth.uid in resource.data.participants;
+
+      // Only the sender creates it, only as pending, addressed to an actual
+      // friend (an accepted relationship must exist), never to oneself.
+      allow create: if signedIn()
+                    && request.auth.uid == request.resource.data.fromUid
+                    && request.resource.data.fromUid != request.resource.data.toUid
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.participants
+                       == [request.resource.data.fromUid, request.resource.data.toUid]
+                    && request.resource.data.progress == {}
+                    && friendDoc().data.status == 'accepted';
+
+      // Updates keep the parties and the book fixed. Two shapes are allowed:
+      //  (a) the recipient accepts (pending -> active, nothing else changes), or
+      //  (b) a participant edits only their OWN entry in `progress` on an
+      //      active read (setting up their edition, or logging pages).
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.participants
+        && request.resource.data.participants == resource.data.participants
+        && request.resource.data.fromUid == resource.data.fromUid
+        && request.resource.data.toUid == resource.data.toUid
+        && request.resource.data.book == resource.data.book
+        && (
+          ( request.auth.uid == resource.data.toUid
+            && resource.data.status == 'pending'
+            && request.resource.data.status == 'active'
+            && request.resource.data.progress == resource.data.progress
+          )
+          ||
+          ( resource.data.status == 'active'
+            && request.resource.data.status == 'active'
+            && request.resource.data.progress.diff(resource.data.progress)
+                 .affectedKeys().hasOnly([request.auth.uid])
+          )
+        );
+
+      // Either party can delete (decline / cancel / leave the read).
+      allow delete: if signedIn()
+                    && request.auth.uid in resource.data.participants;
+    }
   }
 }

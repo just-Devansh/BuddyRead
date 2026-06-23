@@ -18,6 +18,12 @@ export function Search() {
   const [results, setResults] = useState<Book[]>([])
   const [status, setStatus] = useState<Status>('idle')
 
+  // Arrived from a friend's "Read" button — carry that buddy through to the book.
+  const withUid = searchParams.get('with')
+  const withName = searchParams.get('name')
+  const bookHref = (bookId: string) =>
+    withUid ? `/book/${bookId}?with=${withUid}` : `/book/${bookId}`
+
   useEffect(() => {
     const q = query.trim()
     const ctrl = new AbortController()
@@ -50,6 +56,13 @@ export function Search() {
   return (
     <AppShell>
       <h1 className="font-display text-3xl text-text">Add a book</h1>
+
+      {withName && (
+        <p className="mt-2 text-text-muted">
+          Finding a book to read with{' '}
+          <span className="text-text">{withName}</span>.
+        </p>
+      )}
 
       <div className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-surface-alt px-4 py-3">
         <span className="text-lg text-text-faint" aria-hidden="true">
@@ -107,7 +120,7 @@ export function Search() {
           {results.map((book) => (
             <li key={book.id}>
               <Link
-                to={`/book/${book.id}`}
+                to={bookHref(book.id)}
                 className="flex items-center gap-4 border-t border-border-soft py-3.5 transition-colors hover:bg-surface/60"
               >
                 <BookCover book={book} className="w-11 shrink-0" />

@@ -8,6 +8,7 @@ import { Welcome } from './pages/Welcome'
 import { Home } from './pages/Home'
 import { Search } from './pages/Search'
 import { BookDetail } from './pages/Book'
+import { CoRead } from './pages/CoRead'
 import { Friends } from './pages/Friends'
 import { Activity } from './pages/Activity'
 import { Profile } from './pages/Profile'
@@ -31,6 +32,7 @@ export default function App() {
                 <Route path="/home" element={<Home />} />
                 <Route path="/search" element={<Search />} />
                 <Route path="/book/:id" element={<BookDetail />} />
+                <Route path="/read/:id" element={<CoRead />} />
                 <Route path="/friends" element={<Friends />} />
                 <Route path="/activity" element={<Activity />} />
                 <Route path="/profile" element={<Profile />} />
