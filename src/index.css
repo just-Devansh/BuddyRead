@@ -4,36 +4,43 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ---------------------------------------------------------------------------
-   Design tokens — "dark academia". Warm brown / olive / cream, candlelit.
-   A single muted accent, never a bright one. Defined as CSS variables so the
-   whole theme is one class swap; exposed to Tailwind utilities via @theme.
+   Design tokens — "dark academia, anchored". Parchment by day, espresso by
+   night, candlelit. Two accents, both muted: terracotta for primary actions,
+   gold for pace indicators and ratings (used sparingly). Defined as CSS
+   variables so the whole theme is one class swap; exposed to Tailwind via @theme.
 --------------------------------------------------------------------------- */
 :root {
-  /* Light — "Parchment": deeper, warmer — aged paper, not dusty taupe. */
-  --bg: #e6d8bd;
-  --surface: #f2e8d4;
-  --surface-alt: #d8c6a4;
-  --text: #2a1c0f; /* rich espresso */
-  --text-muted: #6c5a40;
-  --border: #c9b693;
-  --accent: #5f5a31; /* deeper muted olive — the only accent */
-  --accent-contrast: #f2e8d4; /* text/icon sitting on the accent */
-  --bar-track: #d8c6a4;
-  --bar-fill: #847338; /* progress bar */
+  /* Light — "Parchment": warm aged paper. */
+  --bg: #eae0cc;
+  --surface: #f4ecdb; /* cards / raised panels */
+  --surface-alt: #fbf5e9; /* inputs / nested fields */
+  --text: #2b231b;
+  --text-muted: #7a6a56;
+  --text-faint: #9b8a6f; /* mono meta — the quietest text */
+  --border: #d4c7ac;
+  --border-soft: #ddd0b6; /* row dividers / hairlines */
+  --accent: #8a4536; /* terracotta — primary action */
+  --accent-contrast: #f4ecdb; /* text/icon sitting on the accent */
+  --gold: #a8822f; /* second accent — pace & ratings */
+  --bar-track: #e1d5ba;
+  --bar-fill: #8a4536; /* progress bar (your pace) */
 }
 
 .dark {
-  /* Dark — "Library at Night": deep walnut & candlelit brass. */
-  --bg: #1c130a; /* deep, warm espresso-walnut */
-  --surface: #281b10;
-  --surface-alt: #352616;
-  --text: #f1e7d3;
-  --text-muted: #b39d7f;
-  --border: #43321f;
-  --accent: #bd9356; /* richer aged brass */
-  --accent-contrast: #1c130a;
-  --bar-track: #352616;
-  --bar-fill: #a17e47;
+  /* Dark — "Library at Night": deep walnut, candlelit terracotta & brass. */
+  --bg: #1c1813;
+  --surface: #262019;
+  --surface-alt: #15110b;
+  --text: #ebe0cb;
+  --text-muted: #9c8b73;
+  --text-faint: #7d6e54;
+  --border: #3c3326;
+  --border-soft: #332b21;
+  --accent: #c07458; /* terracotta, lifted for the dark ground */
+  --accent-contrast: #1c1813;
+  --gold: #c7a24e;
+  --bar-track: #332b21;
+  --bar-fill: #c07458;
 }
 
 @theme inline {
@@ -42,14 +49,18 @@
   --color-surface-alt: var(--surface-alt);
   --color-text: var(--text);
   --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
   --color-border: var(--border);
+  --color-border-soft: var(--border-soft);
   --color-accent: var(--accent);
   --color-accent-contrast: var(--accent-contrast);
+  --color-gold: var(--gold);
   --color-bar-track: var(--bar-track);
   --color-bar-fill: var(--bar-fill);
 
-  --font-display: 'Fraunces', ui-serif, Georgia, serif;
-  --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Cormorant Garamond', ui-serif, Georgia, serif;
+  --font-body: 'EB Garamond', ui-serif, Georgia, serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
 
   /* ---- Layout: mobile/iPad-first, exactly two layouts ----------------------
      Base styles target a phone. The single `ipad:` breakpoint switches to the
@@ -76,11 +87,11 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Quiet, type-led defaults. */
+/* Quiet, type-led defaults. Cormorant reads light, so headings sit at 600. */
 h1, h2, h3, h4 {
   font-family: var(--font-display);
-  font-weight: 500;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  letter-spacing: -0.005em;
 }
 
 /* Honour the reader who prefers stillness. */
