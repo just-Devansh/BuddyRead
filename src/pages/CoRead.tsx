@@ -4,6 +4,7 @@ import { AppShell } from '../components/AppShell'
 import { Eyebrow } from '../components/Eyebrow'
 import { LogSessionSheet } from '../components/LogSessionSheet'
 import { SplitProgressCard } from '../components/SplitProgressCard'
+import { useConfirm } from '../components/useConfirm'
 import { useAuth } from '../auth/useAuth'
 import { useReads } from '../reads/useReads'
 import {
@@ -122,6 +123,7 @@ export function CoRead() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { active, loading } = useReads()
+  const { confirm, dialog } = useConfirm()
   const [logging, setLogging] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -160,6 +162,12 @@ export function CoRead() {
   }
 
   const leave = async () => {
+    const ok = await confirm({
+      title: 'Leave this read?',
+      message: `You'll both drop out of “${read.book.title}” and lose its progress and notes. You can always start it again later.`,
+      confirmLabel: 'Leave',
+    })
+    if (!ok) return
     await removeRead(read.id)
     navigate('/home')
   }
@@ -259,6 +267,8 @@ export function CoRead() {
           )}
         </>
       )}
+
+      {dialog}
     </AppShell>
   )
 }

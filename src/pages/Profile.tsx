@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AppShell } from '../components/AppShell'
 import { Avatar } from '../components/Avatar'
 import { Eyebrow } from '../components/Eyebrow'
+import { useConfirm } from '../components/useConfirm'
 import { ThemeToggle } from '../theme/ThemeToggle'
 import { useAuth } from '../auth/useAuth'
 import { useFriends } from '../friends/useFriends'
@@ -21,6 +22,7 @@ export function Profile() {
   const { user, userDoc, error, signOut } = useAuth()
   const { friends } = useFriends()
   const { active } = useReads()
+  const { confirm, dialog } = useConfirm()
   const [copied, setCopied] = useState(false)
 
   const copyInvite = async () => {
@@ -98,12 +100,26 @@ export function Profile() {
       <div className="mt-7">
         <button
           type="button"
-          onClick={() => void signOut()}
+          onClick={async () => {
+            if (
+              await confirm({
+                title: 'Sign out?',
+                message:
+                  "You'll need to sign in with Google again to get back to your shelf.",
+                confirmLabel: 'Sign out',
+                cancelLabel: 'Stay',
+                destructive: false,
+              })
+            )
+              void signOut()
+          }}
           className="rounded-full border border-border px-5 py-2.5 text-sm font-medium text-text-muted transition-colors hover:text-text"
         >
           Sign out
         </button>
       </div>
+
+      {dialog}
     </AppShell>
   )
 }

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { Avatar } from '../components/Avatar'
 import { Eyebrow } from '../components/Eyebrow'
-import { ConfirmDialog } from '../components/ConfirmDialog'
+import { useConfirm } from '../components/useConfirm'
 import { useAuth } from '../auth/useAuth'
 import { useFriends } from '../friends/useFriends'
 import {
@@ -65,8 +65,7 @@ export function Friends() {
   const [sending, setSending] = useState(false)
   // ids being acted on, to disable their buttons briefly
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set())
-  // the friend a removal is being confirmed for, if any
-  const [removing, setRemoving] = useState<Relationship | null>(null)
+  const { confirm, dialog } = useConfirm()
 
   const setBusy = (id: string, on: boolean) =>
     setBusyIds((prev) => {
@@ -236,7 +235,16 @@ export function Friends() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => void act(r.id, () => removeRelationship(r.id))}
+                  onClick={async () => {
+                    if (
+                      await confirm({
+                        title: 'Decline this request?',
+                        message: `${r.fromName ?? 'They'} won't be told, and you can add each other later with an invite code.`,
+                        confirmLabel: 'Decline',
+                      })
+                    )
+                      void act(r.id, () => removeRelationship(r.id))
+                  }}
                   disabled={busyIds.has(r.id)}
                   className={PILL_QUIET}
                 >
@@ -275,7 +283,17 @@ export function Friends() {
                 </Link>
                 <button
                   type="button"
-                  onClick={() => setRemoving(r)}
+                  onClick={async () => {
+                    if (
+                      await confirm({
+                        title: `Remove ${friendName(r) ?? 'this reader'}?`,
+                        message:
+                          "You'll drop out of each other's circle and stop seeing each other's reading. You can always swap codes again later.",
+                        confirmLabel: 'Remove',
+                      })
+                    )
+                      void act(r.id, () => removeRelationship(r.id))
+                  }}
                   disabled={busyIds.has(r.id)}
                   className={PILL_QUIET}
                 >
@@ -301,7 +319,16 @@ export function Friends() {
               >
                 <button
                   type="button"
-                  onClick={() => void act(r.id, () => removeRelationship(r.id))}
+                  onClick={async () => {
+                    if (
+                      await confirm({
+                        title: 'Withdraw this request?',
+                        message: `We'll cancel your request to ${r.toName ?? 'them'}. You can send it again anytime.`,
+                        confirmLabel: 'Withdraw',
+                      })
+                    )
+                      void act(r.id, () => removeRelationship(r.id))
+                  }}
                   disabled={busyIds.has(r.id)}
                   className={PILL_QUIET}
                 >
@@ -313,20 +340,7 @@ export function Friends() {
         </section>
       )}
 
-      <ConfirmDialog
-        open={removing !== null}
-        title={`Remove ${removing ? (friendName(removing) ?? 'this reader') : ''}?`}
-        message="You'll drop out of each other's circle and stop seeing each other's reading. You can always swap codes again later."
-        confirmLabel="Remove"
-        cancelLabel="Keep"
-        destructive
-        onConfirm={() => {
-          const r = removing
-          setRemoving(null)
-          if (r) void act(r.id, () => removeRelationship(r.id))
-        }}
-        onCancel={() => setRemoving(null)}
-      />
+      {dialog}
     </AppShell>
   )
 }

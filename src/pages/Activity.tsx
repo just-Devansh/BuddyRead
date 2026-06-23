@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { Avatar } from '../components/Avatar'
 import { Eyebrow } from '../components/Eyebrow'
+import { useConfirm } from '../components/useConfirm'
 import { useReads } from '../reads/useReads'
 import { acceptReadRequest, removeRead } from '../lib/reads'
 
@@ -15,6 +16,7 @@ const PILL = 'rounded-lg px-4 py-2 text-sm font-medium transition-colors disable
  */
 export function Activity() {
   const { incoming, outgoing } = useReads()
+  const { confirm, dialog } = useConfirm()
   const [busy, setBusy] = useState<string | null>(null)
 
   const act = async (id: string, fn: () => Promise<void>) => {
@@ -72,7 +74,16 @@ export function Activity() {
                   <button
                     type="button"
                     disabled={busy === r.id}
-                    onClick={() => void act(r.id, () => removeRead(r.id))}
+                    onClick={async () => {
+                      if (
+                        await confirm({
+                          title: 'Decline this read?',
+                          message: `${r.fromName ?? 'They'} won't be notified, and can ask again later.`,
+                          confirmLabel: 'Decline',
+                        })
+                      )
+                        void act(r.id, () => removeRead(r.id))
+                    }}
                     className={`${PILL} flex-1 border border-border bg-surface-alt text-text-muted hover:text-text`}
                   >
                     Decline
@@ -106,7 +117,16 @@ export function Activity() {
                 <button
                   type="button"
                   disabled={busy === r.id}
-                  onClick={() => void act(r.id, () => removeRead(r.id))}
+                  onClick={async () => {
+                    if (
+                      await confirm({
+                        title: 'Withdraw this invitation?',
+                        message: `We'll cancel your request to read “${r.book.title}” with ${r.toName ?? 'them'}. You can send it again anytime.`,
+                        confirmLabel: 'Withdraw',
+                      })
+                    )
+                      void act(r.id, () => removeRead(r.id))
+                  }}
                   className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-muted transition-colors hover:text-text disabled:opacity-50"
                 >
                   Cancel
@@ -124,6 +144,8 @@ export function Activity() {
           </Link>
         </p>
       )}
+
+      {dialog}
     </AppShell>
   )
 }

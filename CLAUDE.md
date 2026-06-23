@@ -63,7 +63,7 @@ src/
   friends/            friends-context.ts, FriendsProvider.tsx (one live listener), useFriends.ts
   reads/              reads-context.ts, ReadsProvider.tsx (one live listener), useReads.ts
   theme/              theme-context.ts, ThemeProvider.tsx, useTheme.ts, ThemeToggle.tsx, ThemeSync.tsx
-  components/         DeviceFrame, AppShell (+ BottomNav), BottomNav, Logo, Avatar (photo or gradient-tone initial), BookCover (Google→OpenLibrary→spine), Splash, Eyebrow, Ornament, ProgressBar, SplitProgressCard, LogSessionSheet, BuddyPicker, StarterBook (3D open-on-hover/long-press)
+  components/         DeviceFrame, AppShell (+ BottomNav), BottomNav, Logo, Avatar (photo or gradient-tone initial), BookCover (Google→OpenLibrary→spine), Splash, Eyebrow, Ornament, ProgressBar, SplitProgressCard, LogSessionSheet, BuddyPicker, StarterBook (3D open-on-hover/long-press), ConfirmDialog + useConfirm (awaitable confirm — gates EVERY destructive action: leave read, decline/cancel, remove friend, sign out)
   pages/              Welcome.tsx (/), Home.tsx (/home), Search.tsx (/search), Book.tsx (/book/:id), CoRead.tsx (/read/:id), Friends.tsx (/friends), Activity.tsx (/activity), Profile.tsx (/profile), NotFound.tsx (*)
 public/               favicon.svg, icon.svg, icon-maskable.svg
 firestore.rules       Firestore security rules (deploy to console)
