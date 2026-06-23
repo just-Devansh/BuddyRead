@@ -87,12 +87,14 @@ export function BookDetail() {
             </div>
           </div>
 
-          <Link
-            to={`/start/${book.id}`}
-            className="mt-6 flex w-full items-center justify-center rounded-xl bg-accent px-5 py-3.5 font-medium text-accent-contrast transition-opacity hover:opacity-90 ipad:w-auto ipad:px-10"
+          <button
+            type="button"
+            disabled
+            title="Coming in the next chapter"
+            className="mt-6 w-full cursor-not-allowed rounded-xl border border-border bg-surface px-5 py-3.5 font-medium text-text-muted ipad:w-auto ipad:px-10"
           >
-            Read this together
-          </Link>
+            Start a read
+          </button>
 
           <dl className="mt-7 grid grid-cols-2 gap-4">
             <Meta

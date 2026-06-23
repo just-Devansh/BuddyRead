@@ -274,3 +274,7 @@ Crucially, the mockup shows screens the data model can't back yet — the co-rea
 
 - **Q: You changed the body font from sans to serif. Isn't that a readability risk?**
   EB Garamond is a text-grade serif designed for body copy, and the app is short-form by nature — progress cards, notes, lists, not long articles. The serif body is what makes the "old library" feeling cohere rather than reading as a sans app wearing a serif hat. Headings, body, and labels are now three deliberate voices (Cormorant, EB Garamond, Plex Mono) instead of two.
+
+### Addendum — clean slate
+
+Seeing the mocks in the running app, we pulled them. Fabricated activity, a fake finished-books shelf, and a demo co-read with invented names (Meher, "The Secret History" at 35%) read as clutter, not vision — and risked looking like real state. So we deleted `src/demo/` and the mock-only pages (co-read, invite, history) and components (SplitProgressCard, LogSessionSheet, ProgressBar, StarRating). The Shelf and Activity are now honest empty states; the design system and the six real screens stand on their own. The co-read split card returns in M4, built against the real `reads` model rather than a demo shape. The lesson kept: mocks earn their keep only while they clarify more than they mislead — past that point, an honest empty state says more.

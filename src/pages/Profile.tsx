@@ -1,13 +1,10 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { Avatar } from '../components/Avatar'
 import { Eyebrow } from '../components/Eyebrow'
-import { ProgressBar } from '../components/ProgressBar'
 import { ThemeToggle } from '../theme/ThemeToggle'
 import { useAuth } from '../auth/useAuth'
 import { useFriends } from '../friends/useFriends'
-import { DEMO_READ, fraction } from '../demo/coread'
 
 /** One headline number with its quiet mono caption. */
 function Stat({ value, label, divide }: { value: string; label: string; divide?: boolean }) {
@@ -16,25 +13,6 @@ function Stat({ value, label, divide }: { value: string; label: string; divide?:
       <div className="font-display text-3xl font-semibold text-text">{value}</div>
       <Eyebrow className="mt-1 block">{label}</Eyebrow>
     </div>
-  )
-}
-
-/** A named shelf with its count. */
-function Shelf({ count, label, to }: { count: number; label: string; to?: string }) {
-  const inner = (
-    <>
-      <div className="font-display text-2xl font-semibold text-text">{count}</div>
-      <div className="mt-0.5 text-sm text-text-muted">{label}</div>
-    </>
-  )
-  const cls =
-    'flex-1 rounded-xl border border-border bg-surface p-4 transition-colors'
-  return to ? (
-    <Link to={to} className={`${cls} hover:border-accent/40`}>
-      {inner}
-    </Link>
-  ) : (
-    <div className={cls}>{inner}</div>
   )
 }
 
@@ -69,9 +47,11 @@ export function Profile() {
           className="text-4xl shadow-[0_10px_24px_-12px_rgba(111,61,48,0.7)]"
         />
         <h1 className="mt-4 font-display text-3xl text-text">{name}</h1>
-        <p className="mt-1 font-mono text-[11px] tracking-[0.06em] text-text-muted">
-          {handle} · Gurgaon
-        </p>
+        {handle && (
+          <p className="mt-1 font-mono text-[11px] tracking-[0.06em] text-text-muted">
+            {handle}
+          </p>
+        )}
 
         <button
           type="button"
@@ -94,53 +74,11 @@ export function Profile() {
         </p>
       )}
 
-      {/* Stats */}
+      {/* Stats — only buddies is tracked today; reads land in M4. */}
       <section className="mt-7 flex">
-        <Stat value="42" label="read" divide />
-        <Stat value="1" label="reading" divide />
+        <Stat value="0" label="read" divide />
+        <Stat value="0" label="reading" divide />
         <Stat value={String(friends.length)} label="buddies" />
-      </section>
-
-      {/* Reading now */}
-      <section className="mt-7">
-        <Eyebrow className="mb-3 block">Reading now</Eyebrow>
-        <Link
-          to="/read"
-          className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3.5 transition-colors hover:border-accent/40"
-        >
-          <div
-            className="flex h-[62px] w-[42px] shrink-0 items-center justify-center rounded-sm px-1 text-center"
-            style={{ background: 'linear-gradient(160deg,#46503a,#353d2c)' }}
-          >
-            <span className="font-display text-[8px] font-medium leading-tight text-[#d8c79a]">
-              {DEMO_READ.title}
-            </span>
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-display text-lg leading-tight text-text">
-              {DEMO_READ.title}
-            </p>
-            <p className="text-sm text-text-muted">
-              with {DEMO_READ.buddy.name} · {Math.round(fraction(DEMO_READ.you) * 100)}%
-            </p>
-            <ProgressBar value={fraction(DEMO_READ.you)} className="mt-2" />
-          </div>
-          <Avatar
-            name={DEMO_READ.buddy.name}
-            tone={DEMO_READ.buddy.tone}
-            size="h-9 w-9"
-          />
-        </Link>
-      </section>
-
-      {/* Shelves */}
-      <section className="mt-7">
-        <Eyebrow className="mb-3 block">Shelves</Eyebrow>
-        <div className="flex gap-3">
-          <Shelf count={18} label="To Be Read" />
-          <Shelf count={9} label="Beloved" />
-          <Shelf count={42} label="Finished" to="/finished" />
-        </div>
       </section>
 
       {/* Appearance */}

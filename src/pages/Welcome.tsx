@@ -31,9 +31,6 @@ export function Welcome() {
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-8 text-center">
-        <p className="mb-6 font-mono text-[10px] uppercase tracking-[0.32em] text-text-faint">
-          Est. MMXXVI · a reading compact
-        </p>
         <h1 className="font-display text-6xl font-semibold leading-none text-text">
           Buddy<span className="text-accent">Read</span>
         </h1>
@@ -68,9 +65,7 @@ export function Welcome() {
         )}
       </main>
 
-      <footer className="px-5 py-7 text-center font-mono text-[9px] uppercase tracking-[0.2em] text-text-faint">
-        Gurgaon ⟷ Hyderabad
-      </footer>
+      <footer className="py-7" />
     </div>
   )
 }

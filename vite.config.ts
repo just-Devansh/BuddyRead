@@ -5,6 +5,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Pinned dev port — 5173 is taken by another project. strictPort means it
+  // fails loudly rather than silently hopping to another port.
+  server: { port: 5180, strictPort: true },
+  preview: { port: 5180, strictPort: true },
   plugins: [
     react(),
     tailwindcss(),
