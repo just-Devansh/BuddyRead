@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { BookCover } from '../components/BookCover'
+import { Eyebrow } from '../components/Eyebrow'
 import { authorLine, searchBooks, type Book } from '../lib/books'
 
 type Status = 'idle' | 'searching' | 'done' | 'error'
@@ -46,21 +47,35 @@ export function Search() {
 
   return (
     <AppShell>
-      <h1 className="font-display text-3xl text-text">Find a book</h1>
-      <p className="mt-1 text-text-muted">
-        Search by title, author, or ISBN — then start a read.
-      </p>
+      <h1 className="font-display text-3xl text-text">Add a book</h1>
 
-      <div className="mt-6">
+      <div className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-surface-alt px-4 py-3">
+        <span className="text-lg text-text-faint" aria-hidden="true">
+          ⌕
+        </span>
         <input
           type="search"
           autoFocus
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="The Secret History…"
+          placeholder="Title, author, or ISBN…"
           autoCorrect="off"
-          className="w-full rounded-xl border border-border bg-surface-alt px-4 py-3 text-text placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent"
+          className="min-w-0 flex-1 bg-transparent text-text placeholder:text-text-muted/60 focus:outline-none"
         />
+        <Eyebrow className="shrink-0">Google Books</Eyebrow>
+      </div>
+
+      {/* Source tabs — Search is live; the others are the M4/manual doorways. */}
+      <div className="mt-4 flex gap-5 border-b border-border-soft">
+        <span className="-mb-px border-b-2 border-accent pb-2.5 font-mono text-[10px] uppercase tracking-[0.1em] text-accent">
+          Search
+        </span>
+        <span className="pb-2.5 font-mono text-[10px] uppercase tracking-[0.1em] text-text-faint">
+          My shelf
+        </span>
+        <span className="pb-2.5 font-mono text-[10px] uppercase tracking-[0.1em] text-text-faint">
+          Manual
+        </span>
       </div>
 
       {status === 'searching' && (
@@ -86,21 +101,35 @@ export function Search() {
       )}
 
       {results.length > 0 && (
-        <ul className="mt-6 divide-y divide-border">
+        <ul>
           {results.map((book) => (
             <li key={book.id}>
               <Link
                 to={`/book/${book.id}`}
-                className="flex items-center gap-4 rounded-lg py-3 transition-colors hover:bg-surface/60"
+                className="flex items-center gap-4 border-t border-border-soft py-3.5 transition-colors hover:bg-surface/60"
               >
                 <BookCover book={book} className="w-11 shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-text">{book.title}</p>
+                  <p className="truncate font-display text-lg font-medium leading-tight text-text">
+                    {book.title}
+                  </p>
                   <p className="truncate text-sm text-text-muted">
                     {authorLine(book.authors)}
                     {book.year ? ` · ${book.year}` : ''}
                   </p>
+                  {book.pageCount != null && (
+                    <Eyebrow className="mt-0.5 block">
+                      {book.pageCount} pp
+                      {book.publisher ? ` · ${book.publisher}` : ''}
+                    </Eyebrow>
+                  )}
                 </div>
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border text-xl text-accent"
+                  aria-hidden="true"
+                >
+                  +
+                </span>
               </Link>
             </li>
           ))}

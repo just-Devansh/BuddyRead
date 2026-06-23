@@ -9,8 +9,8 @@ type Tab = {
 
 const iconProps = {
   viewBox: '0 0 24 24',
-  width: 22,
-  height: 22,
+  width: 21,
+  height: 21,
   fill: 'none',
   stroke: 'currentColor',
   strokeWidth: 1.6,
@@ -42,6 +42,16 @@ const TABS: Tab[] = [
     ),
   },
   {
+    to: '/activity',
+    label: 'Activity',
+    icon: (
+      <svg {...iconProps}>
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M12 7.5V12l3 1.8" />
+      </svg>
+    ),
+  },
+  {
     to: '/profile',
     label: 'You',
     icon: (
@@ -57,7 +67,7 @@ export function BottomNav() {
   const { incoming } = useFriends()
 
   return (
-    <nav className="sticky bottom-0 z-10 border-t border-border bg-bg/90 backdrop-blur">
+    <nav className="sticky bottom-0 z-10 border-t border-border-soft bg-bg/90 backdrop-blur">
       <ul className="mx-auto flex max-w-md items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)]">
         {TABS.map((tab) => (
           <li key={tab.to} className="flex-1">
@@ -65,7 +75,7 @@ export function BottomNav() {
               to={tab.to}
               className={({ isActive }) =>
                 [
-                  'relative flex flex-col items-center gap-1 py-2.5 text-xs transition-colors',
+                  'relative flex flex-col items-center gap-1.5 py-2.5 font-mono text-[9px] uppercase tracking-[0.1em] transition-colors',
                   isActive ? 'text-accent' : 'text-text-muted hover:text-text',
                 ].join(' ')
               }
@@ -74,7 +84,7 @@ export function BottomNav() {
                 {tab.icon}
                 {tab.to === '/friends' && incoming.length > 0 && (
                   <span
-                    className="absolute -right-2 -top-1.5 min-w-4 rounded-full bg-accent px-1 text-center text-[10px] font-semibold leading-4 text-accent-contrast"
+                    className="absolute -right-2 -top-1.5 min-w-4 rounded-full bg-accent px-1 text-center font-mono text-[10px] font-semibold leading-4 text-accent-contrast"
                     aria-label={`${incoming.length} pending request${incoming.length > 1 ? 's' : ''}`}
                   >
                     {incoming.length}

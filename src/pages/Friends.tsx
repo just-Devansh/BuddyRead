@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AppShell } from '../components/AppShell'
 import { Avatar } from '../components/Avatar'
+import { Eyebrow } from '../components/Eyebrow'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useAuth } from '../auth/useAuth'
 import { useFriends } from '../friends/useFriends'
@@ -29,12 +30,16 @@ function PersonRow({
   children?: React.ReactNode
 }) {
   return (
-    <li className="flex items-center gap-3 py-3">
-      <Avatar src={photoURL} name={name} />
+    <li className="flex items-center gap-3 border-t border-border-soft py-3.5">
+      <Avatar src={photoURL} name={name} size="h-10 w-10" />
       <div className="min-w-0 flex-1">
-        <p className="truncate font-medium text-text">{name ?? 'A reader'}</p>
+        <p className="truncate font-display text-lg leading-tight text-text">
+          {name ?? 'A reader'}
+        </p>
         {subtitle && (
-          <p className="truncate text-xs text-text-muted">{subtitle}</p>
+          <p className="truncate font-mono text-[10px] uppercase tracking-[0.1em] text-text-faint">
+            {subtitle}
+          </p>
         )}
       </div>
       <div className="flex shrink-0 items-center gap-2">{children}</div>
@@ -43,7 +48,7 @@ function PersonRow({
 }
 
 const PILL =
-  'rounded-full px-4 py-1.5 text-sm font-medium transition-colors disabled:opacity-50'
+  'rounded-lg px-4 py-1.5 text-sm font-medium transition-colors disabled:opacity-50'
 const PILL_SOLID = `${PILL} bg-accent text-accent-contrast hover:opacity-90`
 const PILL_QUIET = `${PILL} border border-border text-text-muted hover:text-text`
 
@@ -140,14 +145,15 @@ export function Friends() {
 
   return (
     <AppShell>
-      <h1 className="font-display text-3xl text-text">Friends</h1>
+      <Eyebrow>Your reading circle</Eyebrow>
+      <h1 className="mt-1 font-display text-4xl text-text">Friends</h1>
       <p className="mt-1 text-text-muted">
         The people you read alongside. Add one with their invite code.
       </p>
 
       {/* Add by code */}
       <section className="mt-6 rounded-2xl border border-border bg-surface p-5">
-        <label htmlFor="invite" className="font-display text-lg text-text">
+        <label htmlFor="invite" className="font-display text-xl text-text">
           Add by invite code
         </label>
         <div className="mt-3 flex gap-2">
@@ -165,7 +171,7 @@ export function Friends() {
             autoCapitalize="characters"
             autoCorrect="off"
             spellCheck={false}
-            className="min-w-0 flex-1 rounded-xl border border-border bg-surface-alt px-4 py-2.5 font-display text-lg uppercase tracking-[0.15em] text-text placeholder:tracking-normal placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent"
+            className="min-w-0 flex-1 rounded-xl border border-border bg-surface-alt px-4 py-2.5 font-mono text-lg uppercase tracking-[0.15em] text-text placeholder:tracking-normal placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent"
           />
           <button
             type="button"
@@ -181,12 +187,12 @@ export function Friends() {
 
         {target && (
           <div className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-surface-alt p-3">
-            <Avatar src={target.photoURL} name={target.displayName} />
+            <Avatar src={target.photoURL} name={target.displayName} size="h-10 w-10" />
             <div className="min-w-0 flex-1">
-              <p className="truncate font-medium text-text">
+              <p className="truncate font-display text-lg leading-tight text-text">
                 {target.displayName ?? 'A reader'}
               </p>
-              <p className="text-xs text-text-muted">Send a reading request?</p>
+              <p className="text-sm text-text-muted">Send a reading request?</p>
             </div>
             <button
               type="button"
@@ -215,8 +221,8 @@ export function Friends() {
       {/* Incoming requests */}
       {incoming.length > 0 && (
         <section className="mt-8">
-          <h2 className="font-display text-lg text-text">Wanting to read with you</h2>
-          <ul className="mt-1 divide-y divide-border">
+          <h2 className="font-display text-xl text-text">Wanting to read with you</h2>
+          <ul className="mt-2">
             {incoming.map((r) => (
               <PersonRow key={r.id} name={r.fromName} photoURL={r.fromPhotoURL}>
                 <button
@@ -243,7 +249,7 @@ export function Friends() {
 
       {/* The circle */}
       <section className="mt-8">
-        <h2 className="font-display text-lg text-text">Your circle</h2>
+        <h2 className="font-display text-xl text-text">Your circle</h2>
         {!loading && friends.length === 0 ? (
           <div className="mt-3 rounded-2xl border border-dashed border-border bg-surface/60 p-8 text-center">
             <p className="text-pretty text-sm leading-relaxed text-text-muted">
@@ -252,7 +258,7 @@ export function Friends() {
             </p>
           </div>
         ) : (
-          <ul className="mt-1 divide-y divide-border">
+          <ul className="mt-2">
             {friends.map((r) => (
               <PersonRow
                 key={r.id}
@@ -277,8 +283,8 @@ export function Friends() {
       {/* Outgoing requests */}
       {outgoing.length > 0 && (
         <section className="mt-8">
-          <h2 className="font-display text-lg text-text">Waiting on a reply</h2>
-          <ul className="mt-1 divide-y divide-border">
+          <h2 className="font-display text-xl text-text">Waiting on a reply</h2>
+          <ul className="mt-2">
             {outgoing.map((r) => (
               <PersonRow
                 key={r.id}
