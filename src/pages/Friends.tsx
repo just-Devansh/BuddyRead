@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { Avatar } from '../components/Avatar'
 import { Eyebrow } from '../components/Eyebrow'
@@ -266,6 +267,12 @@ export function Friends() {
                 photoURL={otherParty(r, user?.uid ?? '').photoURL}
                 subtitle="Reading buddy"
               >
+                <Link
+                  to={`/search?with=${otherParty(r, user?.uid ?? '').uid}&name=${encodeURIComponent(friendName(r) ?? '')}`}
+                  className={PILL_SOLID}
+                >
+                  Read
+                </Link>
                 <button
                   type="button"
                   onClick={() => setRemoving(r)}

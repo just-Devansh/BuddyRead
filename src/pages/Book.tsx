@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { BookCover } from '../components/BookCover'
+import { BuddyPicker } from '../components/BuddyPicker'
 import { Eyebrow } from '../components/Eyebrow'
+import { useAuth } from '../auth/useAuth'
+import { useFriends } from '../friends/useFriends'
+import { useReads } from '../reads/useReads'
+import { otherParty } from '../lib/friends'
+import { otherReader, sendReadRequest, type ReadBook } from '../lib/reads'
 import { authorLine, getBook, type Book } from '../lib/books'
 
 /** A small muted fact, shown only when we actually have it. */
@@ -18,16 +24,22 @@ function Meta({ label, value }: { label: string; value: string | null }) {
 
 /**
  * A single book's page: cover, title, the facts worth knowing, and its blurb.
- * "Read this together" leads to the invite flow (presentational until M4 reads).
+ * "Read this together" sends a buddy-read request — directly to a friend when
+ * arrived here from Friends (`?with=`), otherwise via a buddy picker.
  */
 export function BookDetail() {
   const { id } = useParams<{ id: string }>()
-  // Tag the fetched result with its id (book === null means that id failed).
-  // Status is then derived, so the effect only ever setState's in a callback
-  // and a new id reads as "loading" until its own fetch lands.
+  const [params] = useSearchParams()
+  const { user } = useAuth()
+  const { friends } = useFriends()
+  const { active, outgoing } = useReads()
+
   const [result, setResult] = useState<{ id: string; book: Book | null } | null>(
     null,
   )
+  const [picking, setPicking] = useState(false)
+  const [busyUid, setBusyUid] = useState<string | null>(null)
+  const [sentTo, setSentTo] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id) return
@@ -43,6 +55,45 @@ export function BookDetail() {
   const matched = result && result.id === id ? result : null
   const status = !matched ? 'loading' : matched.book ? 'done' : 'error'
   const book = matched?.book ?? null
+
+  const myUid = user?.uid ?? ''
+  const buddies = friends.map((r) => otherParty(r, myUid))
+
+  // Friends already reading / invited to this exact book — shown disabled.
+  const disabled: Record<string, string> = {}
+  if (book) {
+    for (const r of [...active, ...outgoing]) {
+      if (r.book.id === book.id) {
+        const o = otherReader(r, myUid)
+        disabled[o.uid] = r.status === 'active' ? 'Already reading' : 'Invited'
+      }
+    }
+  }
+
+  const withUid = params.get('with')
+  const directBuddy =
+    withUid && !disabled[withUid]
+      ? buddies.find((b) => b.uid === withUid)
+      : undefined
+
+  const send = async (buddy: { uid: string; displayName: string | null; photoURL: string | null }) => {
+    if (!user || !book) return
+    setBusyUid(buddy.uid)
+    try {
+      const snapshot: ReadBook = {
+        id: book.id,
+        title: book.title,
+        authors: book.authors,
+        coverUrl: book.coverUrl,
+        pageCount: book.pageCount,
+      }
+      await sendReadRequest(user, buddy, snapshot)
+      setSentTo(buddy.displayName ?? 'your buddy')
+      setPicking(false)
+    } finally {
+      setBusyUid(null)
+    }
+  }
 
   return (
     <AppShell>
@@ -87,14 +138,48 @@ export function BookDetail() {
             </div>
           </div>
 
-          <button
-            type="button"
-            disabled
-            title="Coming in the next chapter"
-            className="mt-6 w-full cursor-not-allowed rounded-xl border border-border bg-surface px-5 py-3.5 font-medium text-text-muted ipad:w-auto ipad:px-10"
-          >
-            Start a read
-          </button>
+          {/* The send action — the soul of the app */}
+          {sentTo ? (
+            <div className="mt-6 rounded-xl border border-accent/40 bg-surface p-4 text-center">
+              <p className="text-text">
+                Request sent to <strong className="font-semibold">{sentTo}</strong>.
+              </p>
+              <p className="mt-1 text-sm text-text-muted">
+                It's waiting in their Activity. You'll see it on your shelf once
+                they accept.
+              </p>
+              <Link
+                to="/home"
+                className="mt-3 inline-block font-mono text-[10px] uppercase tracking-[0.1em] text-accent"
+              >
+                Back to shelf ›
+              </Link>
+            </div>
+          ) : buddies.length === 0 ? (
+            <Link
+              to="/friends"
+              className="mt-6 flex w-full items-center justify-center rounded-xl border border-border bg-surface px-5 py-3.5 font-medium text-text-muted transition-colors hover:text-text ipad:w-auto ipad:px-10"
+            >
+              Add a buddy to read together
+            </Link>
+          ) : directBuddy ? (
+            <button
+              type="button"
+              disabled={busyUid !== null}
+              onClick={() => void send(directBuddy)}
+              className="mt-6 flex w-full items-center justify-center rounded-xl bg-accent px-5 py-3.5 font-medium text-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-60 ipad:w-auto ipad:px-10"
+            >
+              {busyUid ? 'Sending…' : `Read this with ${directBuddy.displayName ?? 'them'}`}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setPicking(true)}
+              className="mt-6 flex w-full items-center justify-center rounded-xl bg-accent px-5 py-3.5 font-medium text-accent-contrast transition-opacity hover:opacity-90 ipad:w-auto ipad:px-10"
+            >
+              Read this together
+            </button>
+          )}
 
           <dl className="mt-7 grid grid-cols-2 gap-4">
             <Meta
@@ -117,6 +202,16 @@ export function BookDetail() {
               </p>
             </section>
           )}
+
+          <BuddyPicker
+            open={picking}
+            title={book.title}
+            friends={buddies}
+            disabled={disabled}
+            busyUid={busyUid}
+            onPick={(b) => void send(b)}
+            onClose={() => setPicking(false)}
+          />
         </article>
       )}
     </AppShell>

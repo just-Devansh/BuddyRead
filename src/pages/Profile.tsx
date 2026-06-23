@@ -5,6 +5,7 @@ import { Eyebrow } from '../components/Eyebrow'
 import { ThemeToggle } from '../theme/ThemeToggle'
 import { useAuth } from '../auth/useAuth'
 import { useFriends } from '../friends/useFriends'
+import { useReads } from '../reads/useReads'
 
 /** One headline number with its quiet mono caption. */
 function Stat({ value, label, divide }: { value: string; label: string; divide?: boolean }) {
@@ -19,6 +20,7 @@ function Stat({ value, label, divide }: { value: string; label: string; divide?:
 export function Profile() {
   const { user, userDoc, error, signOut } = useAuth()
   const { friends } = useFriends()
+  const { active } = useReads()
   const [copied, setCopied] = useState(false)
 
   const copyInvite = async () => {
@@ -74,10 +76,10 @@ export function Profile() {
         </p>
       )}
 
-      {/* Stats — only buddies is tracked today; reads land in M4. */}
+      {/* Stats — reading & buddies are live; finished reads aren't tracked yet. */}
       <section className="mt-7 flex">
         <Stat value="0" label="read" divide />
-        <Stat value="0" label="reading" divide />
+        <Stat value={String(active.length)} label="reading" divide />
         <Stat value={String(friends.length)} label="buddies" />
       </section>
 

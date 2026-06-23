@@ -58,19 +58,22 @@ src/
   App.tsx             Auth + Theme providers + DeviceFrame + Router
   index.css           Tailwind import + design tokens (@theme) + dark variant
   vite-env.d.ts       env typings + PWA client types
-  lib/                firebase.ts (init), users.ts (user doc + invite code), inviteCode.ts, friends.ts (relationships), books.ts (Google Books client + cover helpers)
-  auth/               auth-context.ts, AuthProvider.tsx, useAuth.ts, RequireAuth.tsx (mounts FriendsProvider)
+  lib/                firebase.ts (init), users.ts (user doc + invite code), inviteCode.ts, friends.ts (relationships), reads.ts (buddy reads), books.ts (Google Books client + cover helpers), starters.ts (curated shelf picks)
+  auth/               auth-context.ts, AuthProvider.tsx, useAuth.ts, RequireAuth.tsx (mounts FriendsProvider + ReadsProvider)
   friends/            friends-context.ts, FriendsProvider.tsx (one live listener), useFriends.ts
+  reads/              reads-context.ts, ReadsProvider.tsx (one live listener), useReads.ts
   theme/              theme-context.ts, ThemeProvider.tsx, useTheme.ts, ThemeToggle.tsx, ThemeSync.tsx
-  components/         DeviceFrame.tsx (mobile/iPad cap), AppShell.tsx (+ BottomNav), BottomNav.tsx, Logo.tsx, Avatar.tsx (photo or gradient-tone initial), BookCover.tsx (Google→OpenLibrary→spine placeholder), Splash.tsx, Eyebrow.tsx, Ornament.tsx
-  pages/              Welcome.tsx (/), Home.tsx (/home), Search.tsx (/search), Book.tsx (/book/:id), Friends.tsx (/friends), Activity.tsx (/activity), Profile.tsx (/profile), NotFound.tsx (*)
+  components/         DeviceFrame, AppShell (+ BottomNav), BottomNav, Logo, Avatar (photo or gradient-tone initial), BookCover (Google→OpenLibrary→spine), Splash, Eyebrow, Ornament, ProgressBar, SplitProgressCard, LogSessionSheet, BuddyPicker, StarterBook (3D open-on-hover/long-press)
+  pages/              Welcome.tsx (/), Home.tsx (/home), Search.tsx (/search), Book.tsx (/book/:id), CoRead.tsx (/read/:id), Friends.tsx (/friends), Activity.tsx (/activity), Profile.tsx (/profile), NotFound.tsx (*)
 public/               favicon.svg, icon.svg, icon-maskable.svg
 firestore.rules       Firestore security rules (deploy to console)
 ```
 
 Auth: `AuthProvider` tracks `onAuthStateChanged`, ensures the `users/{uid}` doc on first sign-in, and subscribes to it live. Everything except `/` sits behind `RequireAuth`; `/` redirects to `/home` when signed in.
 
-**UI revamp:** the dark-academia direction is anchored from a Claude Design mockup. All real screens (Welcome, Shelf, Search, Book, Friends, Activity, Profile) were restyled — markup/classes only, M1–M3 logic untouched; Welcome keeps Google sign-in (the mockup's code-entry was not adopted). **No fabricated data: the M4-vision screens (co-read card, log-session, invite, history, full activity feed) were deliberately NOT mocked.** Shelf and Activity show honest empty states; they fill in M4 when the `reads` model lands. Bottom nav is 4 tabs (Shelf · Friends · Activity · You).
+**Design:** the dark-academia direction is anchored from a Claude Design mockup — Cormorant Garamond / EB Garamond / IBM Plex Mono, terracotta + gold on parchment/espresso. The Shelf leads with a warm time-of-day greeting and a curated starter row (`StarterBook`, real Open Library covers, 3D open on hover / long-press) when you have no active reads. Bottom nav is 4 tabs (Shelf · Friends · Activity · You).
+
+**Buddy reads (M4):** the co-read loop is real. `lib/reads.ts` + `ReadsProvider` mirror the friends pattern (one `participants array-contains uid` listener, partitioned into active / incoming / outgoing). Send a request from **two points** — Book detail's "Read this together" (a `BuddyPicker` sheet), or a friend's "Read" button (→ `/search?with=uid` → Book detail's direct `?with=` send). The recipient accepts/declines in **Activity** (badge on the nav). On accept the read goes **active**: each reader sets their own edition + length (`SetupMine`), logs pages (`LogSessionSheet`), and both see the live `SplitProgressCard` on `/read/:id`. Sends are minimal (book snapshot only); progress is per-uid.
 
 Catalog (M3): `lib/books.ts` wraps Google Books — `searchBooks`/`getBook` normalize each volume into a small `Book`; HTML blurbs flattened via DOMParser `textContent` (injection-safe). Keyless by default (shared anonymous quota; `&key=` appended only when a real key is set). Covers: `BookCover` walks `coverCandidates` (Google image → Open Library by ISBN with `default=false` → title placeholder) on `<img>` onError. Search is debounced (350ms) + AbortController; reads are M4.
 
@@ -83,9 +86,9 @@ Implemented (M1–M2):
 - `inviteCodes/{code}` — `{ uid, displayName, photoURL, createdAt }`. Lookup/uniqueness doc (claimed in a transaction); name/photo denormalized so a sender previews "Send request to <name>?" without reading the target's profile. Owner-refreshed on each sign-in.
 - `friendRequests/{pairId}` — **single source of truth for a relationship** (no `friends` subcollection — deliberate deviation). `pairId` = the two uids sorted + `__`-joined. Fields: `participants:[from,to]`, `fromUid/toUid`, `fromName/fromPhotoURL`, `toName/toPhotoURL`, `status: pending|accepted`, `createdAt/respondedAt`. Friends/incoming/outgoing are all derived from one `participants array-contains uid` listener, partitioned client-side. Decline/cancel/unfriend = delete the doc.
 
-Planned (later): `reads/{id}` unified solo+buddy with flat `participantUids` array + per-person `participants` map (M4). Snapshot book metadata into the read at creation.
+- `reads/{readId}` (M4) — a buddy read. **Auto-id** (a pair can have many reads, unlike `friendRequests`). Fields: `participants:[from,to]`, `fromUid/toUid`, denormalized `fromName/fromPhotoURL/toName/toPhotoURL`, `book` snapshot `{id,title,authors,coverUrl,pageCount}`, `status: pending|active`, `progress: { [uid]: { edition, totalPages, currentPage, note, updatedAt, noteAt } }`, `createdAt/respondedAt`. Active/incoming/outgoing derived from one `participants array-contains uid` listener. Decline/cancel/leave = delete. Rules: only a **friend** (an accepted `friendRequests` doc exists) may be sent a request; only the recipient flips pending→active; a participant may edit **only their own** `progress` key (`progress.diff().affectedKeys().hasOnly([uid])`).
 
-**Indexes:** none required so far — the friends query uses a single `array-contains` (auto-indexed); ordering is done client-side to avoid a composite index.
+**Indexes:** none required so far — both the friends and reads queries use a single `array-contains` (auto-indexed); ordering is done client-side to avoid a composite index.
 
 ## Layout — mobile/iPad-first (CORNERSTONE)
 
@@ -98,7 +101,7 @@ Planned (later): `reads/{id}` unified solo+buddy with flat `participantUids` arr
 
 ## Design system
 
-Dark academia, "3 Cs" (cohesive, classy, consistent). **Parchment by day, espresso by night**, candlelit. **Two muted accents, never bright:** **terracotta** for primary actions, **gold** reserved for pace indicators & star ratings (M4; collaboration, never competition). Three faces: display serif **Cormorant Garamond** (`font-display`, headings sit at weight 600), body serif **EB Garamond** (`font-body`), and **IBM Plex Mono** (`font-mono`) for the uppercase micro-labels/eyebrows and meta. Tokens (CSS vars → Tailwind colors `bg-bg`, `text-text-muted`, …): `bg, surface (cards), surface-alt (inputs/nested), text, text-muted, text-faint (mono meta), border, border-soft (dividers), accent, accent-contrast, gold, bar-track, bar-fill`. Reusable primitives: `Eyebrow` (mono label), `Ornament` (❧ break). Generous whitespace, hairline borders over shadows, restrained motion (`prefers-reduced-motion` honoured).
+Dark academia, "3 Cs" (cohesive, classy, consistent). **Parchment by day, espresso by night**, candlelit. **Two muted accents, never bright:** **terracotta** for primary actions and your pace, **gold** for the buddy's pace on the split progress card (collaboration, never competition). Three faces: display serif **Cormorant Garamond** (`font-display`, headings sit at weight 600), body serif **EB Garamond** (`font-body`), and **IBM Plex Mono** (`font-mono`) for the uppercase micro-labels/eyebrows and meta. Tokens (CSS vars → Tailwind colors `bg-bg`, `text-text-muted`, …): `bg, surface (cards), surface-alt (inputs/nested), text, text-muted, text-faint (mono meta), border, border-soft (dividers), accent, accent-contrast, gold, bar-track, bar-fill`. Reusable primitives: `Eyebrow` (mono label), `Ornament` (❧ break). Generous whitespace, hairline borders over shadows, restrained motion (`prefers-reduced-motion` honoured).
 
 ## Current focus / next up
 
@@ -108,6 +111,8 @@ Dark academia, "3 Cs" (cohesive, classy, consistent). **Parchment by day, espres
 - **Done — M2:** friends — bottom tab bar (Shelf · Friends · You), add-by-code (resolve → confirm → send), incoming/outgoing requests, the circle, remove-friend, all live via one `onSnapshot`; `friendRequests` security rules. Build + lint green.
 - **Done — M3:** catalog — debounced Google Books search (`/search`), book detail (`/book/:id`), `BookCover` with Open Library + placeholder fallback, Shelf "Find a book" CTA wired. Keyless (works without an API key); no Firestore writes yet. Build + lint green.
 - **Done — UI revamp:** new design system (Cormorant Garamond + EB Garamond + IBM Plex Mono; terracotta + gold on parchment/espresso) from a Claude Design mockup. Restyled all real screens; bottom nav now 4 tabs (Shelf · Friends · Activity · You). **Clean slate — no fabricated data:** the M4-vision screens were not mocked; Shelf and Activity are honest empty states. Build + lint green. Dev server pinned to **port 5180** (`vite.config.ts`, `strictPort`) — 5173 is another project's.
-- **Next — M4:** reads — `reads/{id}` (solo + buddy), snapshot book metadata at creation. Build the co-read split card + log-session, wire the disabled "Start a read" (Book), and fill the Shelf/Activity empty states with real data.
-- Pending external (user): **re-publish `firestore.rules`** (includes `friendRequests` + `inviteCodes` update). Recommended now: **Google Books API key** (keyless shares an anonymous quota that can 429 under load) — create in Google Cloud, restrict by HTTP referrer, set `VITE_GOOGLE_BOOKS_API_KEY`. Later: Vercel deploy.
+- **Done — Shelf hub:** the empty Shelf became a warm hub — time-of-day greeting (real account name), curated `StarterBook` row (real Open Library covers, 3D open on hover / mobile long-press, → prefilled search), `?q=` on `/search`.
+- **Done — M4 (buddy reads):** the co-read loop end to end — `reads/{readId}` + `ReadsProvider`, send from two points (Book detail `BuddyPicker`, Friends "Read" → `?with=`), accept/decline in Activity (nav badge), per-reader edition setup, page logging, live `SplitProgressCard` on `/read/:id`. New `reads` security rules. Build + lint green.
+- **Next — M5:** finishing a read (rating + the line it left), a finished-books history, and the activity feed (logged pages / notes), so Profile's "read" count and the inbox fill out. Optionally solo reads.
+- Pending external (user): ⚠️ **re-publish `firestore.rules` now** — it adds the `reads` collection; until deployed, all buddy-read reads/writes fail with permission-denied. (Also still includes the earlier `friendRequests` + `inviteCodes` update.) Recommended: **Google Books API key** (keyless shares an anonymous quota that can 429 under load) — restrict by HTTP referrer, set `VITE_GOOGLE_BOOKS_API_KEY`. Later: Vercel deploy.
 - Known debt: JS bundle ~251 kB gzip (Firebase). Code-split / lazy-load routes in M7. Keyless Google Books can 429 on a shared quota until a key is added.

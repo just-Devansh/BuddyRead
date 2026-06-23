@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useFriends } from '../friends/useFriends'
+import { useReads } from '../reads/useReads'
 
 type Tab = {
   to: string
@@ -65,6 +66,13 @@ const TABS: Tab[] = [
 
 export function BottomNav() {
   const { incoming } = useFriends()
+  const { incoming: incomingReads } = useReads()
+
+  const badgeFor = (to: string): number => {
+    if (to === '/friends') return incoming.length
+    if (to === '/activity') return incomingReads.length
+    return 0
+  }
 
   return (
     <nav className="sticky bottom-0 z-10 border-t border-border-soft bg-bg/90 backdrop-blur">
@@ -82,12 +90,12 @@ export function BottomNav() {
             >
               <span className="relative">
                 {tab.icon}
-                {tab.to === '/friends' && incoming.length > 0 && (
+                {badgeFor(tab.to) > 0 && (
                   <span
                     className="absolute -right-2 -top-1.5 min-w-4 rounded-full bg-accent px-1 text-center font-mono text-[10px] font-semibold leading-4 text-accent-contrast"
-                    aria-label={`${incoming.length} pending request${incoming.length > 1 ? 's' : ''}`}
+                    aria-label={`${badgeFor(tab.to)} pending`}
                   >
-                    {incoming.length}
+                    {badgeFor(tab.to)}
                   </span>
                 )}
               </span>
