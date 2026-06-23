@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { BookCover } from '../components/BookCover'
 import { Eyebrow } from '../components/Eyebrow'
@@ -10,9 +10,11 @@ type Status = 'idle' | 'searching' | 'done' | 'error'
 /**
  * Find a book to read. A debounced search over Google Books; each result links
  * to its detail page. This is the doorway from the empty Shelf into M4's reads.
+ * A `?q=` param prefills the query — used by the Shelf's curated starter picks.
  */
 export function Search() {
-  const [query, setQuery] = useState('')
+  const [searchParams] = useSearchParams()
+  const [query, setQuery] = useState(() => searchParams.get('q') ?? '')
   const [results, setResults] = useState<Book[]>([])
   const [status, setStatus] = useState<Status>('idle')
 
