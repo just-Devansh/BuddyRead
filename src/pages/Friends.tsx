@@ -6,6 +6,7 @@ import { Eyebrow } from '../components/Eyebrow'
 import { useConfirm } from '../components/useConfirm'
 import { useAuth } from '../auth/useAuth'
 import { useFriends } from '../friends/useFriends'
+import { logActivity } from '../lib/activity'
 import {
   acceptFriendRequest,
   normalizeInviteCode,
@@ -227,7 +228,12 @@ export function Friends() {
               <PersonRow key={r.id} name={r.fromName} photoURL={r.fromPhotoURL}>
                 <button
                   type="button"
-                  onClick={() => void act(r.id, () => acceptFriendRequest(r.id))}
+                  onClick={() =>
+                    void act(r.id, async () => {
+                      await acceptFriendRequest(r.id)
+                      if (user) await logActivity(r.fromUid, user, 'friend_accepted')
+                    })
+                  }
                   disabled={busyIds.has(r.id)}
                   className={PILL_SOLID}
                 >
@@ -239,11 +245,14 @@ export function Friends() {
                     if (
                       await confirm({
                         title: 'Decline this request?',
-                        message: `${r.fromName ?? 'They'} won't be told, and you can add each other later with an invite code.`,
+                        message: `${r.fromName ?? 'They'} will be told it didn't take, and you can add each other later with an invite code.`,
                         confirmLabel: 'Decline',
                       })
                     )
-                      void act(r.id, () => removeRelationship(r.id))
+                      void act(r.id, async () => {
+                        if (user) await logActivity(r.fromUid, user, 'friend_declined')
+                        await removeRelationship(r.id)
+                      })
                   }}
                   disabled={busyIds.has(r.id)}
                   className={PILL_QUIET}

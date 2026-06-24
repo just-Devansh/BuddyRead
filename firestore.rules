@@ -25,6 +25,16 @@ service cloud.firestore {
       allow create: if isSelf(uid);
       allow update: if isSelf(uid);
       allow delete: if false;
+
+      // A reader's private activity feed. The owner reads (and may dismiss) it;
+      // anyone signed in may append, but only as themselves (actorUid == them),
+      // so an event is always attributable. Immutable once written.
+      match /activity/{eventId} {
+        allow read: if isSelf(uid);
+        allow create: if signedIn()
+                      && request.resource.data.actorUid == request.auth.uid;
+        allow delete: if isSelf(uid);
+      }
     }
 
     // invite code -> owner lookup (uid + denormalized name/photo). Readable by

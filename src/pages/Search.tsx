@@ -64,7 +64,8 @@ export function Search() {
         </p>
       )}
 
-      <div className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-surface-alt px-4 py-3">
+      <Eyebrow className="mt-4 block">Searching Google Books</Eyebrow>
+      <div className="mt-2 flex items-center gap-3 rounded-xl border border-border bg-surface-alt px-4 py-3">
         <span className="text-lg text-text-faint" aria-hidden="true">
           ⌕
         </span>
@@ -77,7 +78,6 @@ export function Search() {
           autoCorrect="off"
           className="min-w-0 flex-1 bg-transparent text-text placeholder:text-text-muted/60 focus:outline-none"
         />
-        <Eyebrow className="shrink-0">Google Books</Eyebrow>
       </div>
 
       {/* Source tabs — Search is live; the others are the M4/manual doorways. */}

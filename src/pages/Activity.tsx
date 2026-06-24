@@ -1,14 +1,23 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import {
+  collection,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+} from 'firebase/firestore'
 import { AppShell } from '../components/AppShell'
 import { Avatar } from '../components/Avatar'
 import { Eyebrow } from '../components/Eyebrow'
 import { useConfirm } from '../components/useConfirm'
+import { db } from '../lib/firebase'
 import { useAuth } from '../auth/useAuth'
 import { useFriends } from '../friends/useFriends'
 import { useReads } from '../reads/useReads'
-import { acceptFriendRequest, otherParty, removeRelationship } from '../lib/friends'
-import { acceptReadRequest, otherReader, removeRead } from '../lib/reads'
+import { logActivity, type ActivityEventDoc, type ActivityItem } from '../lib/activity'
+import { acceptFriendRequest, removeRelationship } from '../lib/friends'
+import { acceptReadRequest, removeRead } from '../lib/reads'
 
 const PILL = 'rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50'
 
@@ -26,28 +35,56 @@ function ago(ms: number): string {
   return new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
-type FeedItem = {
-  id: string
-  time: number
-  name: string | null
-  photoURL: string | null
-  body: ReactNode
-  quote?: string
+const strong = (s: string) => <strong className="font-semibold">{s}</strong>
+const em = (s: string) => <em className="font-display italic">{s}</em>
+
+/** Turn one logged event into its line (and an optional quoted note). */
+function describe(it: ActivityItem): { body: ReactNode; quote?: string } {
+  const who = it.actorName ?? 'A reader'
+  const book = it.bookTitle ?? 'your book'
+  switch (it.type) {
+    case 'friend_accepted':
+      return { body: <>{strong(who)} accepted your buddy request.</> }
+    case 'friend_declined':
+      return { body: <>{strong(who)} declined your buddy request.</> }
+    case 'read_accepted':
+      return { body: <>{strong(who)} is in — you're reading {em(book)} together.</> }
+    case 'read_declined':
+      return { body: <>{strong(who)} passed on reading {em(book)}.</> }
+    case 'read_logged':
+      return {
+        body: <>{strong(who)} reached p.{it.page} in {em(book)}.</>,
+        quote: it.note ?? undefined,
+      }
+    case 'read_left':
+      return { body: <>{strong(who)} stepped away from {em(book)}.</> }
+  }
 }
 
 /**
- * The in-app inbox. Requests that need a yes/no sit at the top; below them, a
- * time-sorted feed of what's happened — friendships made, reads begun, pages
- * logged, notes left. Derived live from FriendsProvider + ReadsProvider (no
- * separate log yet, so declined/removed items leave no trace).
+ * The in-app inbox. Requests that need a yes/no sit at the top; below them, the
+ * activity log (users/{uid}/activity) — a real record of friendships made and
+ * declined, reads accepted/declined/left, and every page logged with its note.
  */
 export function Activity() {
   const { user } = useAuth()
-  const { incoming: friendIn, outgoing: friendOut, friends } = useFriends()
-  const { incoming: readIn, outgoing: readOut, active } = useReads()
+  const { incoming: friendIn } = useFriends()
+  const { incoming: readIn } = useReads()
   const { confirm, dialog } = useConfirm()
   const [busy, setBusy] = useState<string | null>(null)
-  const uid = user?.uid ?? ''
+  const [events, setEvents] = useState<ActivityItem[]>([])
+
+  useEffect(() => {
+    if (!user) return
+    const q = query(
+      collection(db, 'users', user.uid, 'activity'),
+      orderBy('createdAt', 'desc'),
+      limit(60),
+    )
+    return onSnapshot(q, (snap) => {
+      setEvents(snap.docs.map((d) => ({ id: d.id, ...(d.data() as ActivityEventDoc) })))
+    })
+  }, [user])
 
   const act = async (id: string, fn: () => Promise<void>) => {
     setBusy(id)
@@ -58,80 +95,8 @@ export function Activity() {
     }
   }
 
-  const strong = (s: string) => <strong className="font-semibold">{s}</strong>
-  const em = (s: string) => <em className="font-display italic">{s}</em>
-
-  // --- The feed, derived from current state -------------------------------
-  const feed: FeedItem[] = []
-
-  friends.forEach((r) => {
-    const o = otherParty(r, uid)
-    feed.push({
-      id: `friend-${r.id}`,
-      time: r.respondedAt?.toMillis() ?? r.createdAt?.toMillis() ?? 0,
-      name: o.displayName,
-      photoURL: o.photoURL,
-      body: <>You and {strong(o.displayName ?? 'a reader')} are reading buddies.</>,
-    })
-  })
-
-  active.forEach((r) => {
-    const o = otherReader(r, uid)
-    const name = o.displayName ?? 'your buddy'
-    feed.push({
-      id: `read-${r.id}`,
-      time: r.respondedAt?.toMillis() ?? r.createdAt?.toMillis() ?? 0,
-      name: o.displayName,
-      photoURL: o.photoURL,
-      body: <>You and {strong(name)} began {em(r.book.title)}.</>,
-    })
-    const bp = r.progress?.[o.uid]
-    if (bp?.updatedAt) {
-      feed.push({
-        id: `read-${r.id}-bp`,
-        time: bp.updatedAt.toMillis(),
-        name: o.displayName,
-        photoURL: o.photoURL,
-        body: <>{strong(name)} reached p.{bp.currentPage} in {em(r.book.title)}.</>,
-        quote: bp.note ?? undefined,
-      })
-    }
-    const mp = r.progress?.[uid]
-    if (mp?.updatedAt) {
-      feed.push({
-        id: `read-${r.id}-mp`,
-        time: mp.updatedAt.toMillis(),
-        name: 'You',
-        photoURL: user?.photoURL ?? null,
-        body: <>You reached p.{mp.currentPage} in {em(r.book.title)}.</>,
-      })
-    }
-  })
-
-  readOut.forEach((r) => {
-    feed.push({
-      id: `readout-${r.id}`,
-      time: r.createdAt?.toMillis() ?? 0,
-      name: r.toName,
-      photoURL: r.toPhotoURL,
-      body: <>You asked {strong(r.toName ?? 'a reader')} to read {em(r.book.title)}.</>,
-    })
-  })
-
-  friendOut.forEach((r) => {
-    feed.push({
-      id: `friendout-${r.id}`,
-      time: r.createdAt?.toMillis() ?? 0,
-      name: r.toName,
-      photoURL: r.toPhotoURL,
-      body: <>You asked {strong(r.toName ?? 'a reader')} to be buddies.</>,
-    })
-  })
-
-  feed.sort((a, b) => b.time - a.time)
-
   const requests = friendIn.length + readIn.length
-  const nothing = requests === 0 && feed.length === 0
+  const nothing = requests === 0 && events.length === 0
 
   return (
     <AppShell>
@@ -141,8 +106,8 @@ export function Activity() {
         <section className="mt-8 rounded-2xl border border-dashed border-border bg-surface/50 p-10 text-center">
           <p className="font-display text-2xl text-text">All quiet</p>
           <p className="mx-auto mt-2 max-w-sm text-pretty leading-relaxed text-text-muted">
-            Add a buddy and start a read — requests, pages logged, and notes left
-            will all gather here.
+            Add a buddy and start a read — requests, replies, pages logged, and
+            notes left will all gather here.
           </p>
         </section>
       )}
@@ -164,7 +129,12 @@ export function Activity() {
                   <button
                     type="button"
                     disabled={busy === r.id}
-                    onClick={() => void act(r.id, () => acceptFriendRequest(r.id))}
+                    onClick={() =>
+                      void act(r.id, async () => {
+                        await acceptFriendRequest(r.id)
+                        if (user) await logActivity(r.fromUid, user, 'friend_accepted')
+                      })
+                    }
                     className={`${PILL} flex-1 bg-accent text-accent-contrast hover:opacity-90`}
                   >
                     Accept
@@ -176,11 +146,14 @@ export function Activity() {
                       if (
                         await confirm({
                           title: 'Decline this request?',
-                          message: `${r.fromName ?? 'They'} won't be told, and you can add each other later with an invite code.`,
+                          message: `${r.fromName ?? 'They'} will be told it didn't take, and you can add each other later with an invite code.`,
                           confirmLabel: 'Decline',
                         })
                       )
-                        void act(r.id, () => removeRelationship(r.id))
+                        void act(r.id, async () => {
+                          if (user) await logActivity(r.fromUid, user, 'friend_declined')
+                          await removeRelationship(r.id)
+                        })
                     }}
                     className={`${PILL} flex-1 border border-border bg-surface-alt text-text-muted hover:text-text`}
                   >
@@ -202,7 +175,15 @@ export function Activity() {
                   <button
                     type="button"
                     disabled={busy === r.id}
-                    onClick={() => void act(r.id, () => acceptReadRequest(r.id))}
+                    onClick={() =>
+                      void act(r.id, async () => {
+                        await acceptReadRequest(r.id)
+                        if (user)
+                          await logActivity(r.fromUid, user, 'read_accepted', {
+                            bookTitle: r.book.title,
+                          })
+                      })
+                    }
                     className={`${PILL} flex-1 bg-accent text-accent-contrast hover:opacity-90`}
                   >
                     Accept
@@ -214,11 +195,17 @@ export function Activity() {
                       if (
                         await confirm({
                           title: 'Decline this read?',
-                          message: `${r.fromName ?? 'They'} won't be notified, and can ask again later.`,
+                          message: `${r.fromName ?? 'They'} will be told, and can ask again later.`,
                           confirmLabel: 'Decline',
                         })
                       )
-                        void act(r.id, () => removeRead(r.id))
+                        void act(r.id, async () => {
+                          if (user)
+                            await logActivity(r.fromUid, user, 'read_declined', {
+                              bookTitle: r.book.title,
+                            })
+                          await removeRead(r.id)
+                        })
                     }}
                     className={`${PILL} flex-1 border border-border bg-surface-alt text-text-muted hover:text-text`}
                   >
@@ -231,28 +218,31 @@ export function Activity() {
         </section>
       )}
 
-      {/* The feed */}
-      {feed.length > 0 && (
+      {/* The log */}
+      {events.length > 0 && (
         <section className="mt-8">
           <Eyebrow className="mb-1 block">Lately</Eyebrow>
           <ul>
-            {feed.map((it) => (
-              <li
-                key={it.id}
-                className="flex items-start gap-3 border-t border-border-soft py-3.5"
-              >
-                <Avatar src={it.photoURL} name={it.name} size="h-9 w-9" />
-                <div className="min-w-0 flex-1">
-                  <p className="leading-snug text-text">{it.body}</p>
-                  {it.quote && (
-                    <p className="mt-1 font-display italic text-text-muted">“{it.quote}”</p>
-                  )}
-                  <p className="mt-1 font-mono text-[9px] tracking-[0.06em] text-text-faint">
-                    {ago(it.time)}
-                  </p>
-                </div>
-              </li>
-            ))}
+            {events.map((it) => {
+              const { body, quote } = describe(it)
+              return (
+                <li
+                  key={it.id}
+                  className="flex items-start gap-3 border-t border-border-soft py-3.5"
+                >
+                  <Avatar src={it.actorPhotoURL} name={it.actorName} size="h-9 w-9" />
+                  <div className="min-w-0 flex-1">
+                    <p className="leading-snug text-text">{body}</p>
+                    {quote && (
+                      <p className="mt-1 font-display italic text-text-muted">“{quote}”</p>
+                    )}
+                    <p className="mt-1 font-mono text-[9px] tracking-[0.06em] text-text-faint">
+                      {ago(it.createdAt?.toMillis() ?? 0)}
+                    </p>
+                  </div>
+                </li>
+              )
+            })}
           </ul>
         </section>
       )}

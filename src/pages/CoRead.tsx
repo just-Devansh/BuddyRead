@@ -8,6 +8,7 @@ import { SplitProgressCard } from '../components/SplitProgressCard'
 import { useConfirm } from '../components/useConfirm'
 import { useAuth } from '../auth/useAuth'
 import { useReads } from '../reads/useReads'
+import { logActivity } from '../lib/activity'
 import {
   fractionFor,
   logMyProgress,
@@ -156,6 +157,12 @@ export function CoRead() {
     setSaving(true)
     try {
       await logMyProgress(read.id, uid, page, note)
+      if (user)
+        await logActivity(buddy.uid, user, 'read_logged', {
+          bookTitle: read.book.title,
+          page,
+          note: note.trim() || null,
+        })
       setLogging(false)
     } finally {
       setSaving(false)
@@ -169,6 +176,7 @@ export function CoRead() {
       confirmLabel: 'Leave',
     })
     if (!ok) return
+    if (user) await logActivity(buddy.uid, user, 'read_left', { bookTitle: read.book.title })
     await removeRead(read.id)
     navigate('/home')
   }
