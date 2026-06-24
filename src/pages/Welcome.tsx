@@ -32,7 +32,7 @@ export function Welcome() {
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-8 text-center">
-        <Crowns className="mb-5 w-52 text-accent/75 ipad:w-60" />
+        <Crowns className="mb-5 w-60 text-accent/75 ipad:w-72" />
         <h1 className="font-display text-6xl font-semibold leading-none text-text">
           Buddy<span className="text-accent">Read</span>
         </h1>
