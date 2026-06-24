@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
+import { BookCover } from '../components/BookCover'
 import { StarterBook } from '../components/StarterBook'
 import { Eyebrow } from '../components/Eyebrow'
 import { ProgressBar } from '../components/ProgressBar'
@@ -41,17 +42,16 @@ function ReadCard({ read, uid }: { read: Read; uid: string }) {
       to={`/read/${read.id}`}
       className="flex gap-4 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-accent/40"
     >
-      <div
-        className="flex h-[88px] w-[60px] shrink-0 items-center justify-center rounded-sm px-2 text-center"
-        style={{
-          background: 'linear-gradient(160deg,#46503a,#353d2c)',
-          boxShadow: 'inset 0 0 0 1px rgba(198,162,78,0.25)',
+      <BookCover
+        book={{
+          title: read.book.title,
+          coverUrl: read.book.coverUrl,
+          isbn13: null,
+          isbn10: null,
         }}
-      >
-        <span className="font-display text-[11px] font-medium leading-tight text-[#d8c79a]">
-          {read.book.title}
-        </span>
-      </div>
+        author={read.book.authors[0]}
+        className="w-14 shrink-0"
+      />
       <div className="min-w-0 flex-1">
         <h3 className="font-display text-xl leading-tight text-text">{read.book.title}</h3>
         <Eyebrow className="mt-1 block">with {buddyName}</Eyebrow>

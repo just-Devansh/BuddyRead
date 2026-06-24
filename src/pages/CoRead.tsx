@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
+import { BookCover } from '../components/BookCover'
 import { Eyebrow } from '../components/Eyebrow'
 import { LogSessionSheet } from '../components/LogSessionSheet'
 import { SplitProgressCard } from '../components/SplitProgressCard'
@@ -193,17 +194,16 @@ export function CoRead() {
 
       {/* Book strip */}
       <div className="mt-5 flex items-center gap-4">
-        <div
-          className="flex h-[86px] w-[58px] shrink-0 items-center justify-center rounded-sm px-2 text-center"
-          style={{
-            background: 'linear-gradient(160deg,#46503a,#353d2c)',
-            boxShadow: 'inset 0 0 0 1px rgba(198,162,78,0.25)',
+        <BookCover
+          book={{
+            title: read.book.title,
+            coverUrl: read.book.coverUrl,
+            isbn13: null,
+            isbn10: null,
           }}
-        >
-          <span className="font-display text-[11px] font-medium leading-tight text-[#d8c79a]">
-            {read.book.title}
-          </span>
-        </div>
+          author={read.book.authors[0]}
+          className="w-14 shrink-0"
+        />
         <div className="min-w-0 flex-1">
           <h1 className="font-display text-2xl leading-tight text-text">
             {read.book.title}
