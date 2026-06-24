@@ -66,6 +66,8 @@ export function Friends() {
   const [sending, setSending] = useState(false)
   // ids being acted on, to disable their buttons briefly
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set())
+  // which friend's "⋮" options menu is open, if any
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const { confirm, dialog } = useConfirm()
 
   const setBusy = (id: string, on: boolean) =>
@@ -153,11 +155,14 @@ export function Friends() {
       </p>
 
       {/* Add by code */}
-      <section className="mt-6 rounded-2xl border border-border bg-surface p-5">
-        <label htmlFor="invite" className="font-display text-xl text-text">
+      <section className="mt-6">
+        <label
+          htmlFor="invite"
+          className="mb-2 block font-mono text-[10px] uppercase tracking-[0.16em] text-text-faint"
+        >
           Add by invite code
         </label>
-        <div className="mt-3 flex gap-2">
+        <div className="flex gap-2">
           <input
             id="invite"
             value={code}
@@ -172,7 +177,7 @@ export function Friends() {
             autoCapitalize="characters"
             autoCorrect="off"
             spellCheck={false}
-            className="min-w-0 flex-1 rounded-xl border border-border bg-surface-alt px-4 py-2.5 font-mono text-lg uppercase tracking-[0.15em] text-text placeholder:tracking-normal placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent"
+            className="min-w-0 flex-1 rounded-lg border border-border bg-surface-alt px-3.5 py-2 font-mono text-sm uppercase tracking-[0.2em] text-text placeholder:tracking-normal placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent"
           />
           <button
             type="button"
@@ -184,7 +189,7 @@ export function Friends() {
           </button>
         </div>
 
-        {notice && <p className="mt-3 text-sm text-text-muted">{notice}</p>}
+        {notice && <p className="mt-2 text-sm text-text-muted">{notice}</p>}
 
         {target && (
           <div className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-surface-alt p-3">
@@ -290,24 +295,48 @@ export function Friends() {
                 >
                   Read
                 </Link>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (
-                      await confirm({
-                        title: `Remove ${friendName(r) ?? 'this reader'}?`,
-                        message:
-                          "You'll drop out of each other's circle and stop seeing each other's reading. You can always swap codes again later.",
-                        confirmLabel: 'Remove',
-                      })
-                    )
-                      void act(r.id, () => removeRelationship(r.id))
-                  }}
-                  disabled={busyIds.has(r.id)}
-                  className={PILL_QUIET}
-                >
-                  Remove
-                </button>
+                <div className="relative">
+                  <button
+                    type="button"
+                    aria-label="More options"
+                    onClick={() => setOpenMenuId((id) => (id === r.id ? null : r.id))}
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-lg leading-none text-text-muted transition-colors hover:bg-surface-alt hover:text-text"
+                  >
+                    ⋮
+                  </button>
+                  {openMenuId === r.id && (
+                    <>
+                      <button
+                        type="button"
+                        aria-hidden
+                        tabIndex={-1}
+                        onClick={() => setOpenMenuId(null)}
+                        className="fixed inset-0 z-10 cursor-default"
+                      />
+                      <div className="absolute right-0 top-full z-20 mt-1 w-32 overflow-hidden rounded-xl border border-border bg-surface py-1 shadow-[0_12px_28px_-12px_rgba(40,28,16,0.6)]">
+                        <button
+                          type="button"
+                          disabled={busyIds.has(r.id)}
+                          onClick={async () => {
+                            setOpenMenuId(null)
+                            if (
+                              await confirm({
+                                title: `Remove ${friendName(r) ?? 'this reader'}?`,
+                                message:
+                                  "You'll drop out of each other's circle and stop seeing each other's reading. You can always swap codes again later.",
+                                confirmLabel: 'Remove',
+                              })
+                            )
+                              void act(r.id, () => removeRelationship(r.id))
+                          }}
+                          className="block w-full px-4 py-2 text-left text-sm text-text-muted transition-colors hover:bg-surface-alt hover:text-text disabled:opacity-50"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </PersonRow>
             ))}
           </ul>
