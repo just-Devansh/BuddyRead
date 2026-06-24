@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Ornament } from '../components/Ornament'
-import { VineFlourish } from '../components/VineFlourish'
+import { Crowns } from '../components/Crowns'
 import { ThemeToggle } from '../theme/ThemeToggle'
 import { useAuth } from '../auth/useAuth'
 
@@ -32,7 +32,7 @@ export function Welcome() {
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-8 text-center">
-        <VineFlourish className="mb-5 w-60 text-accent/70 ipad:w-72" />
+        <Crowns className="mb-4 w-44 text-accent/70 ipad:w-52" />
         <h1 className="font-display text-6xl font-semibold leading-none text-text">
           Buddy<span className="text-accent">Read</span>
         </h1>

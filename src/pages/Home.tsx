@@ -135,9 +135,13 @@ export function Home() {
             Search all ›
           </Link>
         </div>
-        <ul className="no-scrollbar -mx-5 mt-3 flex snap-x snap-proximity scroll-smooth gap-4 overflow-x-auto px-5 pt-3 pb-5 [mask-image:linear-gradient(to_right,transparent,#000_2rem,#000_calc(100%_-_2rem),transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,#000_2rem,#000_calc(100%_-_2rem),transparent)] ipad:-mx-8 ipad:px-8">
-          {STARTERS.map((s) => (
-            <li key={s.title} className="w-28 shrink-0 snap-start">
+        <ul className="no-scrollbar mt-3 flex snap-x snap-proximity scroll-smooth gap-4 overflow-x-auto pt-3 pb-5 pr-6">
+          {STARTERS.map((s, i) => (
+            <li
+              key={s.title}
+              className="unfurl-book w-28 shrink-0 snap-start"
+              style={{ animationDelay: `${i * 85}ms` }}
+            >
               <StarterBook
                 title={s.title}
                 author={s.author}
