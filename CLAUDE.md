@@ -58,7 +58,7 @@ src/
   App.tsx             Auth + Theme providers + DeviceFrame + Router
   index.css           Tailwind import + design tokens (@theme) + dark variant
   vite-env.d.ts       env typings + PWA client types
-  lib/                firebase.ts (init), users.ts (user doc + invite code), inviteCode.ts, friends.ts (relationships), reads.ts (buddy reads), activity.ts (event log), books.ts (Google Books client + cover helpers), starters.ts (curated shelf picks)
+  lib/                firebase.ts (init), users.ts (user doc + invite code), inviteCode.ts, username.ts (unique handle + 30-day cooldown), friends.ts (relationships), reads.ts (buddy reads), activity.ts (event log), books.ts (Google Books client + cover helpers), starters.ts (curated shelf picks)
   auth/               auth-context.ts, AuthProvider.tsx, useAuth.ts, RequireAuth.tsx (mounts FriendsProvider + ReadsProvider)
   friends/            friends-context.ts, FriendsProvider.tsx (one live listener), useFriends.ts
   reads/              reads-context.ts, ReadsProvider.tsx (one live listener), useReads.ts
@@ -82,7 +82,8 @@ Theme: preference (`light|dark|system`) lives in `localStorage` under `buddyread
 ## Data model (Firestore)
 
 Implemented (M1–M2):
-- `users/{uid}` — `displayName, email, photoURL, username, inviteCode, theme, createdAt`. Owner-only read/write.
+- `users/{uid}` — `displayName, email, photoURL, username, usernameUpdatedAt, inviteCode, theme, createdAt`. Owner-only read/write.
+- `usernames/{name}` — `{ uid }` claim doc for handle uniqueness (mirrors `inviteCodes`). `lib/username.ts` `changeUsername` runs a transaction: enforce the 30-day cooldown (`usernameUpdatedAt`), ensure the name is free, claim the new doc, release the old. Rules: read by any signed-in (availability check), create/delete only as the owner, **no update** (can't steal a taken handle).
 - `inviteCodes/{code}` — `{ uid, displayName, photoURL, createdAt }`. Lookup/uniqueness doc (claimed in a transaction); name/photo denormalized so a sender previews "Send request to <name>?" without reading the target's profile. Owner-refreshed on each sign-in.
 - `friendRequests/{pairId}` — **single source of truth for a relationship** (no `friends` subcollection — deliberate deviation). `pairId` = the two uids sorted + `__`-joined. Fields: `participants:[from,to]`, `fromUid/toUid`, `fromName/fromPhotoURL`, `toName/toPhotoURL`, `status: pending|accepted`, `createdAt/respondedAt`. Friends/incoming/outgoing are all derived from one `participants array-contains uid` listener, partitioned client-side. Decline/cancel/unfriend = delete the doc.
 
@@ -115,5 +116,6 @@ Dark academia, "3 Cs" (cohesive, classy, consistent). **Parchment by day, espres
 - **Done — Shelf hub:** the empty Shelf became a warm hub — time-of-day greeting (real account name), curated `StarterBook` row (real Open Library covers, 3D open on hover / mobile long-press, → prefilled search), `?q=` on `/search`.
 - **Done — M4 (buddy reads):** the co-read loop end to end — `reads/{readId}` + `ReadsProvider`, send from two points (Book detail `BuddyPicker`, Friends "Read" → `?with=`), accept/decline in Activity (nav badge), per-reader edition setup, page logging, live `SplitProgressCard` on `/read/:id`. New `reads` security rules. Build + lint green.
 - **Next — M5:** finishing a read (rating + the line it left), a finished-books history, and the activity feed (logged pages / notes), so Profile's "read" count and the inbox fill out. Optionally solo reads.
-- Pending external (user): ⚠️ **re-publish `firestore.rules` now** — it adds the `reads` collection **and the `users/{uid}/activity` subcollection**; until deployed, buddy-reads and the activity feed fail with permission-denied. (Also still includes the earlier `friendRequests` + `inviteCodes` update.) Recommended: **Google Books API key** (keyless shares an anonymous quota that can 429 under load) — restrict by HTTP referrer, set `VITE_GOOGLE_BOOKS_API_KEY`. Later: Vercel deploy.
+- Pending external (user): ⚠️ **re-publish `firestore.rules` now** — it adds the `reads` collection, the `users/{uid}/activity` subcollection, **and the `usernames` collection**; until deployed, buddy-reads, the activity feed, and username changes fail with permission-denied.
+- **Next:** preset avatars (no Storage) — render presets via `Avatar`, and propagate a reader's chosen avatar into the denormalized photo on inviteCodes/friendRequests/reads/activity so buddies see it; slot the picker into `EditProfileDialog`. (Also still includes the earlier `friendRequests` + `inviteCodes` update.) Recommended: **Google Books API key** (keyless shares an anonymous quota that can 429 under load) — restrict by HTTP referrer, set `VITE_GOOGLE_BOOKS_API_KEY`. Later: Vercel deploy.
 - Known debt: JS bundle ~251 kB gzip (Firebase). Code-split / lazy-load routes in M7. Keyless Google Books can 429 on a shared quota until a key is added.

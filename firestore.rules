@@ -37,6 +37,18 @@ service cloud.firestore {
       }
     }
 
+    // username -> owner claim, for uniqueness (mirrors inviteCodes). Readable by
+    // any signed-in reader (to check availability); you may only claim a free
+    // name as yourself, and only release one you own. No update — so a taken
+    // handle can't be stolen out from under its owner.
+    match /usernames/{name} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+                    && request.resource.data.uid == request.auth.uid;
+      allow delete: if signedIn()
+                    && resource.data.uid == request.auth.uid;
+    }
+
     // invite code -> owner lookup (uid + denormalized name/photo). Readable by
     // any signed-in reader (you only learn it if a code is shared with you);
     // only the owner may create or refresh it, and the uid can never change.

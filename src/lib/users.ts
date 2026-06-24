@@ -17,7 +17,8 @@ export interface UserDoc {
   displayName: string | null
   email: string | null
   photoURL: string | null
-  username: string // lowercase; default for now, real search is v1
+  username: string // lowercase; default at sign-up, user-editable (see lib/username.ts)
+  usernameUpdatedAt?: Timestamp | null // last change — gates the 30-day cooldown
   inviteCode: string // short, unique, human-typeable
   theme: ThemePreference
   createdAt: Timestamp | null

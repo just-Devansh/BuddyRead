@@ -4,6 +4,7 @@ import { AppShell } from '../components/AppShell'
 import { Avatar } from '../components/Avatar'
 import { BookCover } from '../components/BookCover'
 import { Eyebrow } from '../components/Eyebrow'
+import { EditProfileDialog } from '../components/EditProfileDialog'
 import { useConfirm } from '../components/useConfirm'
 import { ThemeToggle } from '../theme/ThemeToggle'
 import { useAuth } from '../auth/useAuth'
@@ -65,6 +66,7 @@ export function Profile() {
   const { confirm, dialog } = useConfirm()
   const [copied, setCopied] = useState(false)
   const [tab, setTab] = useState<Tab | null>(null)
+  const [editing, setEditing] = useState(false)
 
   const uid = user?.uid ?? ''
   const name = userDoc?.displayName ?? user?.displayName ?? 'Reader'
@@ -111,13 +113,26 @@ export function Profile() {
 
       {/* Identity */}
       <section className="flex flex-col items-center text-center">
-        <Avatar
-          src={user?.photoURL}
-          name={name}
-          tone={user?.photoURL ? undefined : 'terracotta'}
-          size="h-20 w-20"
-          className="text-4xl shadow-[0_10px_24px_-12px_rgba(111,61,48,0.7)]"
-        />
+        <div className="relative">
+          <Avatar
+            src={user?.photoURL}
+            name={name}
+            tone={user?.photoURL ? undefined : 'terracotta'}
+            size="h-20 w-20"
+            className="text-4xl shadow-[0_10px_24px_-12px_rgba(111,61,48,0.7)]"
+          />
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            aria-label="Edit profile"
+            className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-text-muted shadow-sm transition-colors hover:text-accent"
+          >
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+            </svg>
+          </button>
+        </div>
         <h1 className="mt-4 font-display text-3xl text-text">{name}</h1>
         {handle && (
           <p className="mt-1 font-mono text-[11px] tracking-[0.06em] text-text-muted">
@@ -246,7 +261,16 @@ export function Profile() {
         <ThemeToggle />
       </section>
 
+      <EditProfileDialog
+        open={editing}
+        uid={uid}
+        currentUsername={userDoc?.username ?? ''}
+        usernameUpdatedAt={userDoc?.usernameUpdatedAt}
+        onClose={() => setEditing(false)}
+      />
+
       {dialog}
     </AppShell>
   )
 }
+
