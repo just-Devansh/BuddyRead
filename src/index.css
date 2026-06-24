@@ -94,6 +94,16 @@ h1, h2, h3, h4 {
   letter-spacing: -0.005em;
 }
 
+/* Hide the native horizontal scrollbar — the curated row fades at its edges and
+   snaps instead, so the browser's grey bar would only cheapen it. */
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* old Edge */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* WebKit / Blink */
+}
+
 /* Honour the reader who prefers stillness. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Ornament } from '../components/Ornament'
+import { VineFlourish } from '../components/VineFlourish'
 import { ThemeToggle } from '../theme/ThemeToggle'
 import { useAuth } from '../auth/useAuth'
 
@@ -31,6 +32,7 @@ export function Welcome() {
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-8 text-center">
+        <VineFlourish className="mb-5 w-60 text-accent/70 ipad:w-72" />
         <h1 className="font-display text-6xl font-semibold leading-none text-text">
           Buddy<span className="text-accent">Read</span>
         </h1>
@@ -40,9 +42,9 @@ export function Welcome() {
 
         <Ornament rules className="my-8" />
 
-        <p className="max-w-sm text-pretty text-base leading-relaxed text-text-muted">
-          No streaks, no leaderboards, no one racing ahead. Just you, a friend,
-          and a book — and a quiet card that keeps you company.
+        <p className="max-w-xs text-pretty text-base leading-relaxed text-text-muted">
+          Read the same book as a friend, and watch each other's bookmarks inch
+          along.
         </p>
 
         <button
