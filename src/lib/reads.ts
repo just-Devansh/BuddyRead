@@ -3,6 +3,7 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   serverTimestamp,
   updateDoc,
@@ -43,6 +44,24 @@ export interface ProgressEntry {
   noteAt: Timestamp | null
 }
 
+/**
+ * One reader's verdict on closing a read. Stored under `finish[uid]`, mirroring
+ * `progress` — owner-writable only. It's the *ceremony*: a rating, the line it
+ * left you, and whether you loved it. Sealed from your buddy (in the UI) until
+ * they close the book too, so a verdict is never a spoiler.
+ */
+export interface FinishEntry {
+  /** 0–5 in quarter steps, or null if they chose not to rate (or set it down). */
+  rating: number | null
+  /** The line it left you / a short closing review. */
+  review: string | null
+  /** Loved it — files the book to Favorites as well as Read. */
+  favorite: boolean
+  /** They set it down rather than finished it; no rating, no shame. */
+  dnf: boolean
+  finishedAt: Timestamp | null
+}
+
 export interface ReadDoc {
   participants: string[] // [fromUid, toUid] — queried with array-contains
   fromUid: string
@@ -54,6 +73,9 @@ export interface ReadDoc {
   book: ReadBook
   status: 'pending' | 'active'
   progress: Record<string, ProgressEntry>
+  /** Per-reader closing verdicts. Absent until someone closes the book. A read
+   *  is "finished" when both participants have an entry — derived, not a status. */
+  finish?: Record<string, FinishEntry>
   createdAt: Timestamp | null
   respondedAt: Timestamp | null
 }
@@ -142,6 +164,63 @@ export async function logMyProgress(
       ? { [`progress.${uid}.note`]: trimmed, [`progress.${uid}.noteAt`]: serverTimestamp() }
       : {}),
   })
+}
+
+/** What a reader sets when they close the book. */
+export interface Verdict {
+  rating: number | null
+  review: string | null
+  favorite: boolean
+  dnf: boolean
+}
+
+/**
+ * Close the book on my side: write my verdict under `finish[uid]`. A true
+ * finish also completes my bookmark (so the split card reads 100%); setting a
+ * book down leaves the bookmark where it lay. Both touch only my own keys, so
+ * the same own-key-only rule that guards `progress` covers this.
+ */
+export async function finishRead(
+  id: string,
+  uid: string,
+  verdict: Verdict,
+  completeTo?: number | null,
+): Promise<void> {
+  const review = verdict.review?.trim() || null
+  await updateDoc(doc(db, 'reads', id), {
+    [`finish.${uid}`]: {
+      rating: verdict.dnf ? null : verdict.rating,
+      review,
+      favorite: verdict.dnf ? false : verdict.favorite,
+      dnf: verdict.dnf,
+      finishedAt: serverTimestamp(),
+    },
+    ...(!verdict.dnf && completeTo
+      ? {
+          [`progress.${uid}.currentPage`]: completeTo,
+          [`progress.${uid}.updatedAt`]: serverTimestamp(),
+        }
+      : {}),
+  })
+}
+
+/** Reopen a read I'd closed — only meaningful while my verdict is still sealed
+ *  (the buddy hasn't finished). Clears my `finish` entry. */
+export async function reopenRead(id: string, uid: string): Promise<void> {
+  await updateDoc(doc(db, 'reads', id), {
+    [`finish.${uid}`]: deleteField(),
+  })
+}
+
+/** My closing verdict, if I've closed the book. */
+export function finishFor(read: Read, uid: string): FinishEntry | null {
+  return read.finish?.[uid] ?? null
+}
+
+/** Both readers have closed the book — the read is finished, a shared keepsake. */
+export function bothFinished(read: Read): boolean {
+  const f = read.finish
+  return !!f && !!f[read.fromUid] && !!f[read.toUid]
 }
 
 /** The other reader, relative to me. */

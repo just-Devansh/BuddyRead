@@ -68,6 +68,10 @@ function describe(it: ActivityItem): { body: ReactNode; quote?: string; mood?: M
       }
     case 'read_left':
       return { body: <>{strong(who)} stepped away from {em(book)}.</> }
+    case 'read_finished':
+      return { body: <>{strong(who)} turned the last page of {em(book)}.</> }
+    case 'read_set_down':
+      return { body: <>{strong(who)} set {em(book)} down for now.</> }
   }
 }
 

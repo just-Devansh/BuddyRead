@@ -2,19 +2,28 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { BookCover } from '../components/BookCover'
+import { CloseReadSheet } from '../components/CloseReadSheet'
 import { Eyebrow } from '../components/Eyebrow'
 import { LogSessionSheet } from '../components/LogSessionSheet'
 import { SplitProgressCard } from '../components/SplitProgressCard'
+import { StarRating } from '../components/StarRating'
 import { useConfirm } from '../components/useConfirm'
 import { useAuth } from '../auth/useAuth'
 import { useReads } from '../reads/useReads'
 import { logActivity } from '../lib/activity'
+import { setShelf } from '../lib/library'
+import { formatRating } from '../lib/rating'
 import {
+  bothFinished,
+  finishFor,
+  finishRead,
   fractionFor,
   logMyProgress,
   otherReader,
   removeRead,
+  reopenRead,
   setupMyProgress,
+  type Verdict,
 } from '../lib/reads'
 
 const EDITIONS = ['Paperback', 'Hardcover', 'Kindle', 'Ebook', 'Audiobook']
@@ -127,6 +136,7 @@ export function CoRead() {
   const { active, loading } = useReads()
   const { confirm, dialog } = useConfirm()
   const [logging, setLogging] = useState(false)
+  const [closing, setClosing] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const uid = user?.uid ?? ''
@@ -152,6 +162,8 @@ export function CoRead() {
   const mine = read.progress?.[uid]
   const theirs = read.progress?.[buddy.uid]
   const buddyName = buddy.displayName ?? 'Your buddy'
+  const myFinish = finishFor(read, uid)
+  const sealed = !bothFinished(read) // verdicts hidden until you both close
 
   const save = async (page: number, note: string, mood: string | null) => {
     setSaving(true)
@@ -168,6 +180,37 @@ export function CoRead() {
     } finally {
       setSaving(false)
     }
+  }
+
+  const finish = async (verdict: Verdict) => {
+    setSaving(true)
+    try {
+      await finishRead(read.id, uid, verdict, mine?.totalPages ?? null)
+      // A finish files the book on your shelf automatically; loving it favorites
+      // it (and favorite implies read). Setting it down touches no shelf.
+      if (!verdict.dnf)
+        await setShelf(uid, read.book, verdict.favorite ? 'favorite' : 'read')
+      if (user)
+        await logActivity(
+          buddy.uid,
+          user,
+          verdict.dnf ? 'read_set_down' : 'read_finished',
+          { bookTitle: read.book.title },
+        )
+      setClosing(false)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const reopen = async () => {
+    const ok = await confirm({
+      title: 'Reopen this read?',
+      message: `Your verdict on “${read.book.title}” will be cleared and you'll be back to logging pages.`,
+      confirmLabel: 'Reopen',
+    })
+    if (!ok) return
+    await reopenRead(read.id, uid)
   }
 
   const leave = async () => {
@@ -260,13 +303,59 @@ export function CoRead() {
             </div>
           )}
 
-          <button
-            type="button"
-            onClick={() => setLogging(true)}
-            className="mt-6 w-full rounded-xl bg-accent py-4 font-medium text-accent-contrast shadow-[0_12px_24px_-14px_rgba(138,69,54,0.7)] transition-opacity hover:opacity-90"
-          >
-            Log tonight's pages
-          </button>
+          {myFinish ? (
+            /* I've closed the book — my verdict, sealed until they finish too. */
+            <div className="mt-6 rounded-2xl border border-border bg-surface p-5 text-center">
+              <Eyebrow className="block">
+                {myFinish.dnf ? 'You set this down' : 'You closed the book'}
+              </Eyebrow>
+              {!myFinish.dnf && myFinish.rating != null && (
+                <div className="mt-3 flex flex-col items-center gap-1.5">
+                  <StarRating value={myFinish.rating} size="text-2xl" />
+                  <span className="font-display text-lg text-text-muted">
+                    {formatRating(myFinish.rating)}
+                    {myFinish.favorite && <span className="ml-1.5 text-accent">♥</span>}
+                  </span>
+                </div>
+              )}
+              {myFinish.review && (
+                <p className="mx-auto mt-3 max-w-md font-display text-lg italic leading-snug text-text-muted">
+                  “{myFinish.review}”
+                </p>
+              )}
+              <p className="mt-4 text-sm leading-relaxed text-text-muted">
+                {sealed
+                  ? `Sealed until ${buddyName} finishes — then you'll read each other's at once.`
+                  : `${buddyName} has finished too.`}
+              </p>
+              {sealed && (
+                <button
+                  type="button"
+                  onClick={() => void reopen()}
+                  className="mt-3 font-mono text-[10px] uppercase tracking-[0.1em] text-text-faint transition-colors hover:text-accent"
+                >
+                  Reopen this read
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => setLogging(true)}
+                className="mt-6 w-full rounded-xl bg-accent py-4 font-medium text-accent-contrast shadow-[0_12px_24px_-14px_rgba(138,69,54,0.7)] transition-opacity hover:opacity-90"
+              >
+                Log tonight's pages
+              </button>
+              <button
+                type="button"
+                onClick={() => setClosing(true)}
+                className="mx-auto mt-3 block font-mono text-[10px] uppercase tracking-[0.1em] text-text-faint transition-colors hover:text-accent"
+              >
+                Close this read ›
+              </button>
+            </>
+          )}
 
           {logging && (
             <LogSessionSheet
@@ -279,6 +368,17 @@ export function CoRead() {
               saving={saving}
               onSave={(page, note, mood) => void save(page, note, mood)}
               onClose={() => setLogging(false)}
+            />
+          )}
+
+          {closing && (
+            <CloseReadSheet
+              open
+              bookTitle={read.book.title}
+              buddyName={buddyName}
+              saving={saving}
+              onSave={(verdict) => void finish(verdict)}
+              onClose={() => setClosing(false)}
             />
           )}
         </>

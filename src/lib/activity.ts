@@ -22,6 +22,10 @@ export type ActivityType =
   | 'read_declined'
   | 'read_logged'
   | 'read_left'
+  // Closing a read. The *fact* lands in the buddy's feed; the verdict (rating,
+  // the line it left) stays sealed on the read until they finish too.
+  | 'read_finished'
+  | 'read_set_down'
 
 export interface ActivityEventDoc {
   actorUid: string

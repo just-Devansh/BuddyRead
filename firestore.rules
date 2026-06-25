@@ -133,8 +133,10 @@ service cloud.firestore {
 
       // Updates keep the parties and the book fixed. Two shapes are allowed:
       //  (a) the recipient accepts (pending -> active, nothing else changes), or
-      //  (b) a participant edits only their OWN entry in `progress` on an
-      //      active read (setting up their edition, or logging pages).
+      //  (b) a participant edits only their OWN keys on an active read — their
+      //      `progress` entry (setting up, logging pages) and/or their `finish`
+      //      entry (closing the book, or reopening it). "Finished" is derived
+      //      from both `finish` entries existing, so there's no status to flip.
       allow update: if signedIn()
         && request.auth.uid in resource.data.participants
         && request.resource.data.participants == resource.data.participants
@@ -151,6 +153,9 @@ service cloud.firestore {
           ( resource.data.status == 'active'
             && request.resource.data.status == 'active'
             && request.resource.data.progress.diff(resource.data.progress)
+                 .affectedKeys().hasOnly([request.auth.uid])
+            && request.resource.data.get('finish', {})
+                 .diff(resource.data.get('finish', {}))
                  .affectedKeys().hasOnly([request.auth.uid])
           )
         );
