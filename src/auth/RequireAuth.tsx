@@ -4,6 +4,7 @@ import { useAuth } from './useAuth'
 import { Splash } from '../components/Splash'
 import { FriendsProvider } from '../friends/FriendsProvider'
 import { ReadsProvider } from '../reads/ReadsProvider'
+import { LibraryProvider } from '../library/LibraryProvider'
 
 /**
  * Route guard for signed-in screens. Waits for auth to resolve (avoids a
@@ -26,7 +27,9 @@ export function RequireAuth() {
   return (
     <FriendsProvider>
       <ReadsProvider>
-        <Outlet />
+        <LibraryProvider>
+          <Outlet />
+        </LibraryProvider>
       </ReadsProvider>
     </FriendsProvider>
   )

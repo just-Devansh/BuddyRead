@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
+import { AddToLibrary } from '../components/AddToLibrary'
 import { BookCover } from '../components/BookCover'
 import { BuddyPicker } from '../components/BuddyPicker'
 import { Eyebrow } from '../components/Eyebrow'
@@ -179,6 +180,19 @@ export function BookDetail() {
             >
               Read this together
             </button>
+          )}
+
+          {user && (
+            <AddToLibrary
+              uid={user.uid}
+              book={{
+                id: book.id,
+                title: book.title,
+                authors: book.authors,
+                coverUrl: book.coverUrl,
+                pageCount: book.pageCount,
+              }}
+            />
           )}
 
           <dl className="mt-7 grid grid-cols-2 gap-4">

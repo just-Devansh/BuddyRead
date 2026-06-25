@@ -1,4 +1,4 @@
-import type { SpineTone } from '../components/BookCover'
+import type { SpineTone } from './spines'
 
 /**
  * An editorial "front table" — a few real books to begin a read with, for when

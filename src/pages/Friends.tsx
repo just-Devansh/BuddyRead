@@ -162,7 +162,13 @@ export function Friends() {
 
   return (
     <AppShell>
-      <Eyebrow>Your reading circle</Eyebrow>
+      <Link
+        to="/profile"
+        className="font-mono text-[11px] uppercase tracking-[0.1em] text-text-muted transition-colors hover:text-text"
+      >
+        ‹ You
+      </Link>
+      <Eyebrow className="mt-4 block">Your reading circle</Eyebrow>
       <h1 className="mt-1 font-display text-4xl text-text">Friends</h1>
       <p className="mt-1 text-text-muted">
         The people you read alongside. Add one with their invite code.

@@ -1,13 +1,17 @@
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { Avatar } from '../components/Avatar'
 import { BookCover } from '../components/BookCover'
+import { BookshelfFlat } from '../components/BookshelfFlat'
+import { BookSpotlight } from '../components/BookSpotlight'
 import { Eyebrow } from '../components/Eyebrow'
 import { useAuth } from '../auth/useAuth'
 import { useFriends } from '../friends/useFriends'
 import { useReads } from '../reads/useReads'
 import { otherParty } from '../lib/friends'
 import { fractionFor, otherReader } from '../lib/reads'
+import { booksOnShelf, fetchLibrary, type LibraryItem } from '../lib/library'
 
 /** Month + year a relationship settled, for a quiet "buddies since" line. */
 function since(ms: number | undefined): string | null {
@@ -31,6 +35,25 @@ export function BuddyProfile() {
   const me = user?.uid ?? ''
   const rel = friends.find((r) => otherParty(r, me).uid === them)
   const shared = active.filter((r) => otherReader(r, me).uid === them)
+
+  // Their library — a one-shot read (friends can read it; see firestore.rules).
+  const [lib, setLib] = useState<LibraryItem[]>([])
+  const [libLoading, setLibLoading] = useState(true)
+  const [selected, setSelected] = useState<LibraryItem | null>(null)
+
+  useEffect(() => {
+    if (!them) return
+    // Loading starts true; this view remounts per profile (AppShell keys on the
+    // path), so there's no stale-loading state to reset synchronously here.
+    let on = true
+    fetchLibrary(them)
+      .then((items) => on && setLib(items))
+      .catch(() => on && setLib([]))
+      .finally(() => on && setLibLoading(false))
+    return () => {
+      on = false
+    }
+  }, [them])
 
   // Identity from whichever denormalized source we have — relationship first.
   const ident = rel
@@ -57,7 +80,9 @@ export function BuddyProfile() {
   }
 
   const name = ident.displayName ?? 'A reader'
+  const firstName = name.split(' ')[0]
   const sinceLabel = since(rel?.respondedAt?.toMillis() ?? rel?.createdAt?.toMillis())
+  const readCount = booksOnShelf(lib, 'read').length
 
   return (
     <AppShell>
@@ -84,6 +109,28 @@ export function BuddyProfile() {
         </Eyebrow>
         {sinceLabel && (
           <p className="mt-1 text-sm text-text-muted">Buddies since {sinceLabel}</p>
+        )}
+        {!libLoading && lib.length > 0 && (
+          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-text-faint">
+            {readCount} read · {booksOnShelf(lib, 'tbr').length} to read ·{' '}
+            {booksOnShelf(lib, 'favorite').length} favorites
+          </p>
+        )}
+      </section>
+
+      {/* Their shelves */}
+      <section className="mt-8">
+        <Eyebrow className="mb-3 block">{firstName}'s shelves</Eyebrow>
+        {libLoading ? (
+          <p className="py-10 text-center text-sm text-text-muted">
+            Opening their bookcase…
+          </p>
+        ) : lib.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border bg-surface/50 px-4 py-5 text-center text-pretty text-sm leading-relaxed text-text-muted">
+            No books shelved yet.
+          </p>
+        ) : (
+          <BookshelfFlat items={lib} onSelect={setSelected} />
         )}
       </section>
 
@@ -136,6 +183,8 @@ export function BuddyProfile() {
           Read something together
         </Link>
       )}
+
+      {selected && <BookSpotlight item={selected} onClose={() => setSelected(null)} />}
     </AppShell>
   )
 }

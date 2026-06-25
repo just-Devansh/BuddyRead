@@ -251,6 +251,22 @@ export function Profile() {
         </div>
       )}
 
+      {/* Reading circle — the home for friends, now that it's not a tab */}
+      <Link
+        to="/friends"
+        className="mt-7 flex items-center justify-between rounded-2xl border border-border bg-surface px-5 py-4 transition-colors hover:border-accent/40"
+      >
+        <div className="min-w-0">
+          <h2 className="font-display text-xl text-text">Your reading circle</h2>
+          <p className="mt-0.5 text-pretty text-sm text-text-muted">
+            Add buddies by invite code, answer requests, manage who you read with.
+          </p>
+        </div>
+        <span className="ml-3 shrink-0 font-mono text-lg text-text-faint" aria-hidden="true">
+          ›
+        </span>
+      </Link>
+
       <EditProfileDialog
         open={editing}
         uid={uid}

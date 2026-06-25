@@ -17,6 +17,13 @@ service cloud.firestore {
     function pairId(a, b) {
       return a < b ? a + '__' + b : b + '__' + a;
     }
+    // True if the signed-in reader has an accepted friendship with `uid`.
+    function isFriendOf(uid) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/friendRequests/$(pairId(request.auth.uid, uid)))
+        && get(/databases/$(database)/documents/friendRequests/$(pairId(request.auth.uid, uid)))
+             .data.status == 'accepted';
+    }
 
     // A reader's own profile. Only the owner reads or writes it; buddies never
     // need to read it directly (display data is denormalized onto requests).
@@ -34,6 +41,14 @@ service cloud.firestore {
         allow create: if signedIn()
                       && request.resource.data.actorUid == request.auth.uid;
         allow delete: if isSelf(uid);
+      }
+
+      // A reader's library (shelved books). The owner manages it; the owner and
+      // their accepted friends may read it, so a buddy's profile can show their
+      // shelves. No friend can write to someone else's library.
+      match /library/{bookId} {
+        allow read: if isSelf(uid) || isFriendOf(uid);
+        allow write: if isSelf(uid);
       }
     }
 

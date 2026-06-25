@@ -32,13 +32,14 @@ const TABS: Tab[] = [
     ),
   },
   {
-    to: '/friends',
-    label: 'Friends',
+    to: '/library',
+    label: 'Library',
     icon: (
       <svg {...iconProps}>
-        <circle cx="9" cy="8" r="3.2" />
-        <path d="M3.5 19a5.5 5.5 0 0 1 11 0" />
-        <path d="M16 5.2a3.2 3.2 0 0 1 0 5.6M17.5 13.6A5.5 5.5 0 0 1 20.5 18.5" />
+        <path d="M5 4.5h3.2v14H5z" />
+        <path d="M10.2 4.5h3.2v14h-3.2z" />
+        <path d="M15.6 5.4l3 .7-2.9 13-3-.7z" />
+        <path d="M3.5 19.2h17" />
       </svg>
     ),
   },
@@ -69,8 +70,8 @@ export function BottomNav() {
   const { incoming: incomingReads } = useReads()
 
   const badgeFor = (to: string): number => {
-    if (to === '/friends') return incoming.length
-    if (to === '/activity') return incomingReads.length
+    // Friends no longer has its own tab; its requests surface in Activity too.
+    if (to === '/activity') return incoming.length + incomingReads.length
     return 0
   }
 

@@ -9,6 +9,7 @@ import { Home } from './pages/Home'
 import { Search } from './pages/Search'
 import { BookDetail } from './pages/Book'
 import { CoRead } from './pages/CoRead'
+import { Library } from './pages/Library'
 import { Friends } from './pages/Friends'
 import { BuddyProfile } from './pages/BuddyProfile'
 import { Activity } from './pages/Activity'
@@ -34,6 +35,7 @@ export default function App() {
                 <Route path="/search" element={<Search />} />
                 <Route path="/book/:id" element={<BookDetail />} />
                 <Route path="/read/:id" element={<CoRead />} />
+                <Route path="/library" element={<Library />} />
                 <Route path="/friends" element={<Friends />} />
                 <Route path="/u/:uid" element={<BuddyProfile />} />
                 <Route path="/activity" element={<Activity />} />
