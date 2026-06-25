@@ -312,3 +312,39 @@ BuddyRead worked, but it didn't yet *feel* like two people in a room. This pass 
 
 - **Q: Why not one global page-transition library?**
   The need was small and consistent: a handful of surfaces that should all arrive the same quiet way. Four CSS classes keyed off route/mount cost nothing, ship no dependency, and honour `prefers-reduced-motion` for free — and the one surface with a real gesture (the draggable sheet) opts out and drives itself.
+
+## Chapter 5 — A library you can walk up to: the 3D bookshelf
+
+### What we built and why
+
+Three things that turn BuddyRead from "two people on a book" toward "a small social reading place":
+
+- **A personal Library, shown as an actual bookcase.** `/library` is a new screen with three shelves — **To Read · Read · Favorites** — the Goodreads/Fable list idea, but drawn as a wooden shelf of real spines you browse. Books land there from Book detail's new **Add to Library** sheet. One doc per book at `users/{uid}/library/{bookId}`; **favorite implies read** (a favorite shows on both shelves), so there's never a loved book that isn't also a read one. Tap a spine and its cover comes forward in full glory; tap the cover for the book's page.
+- **The shelf is 3D.** `react-three-fiber` + `three` render the bookcase with real spines, gentle pointer parallax, and a hover lift — but the whole 3D layer is **isolated in `src/library3d/` and lazy-loaded into its own chunk**, so three.js never enters the main bundle, and the screen falls back to a CSS-spine shelf if 3D is loading or fails.
+- **Richer buddy profiles.** A profile now reads the buddy's library (friends are allowed to) and shows their three shelves and a counts line, alongside the reads you share — the social, Letterboxd-ish layer the earlier profile deliberately stopped short of.
+
+Navigation was reworked to make room: **Friends left the tab bar and moved into the You tab** ("Your reading circle"), and a **Library tab** took its place (Shelf · Library · Activity · You). Friend requests still surface in Activity, so nothing was lost. Search was **isolated into the Library** as a collapsible magnifier, with the older entry points kept.
+
+### Decisions & trade-offs (and what we rejected)
+
+- **3D as a guarded experiment, not a commitment.** The user wanted to try 3D and be able to roll it back cleanly. So `components/Bookshelf.tsx` is a chooser: a `USE_3D` flag, `React.lazy` for the 3D scene, and the flat CSS shelf as *both* the Suspense fallback and — via a tiny `ThreeBoundary` error boundary — an automatic crash fallback. If WebGL is unavailable or the chunk fails, the reader still gets a real bookshelf. Rollback is a one-line flag flip, then deleting one folder and two deps. We built the **CSS shelf first** precisely so the rollback target already existed.
+- **Covers as HTML, spines as geometry.** Book-cover images come from Google/Open Library with no guaranteed CORS headers — loading them as WebGL textures risks tainted-canvas failures. So the 3D scene draws only coloured spines (no external textures, no font fetch), and the *cover* reveal is the existing `BookCover` (a plain `<img>`) in a centred `BookSpotlight` overlay. The 3D shelf stays offline-safe and asset-free; the cover still shows in full.
+- **Favorite ⇒ read, modelled as one field.** Rather than two booleans or two docs, a book has a single `shelf` of `tbr | read | favorite`, and the Read shelf simply gathers `read` + `favorite`. One source of truth, no way to desync "favorited but not read".
+- **Friends can read your whole library.** The user chose all three shelves visible (TBR included). That made the rule a clean `isSelf(uid) || isFriendOf(uid)` on the subcollection, where `isFriendOf` checks for an accepted `friendRequests` doc — reusing the same pair-id the rest of the model is built on.
+
+### Notable details & gotchas
+
+- **react-three-fiber augments the JSX namespace — and broke a polymorphic component.** Adding r3f made `tsc` fail in `Eyebrow`, our one `as`-polymorphic component ("children expects type 'never'"). r3f's JSX augmentation perturbs how TS infers children for a polymorphic intrinsic `<Tag>`. Fix: render `Eyebrow` via `createElement(Tag, …)` instead of `<Tag>`, sidestepping the JSX-children inference entirely. A reminder that a global type augmentation from one dependency can surface far away.
+- **Lint guards bit twice.** `react-hooks/purity` rejected `Math.random()` in render (the splash quote, last chapter); `react-hooks/set-state-in-effect` rejected a synchronous `setLoading(true)` at the top of the buddy-library effect. Both pushed us toward better patterns — module-scope for the random pick, and leaning on the page's per-route remount (AppShell keys on pathname) so loading starts `true` without a synchronous reset.
+- **The 3D chunk is precached.** `vite-plugin-pwa`'s `generateSW` precaches build assets, including the lazy 3D chunk (~235 kB gzip). Acceptable for a trial; noted as debt with a `globIgnores` escape hatch if 3D stays.
+
+### Questions an interviewer might ask
+
+- **Q: How do you add a heavy, risky dependency without betting the app on it?**
+  Isolate and guard it. All three.js code lives in one folder behind a `lazy()` boundary, so it's a separate chunk that never affects the main bundle's load. A flag switches it off instantly, and an error boundary + Suspense fallback mean even a runtime failure degrades to the CSS shelf rather than a blank screen. The rollback is mechanical: flip the flag, delete the folder, drop the deps.
+
+- **Q: Why not render the real covers inside the 3D scene?**
+  Because external cover images don't promise CORS headers, and a WebGL texture from a tainted image fails. Keeping the 3D layer to coloured geometry (no textures, no fonts) makes it robust and offline-safe, and the cover still gets its moment as an HTML overlay on tap. The 3D is for the *shelf feeling*; the DOM is for the *image*.
+
+- **Q: You moved a primary tab (Friends) into a sub-screen. How do you avoid losing it?**
+  By checking where its weight actually goes. Friend *requests* already surface in Activity (and its badge), and the *circle* is management you reach occasionally — so it sits well one level down in You, with a clear "Your reading circle" entry. The everyday surface (the new Library) earns the tab; the occasional surface (managing friends) doesn't need one.
