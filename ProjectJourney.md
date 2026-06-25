@@ -278,3 +278,37 @@ Crucially, the mockup shows screens the data model can't back yet — the co-rea
 ### Addendum — clean slate
 
 Seeing the mocks in the running app, we pulled them. Fabricated activity, a fake finished-books shelf, and a demo co-read with invented names (Meher, "The Secret History" at 35%) read as clutter, not vision — and risked looking like real state. So we deleted `src/demo/` and the mock-only pages (co-read, invite, history) and components (SplitProgressCard, LogSessionSheet, ProgressBar, StarRating). The Shelf and Activity are now honest empty states; the design system and the six real screens stand on their own. The co-read split card returns in M4, built against the real `reads` model rather than a demo shape. The lesson kept: mocks earn their keep only while they clarify more than they mislead — past that point, an honest empty state says more.
+
+## Chapter 4 — A small social layer: profiles, mood & motion
+
+### What we built and why
+
+BuddyRead worked, but it didn't yet *feel* like two people in a room. This pass added the texture that makes a reading compact social rather than transactional:
+
+- **Tappable readers → `BuddyProfile` (`/u/:uid`).** Avatars and names are now links — from the Friends circle, the Activity feed, the split card's buddy half, and Profile's buddies list. The page is deliberately small and privacy-honest: it shows a buddy's denormalized identity, "buddies since", and the reads you *share* — nothing of their wider shelf, because the owner-only rules still hold. It reads entirely from data the client already has (relationships + shared reads); no new Firestore reads, no rules change.
+- **Activity that tells the whole story.** Two gaps closed: a `read_started` event (written to your *own* feed when you accept, naming who you're reading with — "You began reading X with Arushi"), and **mood** riding along on every logged session. Actor avatars in the feed tap through to profiles.
+- **The split card got faces and feelings.** Real profile photos when available (gradient initial otherwise), and each reader's latest end-of-session mood under their percent.
+- **A log sheet that respects the gesture.** The +/− stepper became a draggable page bar (with fine ± for precision), a curated mood picker (emoji + word), a handle you can actually drag down to dismiss, a slide-up entrance, and a scroll-locked background so the drag never leaks into the page.
+- **One motion language.** `view-enter` / `pop-enter` / `sheet-enter` / `overlay-enter` in `index.css`, applied everywhere a new surface appears — all flattened by `prefers-reduced-motion`.
+- **Small honesties.** The greeting only ever greets now (no "Good night" goodbye); Profile's appearance widget shrank to the bare theme toggle by Sign out; and `Splash` shows a line from a beloved book, held a minimum three seconds so you can actually read it.
+
+### Decisions & trade-offs (and what we rejected)
+
+- **A profile of what you share, not a profile of them.** The instinct is to show a buddy's full reading life — total reads, all their friends. But those collections are owner-scoped, and opening them would mean denormalizing public stats onto every user. We shipped the honest subset (shared reads + identity) now, and flagged the richer version as deliberate later work rather than quietly relaxing the security model.
+- **`read_started` self-appends.** Every other activity event is appended by the *other* party to your feed. "You began reading…" has no other party to write it, so the accepter writes it to their own feed — still attributable (`actorUid == auth.uid`), still within the existing create rule, no new permissions.
+- **Mood as a curated set, not free emoji.** Six hand-picked moods (emoji + word) render identically in the card and the feed and never degrade into an inconsistent wall of glyphs. Stored by `key`; emoji/word are presentation only.
+- **A draggable bar, not a wheel picker.** An iOS-style scroll wheel is heavier and fussier on the web across phone + iPad; a filled range "volume bar" is one familiar gesture, sets any page in a flick, and keeps fine ± for the last-page nudge.
+
+### Notable details & gotchas
+
+- **`Math.random` is impure — even inside `useMemo`.** The lint rule (`react-hooks/purity`) rejects calling it during render. The fix that actually fit the lifecycle: pick the splash quote once at *module scope*. The splash only really shows at startup, so a per-load pick is exactly right and render stays pure.
+- **JS-driven slide beats a CSS keyframe for a draggable sheet.** The log sheet manages its own `translateY` (open → 0, drag follows the finger, release past a threshold dismisses) because a CSS entrance animation with `fill: both` would keep overriding the inline transform the drag needs. Other sheets/modals, which don't drag, use the shared CSS classes.
+- **A minimum splash, in the guard not the component.** Auth can resolve in a blink, which would flash the quote away. `RequireAuth` holds `Splash` until *both* auth has resolved and a 3s timer has fired — keeping the timing concern next to the thing that decides what renders.
+
+### Questions an interviewer might ask
+
+- **Q: How do you show a "social profile" without leaking data?**
+  You only render what the viewer is already entitled to. Every field on `BuddyProfile` comes from data the client holds for its own sake — the denormalized identity on a relationship, and the reads where the viewer is a participant. Their private collections are never queried, so the security rules don't even have to bend.
+
+- **Q: Why not one global page-transition library?**
+  The need was small and consistent: a handful of surfaces that should all arrive the same quiet way. Four CSS classes keyed off route/mount cost nothing, ship no dependency, and honour `prefers-reduced-motion` for free — and the one surface with a real gesture (the draggable sheet) opts out and drives itself.
