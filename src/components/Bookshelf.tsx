@@ -1,111 +1,77 @@
-import { SPINES } from '../lib/spines'
+import { Link } from 'react-router-dom'
+import { BookCover } from './BookCover'
+import { Eyebrow } from './Eyebrow'
 import { booksOnShelf, SHELVES, spineToneFor, type LibraryItem } from '../lib/library'
-import type { BookshelfProps } from '../library/bookshelf'
 
 /**
- * The Library bookcase — a static, hand-drawn 2D shelf (no 3D). Each book is a
- * bound spine: its colour is washed from its own cover (a blurred cover layer
- * tinted into the candlelit palette, falling back to a leather tone when there's
- * no cover), with raised hubs and a gold-stamped title. Tap a spine and the
- * Library screen brings its cover forward.
+ * The Library shelf — real covers standing face-out on a slim wooden ledge,
+ * themed to the app (warm oak by day, walnut by night). A boutique-bookstore
+ * display rather than a dark box of spines: you see the actual art, and tapping
+ * a book goes straight to its page. One row per shelf (To Read · Read ·
+ * Favorites); rows scroll sideways when full.
  */
 
-function clamp(v: number, lo: number, hi: number) {
-  return Math.max(lo, Math.min(hi, v))
-}
-
-/** One bound spine, sized and coloured from the book. */
-function Spine({
-  item,
-  onSelect,
-}: {
-  item: LibraryItem
-  onSelect: (i: LibraryItem) => void
-}) {
-  const tone = SPINES[spineToneFor(item.id)]
-  const pages = item.book.pageCount ?? 300
-  const width = Math.round(clamp(26, 42, 22 + pages / 40))
-  const height = clamp(82, 99, 76 + pages / 40)
-  const cover = item.book.coverUrl
-
+/** One book standing on the ledge — its cover, a page-block edge, a Link out. */
+function ShelfBook({ item }: { item: LibraryItem }) {
   return (
-    <button
-      type="button"
-      onClick={() => onSelect(item)}
-      aria-label={item.book.title}
-      title={item.book.title}
-      style={{
-        width: `${width}px`,
-        height: `${height}%`,
-        background: `linear-gradient(100deg, ${tone.from}, ${tone.to})`,
-      }}
-      className="spine flex shrink-0 items-center justify-center self-end"
-    >
-      {cover && (
-        <span
-          className="spine-wash"
-          style={{ backgroundImage: `url("${cover}")` }}
-          aria-hidden="true"
-        />
-      )}
-      <span className="spine-tint" aria-hidden="true" />
-      <span className="spine-band" style={{ top: '4%' }} aria-hidden="true" />
-      <span className="spine-band" style={{ bottom: '4%' }} aria-hidden="true" />
-      <span
-        className="spine-title relative z-[1] max-h-[74%] overflow-hidden px-0.5 font-display text-[11px] font-semibold leading-none"
-        style={{ color: tone.ink }}
+    <li className="shelf-book shrink-0">
+      <Link
+        to={`/book/${item.book.id}`}
+        aria-label={item.book.title}
+        title={item.book.title}
+        className="relative block w-[72px] ipad:w-[88px] rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
-        {item.book.title}
-      </span>
-    </button>
+        <BookCover
+          book={{
+            title: item.book.title,
+            coverUrl: item.book.coverUrl,
+            isbn13: null,
+            isbn10: null,
+          }}
+          author={item.book.authors[0]}
+          tone={spineToneFor(item.id)}
+          className="w-full shadow-[0_12px_16px_-9px_rgba(40,22,8,0.55)]"
+        />
+        <span className="book-edge" aria-hidden="true" />
+      </Link>
+    </li>
   )
 }
 
-/** One shelf: a label, a recessed back of spines, the lit plank they rest on. */
-function Shelf({
-  label,
-  items,
-  onSelect,
-}: {
-  label: string
-  items: LibraryItem[]
-  onSelect: (i: LibraryItem) => void
-}) {
+/** One shelf: a label, the row of books, the ledge they stand on. */
+function Shelf({ label, items }: { label: string; items: LibraryItem[] }) {
   return (
-    <div>
-      <div className="flex items-baseline justify-between px-1 pb-1.5">
-        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#e7d6b0]/85">
-          {label}
-        </span>
-        <span className="font-mono text-[10px] text-[#e7d6b0]/45">{items.length}</span>
+    <section>
+      <div className="mb-2 flex items-baseline justify-between px-0.5">
+        <Eyebrow>{label}</Eyebrow>
+        <span className="font-mono text-[10px] text-text-faint">{items.length}</span>
       </div>
-      <div className="shelf-back no-scrollbar relative flex h-[20vh] min-h-[140px] items-end gap-[3px] overflow-x-auto px-3 pt-4">
+      <div className="relative">
         {items.length === 0 ? (
-          <span className="self-center pb-4 font-display text-sm italic text-[#e7d6b0]/40">
-            Nothing here yet.
-          </span>
+          <div className="flex h-[120px] items-end px-1 pb-3 ipad:h-[146px]">
+            <span className="font-display text-sm italic text-text-faint">
+              Nothing here yet.
+            </span>
+          </div>
         ) : (
-          items.map((it) => <Spine key={it.id} item={it} onSelect={onSelect} />)
+          <ul className="no-scrollbar flex items-end gap-4 overflow-x-auto px-1 pt-3 pb-0">
+            {items.map((it) => (
+              <ShelfBook key={it.id} item={it} />
+            ))}
+          </ul>
         )}
+        <div className="shelf-ledge" />
       </div>
-      <div className="shelf-plank h-3.5 rounded-[1px]" />
-    </div>
+    </section>
   )
 }
 
-export function Bookshelf({ items, onSelect }: BookshelfProps) {
+export function Bookshelf({ items }: { items: LibraryItem[] }) {
   return (
-    <div className="bookcase rounded-2xl p-3 ipad:p-4">
-      <div className="space-y-2.5">
-        {SHELVES.map((s) => (
-          <Shelf
-            key={s.key}
-            label={s.label}
-            items={booksOnShelf(items, s.key)}
-            onSelect={onSelect}
-          />
-        ))}
-      </div>
+    <div className="space-y-7">
+      {SHELVES.map((s) => (
+        <Shelf key={s.key} label={s.label} items={booksOnShelf(items, s.key)} />
+      ))}
     </div>
   )
 }

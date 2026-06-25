@@ -4,7 +4,6 @@ import { AppShell } from '../components/AppShell'
 import { Avatar } from '../components/Avatar'
 import { BookCover } from '../components/BookCover'
 import { Bookshelf } from '../components/Bookshelf'
-import { BookSpotlight } from '../components/BookSpotlight'
 import { Eyebrow } from '../components/Eyebrow'
 import { useAuth } from '../auth/useAuth'
 import { useFriends } from '../friends/useFriends'
@@ -39,7 +38,6 @@ export function BuddyProfile() {
   // Their library — a one-shot read (friends can read it; see firestore.rules).
   const [lib, setLib] = useState<LibraryItem[]>([])
   const [libLoading, setLibLoading] = useState(true)
-  const [selected, setSelected] = useState<LibraryItem | null>(null)
 
   useEffect(() => {
     if (!them) return
@@ -130,7 +128,7 @@ export function BuddyProfile() {
             No books shelved yet.
           </p>
         ) : (
-          <Bookshelf items={lib} onSelect={setSelected} />
+          <Bookshelf items={lib} />
         )}
       </section>
 
@@ -183,8 +181,6 @@ export function BuddyProfile() {
           Read something together
         </Link>
       )}
-
-      {selected && <BookSpotlight item={selected} onClose={() => setSelected(null)} />}
     </AppShell>
   )
 }

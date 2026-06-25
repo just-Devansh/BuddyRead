@@ -1,11 +1,8 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { Bookshelf } from '../components/Bookshelf'
-import { BookSpotlight } from '../components/BookSpotlight'
 import { Eyebrow } from '../components/Eyebrow'
 import { useLibrary } from '../library/useLibrary'
-import type { LibraryItem } from '../lib/library'
 
 /** The search affordance — a big magnifier that opens the full search page
  *  straight away (same as the Shelf's "Find a book"; no in-place typing). */
@@ -26,13 +23,12 @@ function SearchButton() {
 
 /**
  * Your Library — your books as an actual bookshelf (To Read · Read · Favorites),
- * inspired by Goodreads/Fable lists but shown as a shelf you browse. Search lives
- * here now (the collapsible magnifier, top-right). Tap a spine to bring its cover
- * forward; tap the cover for the book's page.
+ * inspired by Goodreads/Fable lists but shown as a shelf you browse: real covers
+ * standing on wooden ledges. Search lives here now (the magnifier, top-right, →
+ * the full search page). Tap a book for its page.
  */
 export function Library() {
   const { items, loading } = useLibrary()
-  const [selected, setSelected] = useState<LibraryItem | null>(null)
 
   return (
     <AppShell>
@@ -62,11 +58,9 @@ export function Library() {
             </Link>
           </div>
         ) : (
-          <Bookshelf items={items} onSelect={setSelected} />
+          <Bookshelf items={items} />
         )}
       </section>
-
-      {selected && <BookSpotlight item={selected} onClose={() => setSelected(null)} />}
     </AppShell>
   )
 }

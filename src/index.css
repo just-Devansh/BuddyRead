@@ -178,86 +178,41 @@ h1, h2, h3, h4 {
   animation: pop-in 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
-/* ---- The Library: a static 2D bookcase ----------------------------------
-   A drawn walnut case with recessed shelf backs and lit planks; each book is a
-   bound spine whose colour is washed from its own cover (a blurred cover layer
-   under a leather tint), with raised hubs and a gold-stamped title. No 3D. */
-.bookcase {
-  background-color: #2c1e13;
-  background-image:
-    linear-gradient(180deg, rgba(255, 238, 205, 0.06), rgba(0, 0, 0, 0.28)),
-    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.13) 0 1px, transparent 1px 6px);
-  box-shadow:
-    0 34px 64px -34px rgba(8, 4, 1, 0.9),
-    inset 0 1px 0 rgba(255, 228, 188, 0.1),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.4);
+/* ---- The Library: face-out covers on candlelit wooden ledges ------------
+   Real covers stand on a slim wooden ledge, themed to the app (warm oak by day,
+   walnut by night) rather than a dark box. A drop shadow grounds each book; a
+   thin page-block on the right gives it thickness; it lifts gently on hover. */
+.shelf-book {
+  transition: transform 240ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
-.shelf-back {
-  background:
-    radial-gradient(130% 90% at 50% -15%, rgba(199, 162, 78, 0.12), transparent 62%),
-    linear-gradient(180deg, #241710, #18100a);
-  box-shadow:
-    inset 0 14px 20px -12px rgba(0, 0, 0, 0.85),
-    inset 0 -3px 6px -2px rgba(0, 0, 0, 0.5),
-    inset 2px 0 6px -3px rgba(0, 0, 0, 0.6),
-    inset -2px 0 6px -3px rgba(0, 0, 0, 0.6);
+.shelf-book:hover {
+  transform: translateY(-7px);
 }
-.shelf-plank {
-  background: linear-gradient(180deg, #7a5232 0%, #5a3a20 45%, #3f2913 100%);
-  box-shadow:
-    0 7px 12px -5px rgba(0, 0, 0, 0.7),
-    inset 0 1px 0 rgba(255, 228, 184, 0.22),
-    inset 0 -3px 4px -1px rgba(0, 0, 0, 0.45);
-}
-.spine {
-  position: relative;
-  overflow: hidden;
-  border-radius: 2px 3.5px 3.5px 2px;
-  box-shadow:
-    1px 0 0 rgba(0, 0, 0, 0.35),
-    -1px 0 2px rgba(0, 0, 0, 0.25),
-    0 8px 12px -8px rgba(0, 0, 0, 0.7);
-  transition: transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-.spine:hover,
-.spine:focus-visible {
-  transform: translateY(-8px);
-  outline: none;
-}
-.spine-wash {
+.book-edge {
   position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  filter: blur(2.5px) brightness(0.82) saturate(1.08);
-  transform: scale(1.2);
+  top: 3%;
+  bottom: 3%;
+  right: -3px;
+  width: 4px;
+  border-radius: 0 2px 2px 0;
+  background: repeating-linear-gradient(180deg, #efe4cf 0 1.2px, #cdbd9e 1.2px 2.4px);
+  box-shadow: 1px 0 2px rgba(0, 0, 0, 0.25);
 }
-.spine-tint {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(
-      100deg,
-      rgba(0, 0, 0, 0.52) 0%,
-      rgba(0, 0, 0, 0.12) 16%,
-      rgba(255, 246, 226, 0.14) 45%,
-      rgba(0, 0, 0, 0.16) 62%,
-      rgba(0, 0, 0, 0.5) 100%
-    ),
-    linear-gradient(180deg, rgba(20, 12, 6, 0.5), transparent 10%, transparent 90%, rgba(20, 12, 6, 0.55));
+.shelf-ledge {
+  height: 11px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #caa676 0%, #a9824f 42%, #7d5d36 100%);
+  box-shadow:
+    0 11px 16px -8px rgba(70, 40, 15, 0.45),
+    inset 0 1px 0 rgba(255, 243, 219, 0.7),
+    inset 0 -3px 4px -2px rgba(0, 0, 0, 0.28);
 }
-.spine-band {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 6%;
-  background: linear-gradient(180deg, rgba(255, 232, 190, 0.16), rgba(0, 0, 0, 0.28));
-  box-shadow: inset 0 1px 0 rgba(255, 232, 190, 0.22), inset 0 -1px 1px rgba(0, 0, 0, 0.5);
-}
-.spine-title {
-  writing-mode: vertical-rl;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.65), 0 0 1px rgba(0, 0, 0, 0.4);
-  letter-spacing: 0.01em;
+.dark .shelf-ledge {
+  background: linear-gradient(180deg, #6a4a2e 0%, #4d3420 45%, #33220f 100%);
+  box-shadow:
+    0 11px 16px -8px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 224, 180, 0.26),
+    inset 0 -3px 4px -2px rgba(0, 0, 0, 0.5);
 }
 
 /* The curated shelf unrolls: each book settles onto the shelf in turn, like a
