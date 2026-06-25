@@ -13,10 +13,16 @@ export function StarRating({
   value,
   onChange,
   size = 'text-4xl',
+  fillColor,
+  trackColor,
 }: {
   value: number
   onChange?: (v: number) => void
   size?: string
+  /** Explicit fill colour (defaults to the themed accent). Used by the keepsake
+   *  card, which must render a fixed light/dark palette regardless of app theme. */
+  fillColor?: string
+  trackColor?: string
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const interactive = !!onChange
@@ -56,7 +62,11 @@ export function StarRating({
       }`}
     >
       {/* Outline layer */}
-      <div className="flex text-border" aria-hidden="true">
+      <div
+        className={`flex ${trackColor ? '' : 'text-border'}`}
+        style={trackColor ? { color: trackColor } : undefined}
+        aria-hidden="true"
+      >
         {STARS.map((i) => (
           <span key={i} className="px-0.5">
             ★
@@ -65,8 +75,11 @@ export function StarRating({
       </div>
       {/* Filled layer, clipped from the right to the value */}
       <div
-        className="absolute inset-0 flex text-accent"
-        style={{ clipPath: `inset(0 ${100 - pct}% 0 0)` }}
+        className={`absolute inset-0 flex ${fillColor ? '' : 'text-accent'}`}
+        style={{
+          clipPath: `inset(0 ${100 - pct}% 0 0)`,
+          ...(fillColor ? { color: fillColor } : {}),
+        }}
         aria-hidden="true"
       >
         {STARS.map((i) => (

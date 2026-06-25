@@ -35,6 +35,9 @@ function MiniRow({ label, frac, tone }: { label: string; frac: number | null; to
 function ReadCard({ read, uid }: { read: Read; uid: string }) {
   const buddy = otherReader(read, uid)
   const buddyName = buddy.displayName ?? 'Your buddy'
+  // The mini progress rows are tight (a truncated label) — a last name only ever
+  // shows half. First name only, on both phone and iPad.
+  const buddyFirst = buddyName.trim().split(' ')[0]
   return (
     <Link
       to={`/read/${read.id}`}
@@ -55,7 +58,7 @@ function ReadCard({ read, uid }: { read: Read; uid: string }) {
         <Eyebrow className="mt-1 block">with {buddyName}</Eyebrow>
         <div className="mt-3 space-y-2">
           <MiniRow label="You" frac={fractionFor(read, uid)} tone="accent" />
-          <MiniRow label={buddyName} frac={fractionFor(read, buddy.uid)} tone="gold" />
+          <MiniRow label={buddyFirst} frac={fractionFor(read, buddy.uid)} tone="gold" />
         </div>
       </div>
     </Link>

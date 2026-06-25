@@ -4,11 +4,15 @@ import { AppShell } from '../components/AppShell'
 import { BookCover } from '../components/BookCover'
 import { CloseReadSheet } from '../components/CloseReadSheet'
 import { Eyebrow } from '../components/Eyebrow'
+import { FitToWidth } from '../components/FitToWidth'
+import { KeepsakeCard, KEEPSAKE_WIDTH } from '../components/KeepsakeCard'
+import { KeepsakeShareModal } from '../components/KeepsakeShareModal'
 import { LogSessionSheet } from '../components/LogSessionSheet'
 import { SplitProgressCard } from '../components/SplitProgressCard'
 import { StarRating } from '../components/StarRating'
 import { useConfirm } from '../components/useConfirm'
 import { useAuth } from '../auth/useAuth'
+import { useTheme } from '../theme/useTheme'
 import { useReads } from '../reads/useReads'
 import { logActivity } from '../lib/activity'
 import { setShelf } from '../lib/library'
@@ -133,10 +137,12 @@ export function CoRead() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { resolved } = useTheme()
   const { active, loading } = useReads()
   const { confirm, dialog } = useConfirm()
   const [logging, setLogging] = useState(false)
   const [closing, setClosing] = useState(false)
+  const [sharing, setSharing] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const uid = user?.uid ?? ''
@@ -163,7 +169,16 @@ export function CoRead() {
   const theirs = read.progress?.[buddy.uid]
   const buddyName = buddy.displayName ?? 'Your buddy'
   const myFinish = finishFor(read, uid)
-  const sealed = !bothFinished(read) // verdicts hidden until you both close
+  const theirFinish = finishFor(read, buddy.uid)
+  const bothDone = bothFinished(read) // verdicts unseal only once you both close
+
+  // The keepsake's two sides (only meaningful once both have closed the book).
+  const startedAt = read.respondedAt?.toMillis() ?? read.createdAt?.toMillis() ?? null
+  const youSide =
+    myFinish && { name: 'You', src: user?.photoURL, finish: myFinish, progress: mine }
+  const buddySide =
+    theirFinish &&
+    { name: buddyName, src: buddy.photoURL, finish: theirFinish, progress: theirs }
 
   const save = async (page: number, note: string, mood: string | null) => {
     setSaving(true)
@@ -270,90 +285,118 @@ export function CoRead() {
         <SetupMine readId={read.id} uid={uid} defaultTotal={read.book.pageCount} />
       ) : (
         <>
-          <div className="mt-5">
-            <SplitProgressCard
-              you={{ name: 'You', tone: 'terracotta', src: user?.photoURL, progress: mine }}
-              buddy={{
-                name: buddyName,
-                tone: 'gold',
-                src: buddy.photoURL,
-                to: `/u/${buddy.uid}`,
-                progress: theirs,
-              }}
-              paceLine={paceLine(
-                fractionFor(read, uid),
-                fractionFor(read, buddy.uid),
-                buddyName,
-              )}
-            />
-          </div>
-
-          {/* Buddy's latest note, if any */}
-          {theirs?.note && (
-            <div className="mt-5 rounded-xl border border-border bg-surface p-4">
-              <div className="flex items-center justify-between">
-                <Eyebrow>{buddyName}'s note</Eyebrow>
-                <span className="font-mono text-[9px] text-text-faint">
-                  p.{theirs.currentPage}
-                </span>
-              </div>
-              <p className="mt-2 font-display text-lg italic leading-snug text-text-muted">
-                “{theirs.note}”
-              </p>
-            </div>
-          )}
-
-          {myFinish ? (
-            /* I've closed the book — my verdict, sealed until they finish too. */
-            <div className="mt-6 rounded-2xl border border-border bg-surface p-5 text-center">
-              <Eyebrow className="block">
-                {myFinish.dnf ? 'You set this down' : 'You closed the book'}
-              </Eyebrow>
-              {!myFinish.dnf && myFinish.rating != null && (
-                <div className="mt-3 flex flex-col items-center gap-1.5">
-                  <StarRating value={myFinish.rating} size="text-2xl" />
-                  <span className="font-display text-lg text-text-muted">
-                    {formatRating(myFinish.rating)}
-                    {myFinish.favorite && <span className="ml-1.5 text-accent">♥</span>}
-                  </span>
-                </div>
-              )}
-              {myFinish.review && (
-                <p className="mx-auto mt-3 max-w-md font-display text-lg italic leading-snug text-text-muted">
-                  “{myFinish.review}”
+          {bothDone && youSide && buddySide ? (
+            /* Both closed the book — the seal breaks, the keepsake appears. */
+            <div className="mt-6">
+              <div className="text-center">
+                <Eyebrow className="block">You've both closed the book</Eyebrow>
+                <p className="mx-auto mt-2 max-w-md text-pretty leading-relaxed text-text-muted">
+                  Here's what “{read.book.title}” left you both.
                 </p>
-              )}
-              <p className="mt-4 text-sm leading-relaxed text-text-muted">
-                {sealed
-                  ? `Sealed until ${buddyName} finishes — then you'll read each other's at once.`
-                  : `${buddyName} has finished too.`}
-              </p>
-              {sealed && (
-                <button
-                  type="button"
-                  onClick={() => void reopen()}
-                  className="mt-3 font-mono text-[10px] uppercase tracking-[0.1em] text-text-faint transition-colors hover:text-accent"
-                >
-                  Reopen this read
-                </button>
-              )}
+              </div>
+              <div className="mt-6">
+                <FitToWidth width={KEEPSAKE_WIDTH}>
+                  <KeepsakeCard
+                    book={read.book}
+                    you={youSide}
+                    buddy={buddySide}
+                    startedAt={startedAt}
+                    mode={resolved}
+                  />
+                </FitToWidth>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSharing(true)}
+                className="mt-6 w-full rounded-xl bg-accent py-3.5 font-medium text-accent-contrast transition-opacity hover:opacity-90"
+              >
+                Save or share this keepsake
+              </button>
             </div>
           ) : (
             <>
-              <button
-                type="button"
-                onClick={() => setLogging(true)}
-                className="mt-6 w-full rounded-xl bg-accent py-4 font-medium text-accent-contrast shadow-[0_12px_24px_-14px_rgba(138,69,54,0.7)] transition-opacity hover:opacity-90"
-              >
-                Log tonight's pages
-              </button>
-              <button
-                type="button"
-                onClick={() => setClosing(true)}
-                className="mx-auto mt-3 block font-mono text-[10px] uppercase tracking-[0.1em] text-text-faint transition-colors hover:text-accent"
-              >
-                Close this read ›
-              </button>
+              <div className="mt-5">
+                <SplitProgressCard
+                  you={{ name: 'You', tone: 'terracotta', src: user?.photoURL, progress: mine }}
+                  buddy={{
+                    name: buddyName,
+                    tone: 'gold',
+                    src: buddy.photoURL,
+                    to: `/u/${buddy.uid}`,
+                    progress: theirs,
+                  }}
+                  paceLine={paceLine(
+                    fractionFor(read, uid),
+                    fractionFor(read, buddy.uid),
+                    buddyName,
+                  )}
+                />
+              </div>
+
+              {/* Buddy's latest note, if any */}
+              {theirs?.note && (
+                <div className="mt-5 rounded-xl border border-border bg-surface p-4">
+                  <div className="flex items-center justify-between">
+                    <Eyebrow>{buddyName}'s note</Eyebrow>
+                    <span className="font-mono text-[9px] text-text-faint">
+                      p.{theirs.currentPage}
+                    </span>
+                  </div>
+                  <p className="mt-2 font-display text-lg italic leading-snug text-text-muted">
+                    “{theirs.note}”
+                  </p>
+                </div>
+              )}
+
+              {myFinish ? (
+                /* I've closed the book — my verdict, sealed until they finish too. */
+                <div className="mt-6 rounded-2xl border border-border bg-surface p-5 text-center">
+                  <Eyebrow className="block">
+                    {myFinish.dnf ? 'You set this down' : 'You closed the book'}
+                  </Eyebrow>
+                  {!myFinish.dnf && myFinish.rating != null && (
+                    <div className="mt-3 flex flex-col items-center gap-1.5">
+                      <StarRating value={myFinish.rating} size="text-2xl" />
+                      <span className="font-display text-lg text-text-muted">
+                        {formatRating(myFinish.rating)}
+                        {myFinish.favorite && <span className="ml-1.5 text-accent">♥</span>}
+                      </span>
+                    </div>
+                  )}
+                  {myFinish.review && (
+                    <p className="mx-auto mt-3 max-w-md font-display text-lg italic leading-snug text-text-muted">
+                      “{myFinish.review}”
+                    </p>
+                  )}
+                  <p className="mt-4 text-sm leading-relaxed text-text-muted">
+                    Sealed until {buddyName} finishes — then you'll read each other's at once.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void reopen()}
+                    className="mt-3 font-mono text-[10px] uppercase tracking-[0.1em] text-text-faint transition-colors hover:text-accent"
+                  >
+                    Reopen this read
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setLogging(true)}
+                    className="mt-6 w-full rounded-xl bg-accent py-4 font-medium text-accent-contrast shadow-[0_12px_24px_-14px_rgba(138,69,54,0.7)] transition-opacity hover:opacity-90"
+                  >
+                    Log tonight's pages
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setClosing(true)}
+                    className="mx-auto mt-3 block font-mono text-[10px] uppercase tracking-[0.1em] text-text-faint transition-colors hover:text-accent"
+                  >
+                    Close this read ›
+                  </button>
+                </>
+              )}
             </>
           )}
 
@@ -379,6 +422,17 @@ export function CoRead() {
               saving={saving}
               onSave={(verdict) => void finish(verdict)}
               onClose={() => setClosing(false)}
+            />
+          )}
+
+          {sharing && youSide && buddySide && (
+            <KeepsakeShareModal
+              book={read.book}
+              you={youSide}
+              buddy={buddySide}
+              startedAt={startedAt}
+              defaultMode={resolved}
+              onClose={() => setSharing(false)}
             />
           )}
         </>
