@@ -52,9 +52,9 @@ export function ConfirmDialog({
         aria-label="Cancel"
         tabIndex={-1}
         onClick={onCancel}
-        className="absolute inset-0 cursor-default bg-black/50 backdrop-blur-sm"
+        className="overlay-enter absolute inset-0 cursor-default bg-black/50 backdrop-blur-sm"
       />
-      <div className="relative w-full max-w-sm rounded-2xl border border-border bg-surface p-6 shadow-xl">
+      <div className="pop-enter relative w-full max-w-sm rounded-2xl border border-border bg-surface p-6 shadow-xl">
         <h2 id="confirm-title" className="font-display text-xl text-text">
           {title}
         </h2>

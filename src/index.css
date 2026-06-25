@@ -104,6 +104,76 @@ h1, h2, h3, h4 {
   display: none; /* WebKit / Blink */
 }
 
+/* The page bar in the log sheet — a draggable "volume bar". The element's own
+   background is painted as a filled track (inline gradient up to the value), so
+   we strip the native track and drop a tactile terracotta thumb on top. */
+.page-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 9999px;
+  outline: none;
+  cursor: pointer;
+}
+.page-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 26px;
+  width: 26px;
+  border-radius: 9999px;
+  background: var(--accent);
+  border: 3px solid var(--surface);
+  box-shadow: 0 2px 8px -1px rgba(0, 0, 0, 0.35);
+  cursor: grab;
+}
+.page-range::-webkit-slider-thumb:active {
+  cursor: grabbing;
+}
+.page-range::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  border-radius: 9999px;
+  background: var(--accent);
+  border: 3px solid var(--surface);
+  box-shadow: 0 2px 8px -1px rgba(0, 0, 0, 0.35);
+  cursor: grab;
+}
+.page-range:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+/* ---- One consistent "a new view arrived" motion, used everywhere -----------
+   A screen rises in; a modal pops in; a backdrop fades. Quiet, classy, not
+   snappy. prefers-reduced-motion (below) flattens all of it. */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.sheet-enter {
+  animation: sheet-up 360ms cubic-bezier(0.22, 0.61, 0.18, 1) both;
+}
+.view-enter {
+  animation: rise-in 360ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.overlay-enter {
+  animation: fade-in 260ms ease both;
+}
+.pop-enter {
+  animation: pop-in 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
 /* The curated shelf unrolls: each book settles onto the shelf in turn, like a
    scroll being unfurled left to right. Staggered via inline animation-delay. */
 @keyframes unfurl-in {

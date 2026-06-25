@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from './useAuth'
 import { Splash } from '../components/Splash'
@@ -12,7 +13,15 @@ import { ReadsProvider } from '../reads/ReadsProvider'
 export function RequireAuth() {
   const { user, loading } = useAuth()
 
-  if (loading) return <Splash />
+  // Hold the splash at least 3s so its quote is actually readable, even when
+  // auth resolves in a blink.
+  const [quoteTime, setQuoteTime] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setQuoteTime(true), 3000)
+    return () => clearTimeout(t)
+  }, [])
+
+  if (loading || !quoteTime) return <Splash />
   if (!user) return <Navigate to="/" replace />
   return (
     <FriendsProvider>

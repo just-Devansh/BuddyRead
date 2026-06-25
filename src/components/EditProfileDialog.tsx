@@ -95,8 +95,8 @@ export function EditProfileDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-6" role="dialog" aria-modal="true">
-      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-      <div className="relative w-full max-w-sm rounded-2xl border border-border bg-surface p-6 shadow-xl">
+      <button type="button" aria-label="Close" onClick={onClose} className="overlay-enter absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div className="pop-enter relative w-full max-w-sm rounded-2xl border border-border bg-surface p-6 shadow-xl">
         <h2 className="font-display text-xl text-text">Your username</h2>
         <p className="mt-1 text-sm text-text-muted">
           How buddies find and recognise you. Changeable once every 30 days.

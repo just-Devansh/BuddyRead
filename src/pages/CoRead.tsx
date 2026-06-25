@@ -153,15 +153,16 @@ export function CoRead() {
   const theirs = read.progress?.[buddy.uid]
   const buddyName = buddy.displayName ?? 'Your buddy'
 
-  const save = async (page: number, note: string) => {
+  const save = async (page: number, note: string, mood: string | null) => {
     setSaving(true)
     try {
-      await logMyProgress(read.id, uid, page, note)
+      await logMyProgress(read.id, uid, page, note, mood)
       if (user)
         await logActivity(buddy.uid, user, 'read_logged', {
           bookTitle: read.book.title,
           page,
           note: note.trim() || null,
+          mood,
         })
       setLogging(false)
     } finally {
@@ -228,8 +229,14 @@ export function CoRead() {
         <>
           <div className="mt-5">
             <SplitProgressCard
-              you={{ name: 'You', tone: 'terracotta', progress: mine }}
-              buddy={{ name: buddyName, tone: 'gold', progress: theirs }}
+              you={{ name: 'You', tone: 'terracotta', src: user?.photoURL, progress: mine }}
+              buddy={{
+                name: buddyName,
+                tone: 'gold',
+                src: buddy.photoURL,
+                to: `/u/${buddy.uid}`,
+                progress: theirs,
+              }}
               paceLine={paceLine(
                 fractionFor(read, uid),
                 fractionFor(read, buddy.uid),
@@ -265,11 +272,12 @@ export function CoRead() {
             <LogSessionSheet
               open
               startPage={mine.currentPage}
+              startMood={mine.mood}
               total={mine.totalPages}
               edition={mine.edition}
               buddyName={buddyName}
               saving={saving}
-              onSave={(page, note) => void save(page, note)}
+              onSave={(page, note, mood) => void save(page, note, mood)}
               onClose={() => setLogging(false)}
             />
           )}

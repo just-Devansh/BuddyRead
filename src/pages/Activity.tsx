@@ -16,6 +16,7 @@ import { useAuth } from '../auth/useAuth'
 import { useFriends } from '../friends/useFriends'
 import { useReads } from '../reads/useReads'
 import { logActivity, type ActivityEventDoc, type ActivityItem } from '../lib/activity'
+import { moodByKey, type Mood } from '../lib/moods'
 import { acceptFriendRequest, removeRelationship } from '../lib/friends'
 import { acceptReadRequest, removeRead } from '../lib/reads'
 
@@ -38,23 +39,32 @@ function ago(ms: number): string {
 const strong = (s: string) => <strong className="font-semibold">{s}</strong>
 const em = (s: string) => <em className="font-display italic">{s}</em>
 
-/** Turn one logged event into its line (and an optional quoted note). */
-function describe(it: ActivityItem): { body: ReactNode; quote?: string } {
+/** Turn one logged event into its line, an optional quoted note, and a mood. */
+function describe(it: ActivityItem): { body: ReactNode; quote?: string; mood?: Mood | null } {
   const who = it.actorName ?? 'A reader'
   const book = it.bookTitle ?? 'your book'
   switch (it.type) {
     case 'friend_accepted':
-      return { body: <>{strong(who)} accepted your buddy request.</> }
+      return { body: <>You and {strong(who)} are reading buddies now.</> }
     case 'friend_declined':
       return { body: <>{strong(who)} declined your buddy request.</> }
     case 'read_accepted':
       return { body: <>{strong(who)} is in — you're reading {em(book)} together.</> }
+    case 'read_started':
+      return {
+        body: it.withName ? (
+          <>You began reading {em(book)} with {strong(it.withName)}.</>
+        ) : (
+          <>You began reading {em(book)}.</>
+        ),
+      }
     case 'read_declined':
       return { body: <>{strong(who)} passed on reading {em(book)}.</> }
     case 'read_logged':
       return {
         body: <>{strong(who)} reached p.{it.page} in {em(book)}.</>,
         quote: it.note ?? undefined,
+        mood: moodByKey(it.mood),
       }
     case 'read_left':
       return { body: <>{strong(who)} stepped away from {em(book)}.</> }
@@ -178,10 +188,16 @@ export function Activity() {
                     onClick={() =>
                       void act(r.id, async () => {
                         await acceptReadRequest(r.id)
-                        if (user)
+                        if (user) {
                           await logActivity(r.fromUid, user, 'read_accepted', {
                             bookTitle: r.book.title,
                           })
+                          // A start entry for my own feed, naming who I'm reading with.
+                          await logActivity(user.uid, user, 'read_started', {
+                            bookTitle: r.book.title,
+                            withName: r.fromName,
+                          })
+                        }
                       })
                     }
                     className={`${PILL} flex-1 bg-accent text-accent-contrast hover:opacity-90`}
@@ -224,17 +240,35 @@ export function Activity() {
           <Eyebrow className="mb-1 block">Lately</Eyebrow>
           <ul>
             {events.map((it) => {
-              const { body, quote } = describe(it)
+              const { body, quote, mood } = describe(it)
+              const isOther = it.actorUid && it.actorUid !== user?.uid
+              const avatar = (
+                <Avatar src={it.actorPhotoURL} name={it.actorName} size="h-9 w-9" />
+              )
               return (
                 <li
                   key={it.id}
                   className="flex items-start gap-3 border-t border-border-soft py-3.5"
                 >
-                  <Avatar src={it.actorPhotoURL} name={it.actorName} size="h-9 w-9" />
+                  {isOther ? (
+                    <Link to={`/u/${it.actorUid}`} className="shrink-0">
+                      {avatar}
+                    </Link>
+                  ) : (
+                    avatar
+                  )}
                   <div className="min-w-0 flex-1">
                     <p className="leading-snug text-text">{body}</p>
                     {quote && (
                       <p className="mt-1 font-display italic text-text-muted">“{quote}”</p>
+                    )}
+                    {mood && (
+                      <p className="mt-1 text-sm text-text-muted">
+                        <span aria-hidden="true">{mood.emoji}</span>{' '}
+                        <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-text-faint">
+                          {mood.word}
+                        </span>
+                      </p>
                     )}
                     <p className="mt-1 font-mono text-[9px] tracking-[0.06em] text-text-faint">
                       {ago(it.createdAt?.toMillis() ?? 0)}

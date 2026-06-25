@@ -19,20 +19,23 @@ import {
   type Relationship,
 } from '../lib/friends'
 
-/** A reader row: avatar + name, with an action slot on the right. */
+/** A reader row: avatar + name, with an action slot on the right. When `to` is
+ *  given, the avatar + name become a tappable link to that reader's profile. */
 function PersonRow({
   name,
   photoURL,
   subtitle,
+  to,
   children,
 }: {
   name: string | null
   photoURL: string | null
   subtitle?: string
+  to?: string
   children?: React.ReactNode
 }) {
-  return (
-    <li className="flex items-center gap-3 border-t border-border-soft py-3.5">
+  const inner = (
+    <>
       <Avatar src={photoURL} name={name} size="h-10 w-10" />
       <div className="min-w-0 flex-1">
         <p className="truncate font-display text-lg leading-tight text-text">
@@ -44,6 +47,17 @@ function PersonRow({
           </p>
         )}
       </div>
+    </>
+  )
+  return (
+    <li className="flex items-center gap-3 border-t border-border-soft py-3.5">
+      {to ? (
+        <Link to={to} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg">
+          {inner}
+        </Link>
+      ) : (
+        <div className="flex min-w-0 flex-1 items-center gap-3">{inner}</div>
+      )}
       <div className="flex shrink-0 items-center gap-2">{children}</div>
     </li>
   )
@@ -288,6 +302,7 @@ export function Friends() {
                 name={friendName(r)}
                 photoURL={otherParty(r, user?.uid ?? '').photoURL}
                 subtitle="Reading buddy"
+                to={`/u/${otherParty(r, user?.uid ?? '').uid}`}
               >
                 <Link
                   to={`/search?with=${otherParty(r, user?.uid ?? '').uid}&name=${encodeURIComponent(friendName(r) ?? '')}`}

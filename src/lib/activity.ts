@@ -18,6 +18,7 @@ export type ActivityType =
   | 'friend_accepted'
   | 'friend_declined'
   | 'read_accepted'
+  | 'read_started'
   | 'read_declined'
   | 'read_logged'
   | 'read_left'
@@ -28,8 +29,12 @@ export interface ActivityEventDoc {
   actorPhotoURL: string | null
   type: ActivityType
   bookTitle: string | null
+  /** The other reader's name, when an event reads better with it (e.g. starts). */
+  withName: string | null
   page: number | null
   note: string | null
+  /** A curated mood key (see lib/moods.ts), when one was shared. */
+  mood: string | null
   createdAt: Timestamp | null
 }
 
@@ -37,7 +42,13 @@ export interface ActivityItem extends ActivityEventDoc {
   id: string
 }
 
-type Detail = { bookTitle?: string | null; page?: number | null; note?: string | null }
+type Detail = {
+  bookTitle?: string | null
+  withName?: string | null
+  page?: number | null
+  note?: string | null
+  mood?: string | null
+}
 
 export async function logActivity(
   recipientUid: string,
@@ -52,8 +63,10 @@ export async function logActivity(
       actorPhotoURL: actor.photoURL,
       type,
       bookTitle: detail.bookTitle ?? null,
+      withName: detail.withName ?? null,
       page: detail.page ?? null,
       note: detail.note ?? null,
+      mood: detail.mood ?? null,
       createdAt: serverTimestamp(),
     })
   } catch {

@@ -37,6 +37,8 @@ export interface ProgressEntry {
   totalPages: number
   currentPage: number
   note: string | null
+  /** A curated end-of-session mood key (see lib/moods.ts), or null. */
+  mood: string | null
   updatedAt: Timestamp | null
   noteAt: Timestamp | null
 }
@@ -116,23 +118,26 @@ export async function setupMyProgress(
       totalPages,
       currentPage: startPage,
       note: null,
+      mood: null,
       updatedAt: serverTimestamp(),
       noteAt: null,
     },
   })
 }
 
-/** Log tonight's pages: move my bookmark, optionally leave a line. */
+/** Log tonight's pages: move my bookmark, optionally leave a line and a mood. */
 export async function logMyProgress(
   id: string,
   uid: string,
   currentPage: number,
   note?: string | null,
+  mood?: string | null,
 ): Promise<void> {
   const trimmed = note?.trim() || null
   await updateDoc(doc(db, 'reads', id), {
     [`progress.${uid}.currentPage`]: currentPage,
     [`progress.${uid}.updatedAt`]: serverTimestamp(),
+    [`progress.${uid}.mood`]: mood ?? null,
     ...(trimmed
       ? { [`progress.${uid}.note`]: trimmed, [`progress.${uid}.noteAt`]: serverTimestamp() }
       : {}),

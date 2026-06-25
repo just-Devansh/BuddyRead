@@ -9,14 +9,12 @@ import { useReads } from '../reads/useReads'
 import { fractionFor, otherReader, type Read } from '../lib/reads'
 import { STARTERS, starterCover } from '../lib/starters'
 
-/** Time-of-day greeting — warm, and a little knowing past midnight. */
+/** Time-of-day greeting — always an actual greeting, never a goodbye. */
 function greeting(): string {
   const h = new Date().getHours()
-  if (h < 5) return 'Still up'
   if (h < 12) return 'Good morning'
   if (h < 17) return 'Good afternoon'
-  if (h < 21) return 'Good evening'
-  return 'Good night'
+  return 'Good evening'
 }
 
 /** One reader's mini progress row inside a shelf card. */

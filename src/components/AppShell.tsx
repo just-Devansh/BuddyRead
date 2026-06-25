@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { Logo } from './Logo'
 import { BottomNav } from './BottomNav'
 
@@ -9,6 +9,7 @@ import { BottomNav } from './BottomNav'
  * fills it, nudging padding up a touch on iPad.
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const location = useLocation()
   return (
     <div className="flex flex-1 flex-col">
       <header className="sticky top-0 z-10 border-b border-border-soft bg-bg/80 backdrop-blur">
@@ -22,7 +23,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1 px-5 py-8 ipad:px-8 ipad:py-10">{children}</main>
+      <main
+        key={location.pathname}
+        className="view-enter flex-1 px-5 py-8 ipad:px-8 ipad:py-10"
+      >
+        {children}
+      </main>
 
       <BottomNav />
     </div>

@@ -1,10 +1,16 @@
+import { Link } from 'react-router-dom'
 import { Avatar, type AvatarTone } from './Avatar'
 import { ProgressBar } from './ProgressBar'
+import { moodByKey } from '../lib/moods'
 import type { ProgressEntry } from '../lib/reads'
 
 export type Side = {
   name: string
   tone: AvatarTone
+  /** Real photo, when we have one — falls back to the gradient initial. */
+  src?: string | null
+  /** Where tapping this reader goes, if anywhere (their profile). */
+  to?: string
   progress: ProgressEntry | undefined
 }
 
@@ -12,10 +18,29 @@ export type Side = {
 function Half({ side, tone }: { side: Side; tone: 'accent' | 'gold' }) {
   const p = side.progress
   const pct = p && p.totalPages ? Math.round((p.currentPage / p.totalPages) * 100) : null
+  const mood = moodByKey(p?.mood)
+
+  const head = (
+    <>
+      <Avatar
+        src={side.src}
+        name={side.name}
+        tone={side.src ? undefined : side.tone}
+        size="h-11 w-11"
+      />
+      <p className="mt-2 text-text">{side.name}</p>
+    </>
+  )
+
   return (
     <div className="flex flex-1 flex-col items-center px-2 text-center">
-      <Avatar name={side.name} tone={side.tone} size="h-11 w-11" />
-      <p className="mt-2 text-text">{side.name}</p>
+      {side.to ? (
+        <Link to={side.to} className="flex flex-col items-center transition-opacity hover:opacity-80">
+          {head}
+        </Link>
+      ) : (
+        head
+      )}
       {p ? (
         <>
           <span className="mt-1.5 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[8.5px] uppercase tracking-[0.1em] text-text-muted">
@@ -33,6 +58,14 @@ function Half({ side, tone }: { side: Side; tone: 'accent' | 'gold' }) {
             tone={tone}
             className="mt-3 w-3/4"
           />
+          {mood && (
+            <p className="mt-2.5 flex items-center gap-1.5 text-sm text-text-muted">
+              <span aria-hidden="true">{mood.emoji}</span>
+              <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-text-faint">
+                {mood.word}
+              </span>
+            </p>
+          )}
         </>
       ) : (
         <p className="mt-6 max-w-[8rem] font-display text-lg italic leading-snug text-text-faint">

@@ -100,8 +100,9 @@ export function Profile() {
 
   return (
     <AppShell>
-      {/* Sign out, top-right */}
-      <div className="flex justify-end">
+      {/* Theme + sign out, kept quiet at the top */}
+      <div className="flex items-center justify-between">
+        <ThemeToggle />
         <button
           type="button"
           onClick={() => void signOutConfirmed()}
@@ -233,7 +234,7 @@ export function Profile() {
                   return (
                     <li key={r.id}>
                       <Link
-                        to="/friends"
+                        to={`/u/${o.uid}`}
                         className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:border-accent/40"
                       >
                         <Avatar src={o.photoURL} name={o.displayName} size="h-10 w-10" />
@@ -249,17 +250,6 @@ export function Profile() {
             ))}
         </div>
       )}
-
-      {/* Appearance */}
-      <section className="mt-7 flex items-center justify-between rounded-2xl border border-border bg-surface p-5">
-        <div>
-          <h2 className="font-display text-xl text-text">Appearance</h2>
-          <p className="mt-0.5 text-sm text-text-muted">
-            Follows you to your other device.
-          </p>
-        </div>
-        <ThemeToggle />
-      </section>
 
       <EditProfileDialog
         open={editing}

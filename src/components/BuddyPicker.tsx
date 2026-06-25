@@ -36,9 +36,9 @@ export function BuddyPicker({
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="absolute inset-0 bg-black/55"
+        className="overlay-enter absolute inset-0 bg-black/55"
       />
-      <div className="relative w-full max-w-app rounded-t-[28px] bg-surface px-6 pb-8 pt-3 shadow-[0_-20px_50px_-20px_rgba(0,0,0,0.5)]">
+      <div className="sheet-enter relative w-full max-w-app rounded-t-[28px] bg-surface px-6 pb-8 pt-3 shadow-[0_-20px_50px_-20px_rgba(0,0,0,0.5)]">
         <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-border" />
         <h2 className="font-display text-2xl leading-tight text-text">
           Read <span className="italic">{title}</span> with…
