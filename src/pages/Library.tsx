@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { Bookshelf } from '../components/Bookshelf'
 import { BookSpotlight } from '../components/BookSpotlight'
@@ -7,55 +7,20 @@ import { Eyebrow } from '../components/Eyebrow'
 import { useLibrary } from '../library/useLibrary'
 import type { LibraryItem } from '../lib/library'
 
-/** A collapsible search affordance — a big magnifier that opens into a field
- *  and hands off to the full search page (the one place search now lives here). */
-function SearchBox() {
-  const navigate = useNavigate()
-  const [open, setOpen] = useState(false)
-  const [q, setQ] = useState('')
-
-  const go = (e: React.FormEvent) => {
-    e.preventDefault()
-    navigate(q.trim() ? `/search?q=${encodeURIComponent(q.trim())}` : '/search')
-  }
-
-  if (!open) {
-    return (
-      <button
-        type="button"
-        aria-label="Search for a book"
-        onClick={() => setOpen(true)}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-accent transition-colors hover:border-accent/50"
-      >
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="11" cy="11" r="7" />
-          <path d="m20 20-3.2-3.2" />
-        </svg>
-      </button>
-    )
-  }
-
+/** The search affordance — a big magnifier that opens the full search page
+ *  straight away (same as the Shelf's "Find a book"; no in-place typing). */
+function SearchButton() {
   return (
-    <form onSubmit={go} className="flex min-w-0 items-center gap-1.5">
-      <input
-        autoFocus
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        onBlur={() => !q && setOpen(false)}
-        placeholder="Search for a book…"
-        className="min-w-0 flex-1 rounded-full border border-border bg-surface-alt px-4 py-2 text-sm text-text placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent"
-      />
-      <button
-        type="submit"
-        aria-label="Search"
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-accent-contrast"
-      >
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="11" cy="11" r="7" />
-          <path d="m20 20-3.2-3.2" />
-        </svg>
-      </button>
-    </form>
+    <Link
+      to="/search"
+      aria-label="Search for a book"
+      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-accent transition-colors hover:border-accent/50"
+    >
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-3.2-3.2" />
+      </svg>
+    </Link>
   )
 }
 
@@ -76,7 +41,7 @@ export function Library() {
           <Eyebrow>Your shelves</Eyebrow>
           <h1 className="mt-1 font-display text-4xl text-text">Your Library</h1>
         </div>
-        <SearchBox />
+        <SearchButton />
       </div>
 
       <section className="mt-6">

@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import { Eyebrow } from './Eyebrow'
-import { useLibrary } from '../library/useLibrary'
 import {
   removeFromLibrary,
   setShelf,
@@ -8,44 +6,46 @@ import {
   type LibraryBook,
   type Shelf,
 } from '../lib/library'
-
-const SHELF_NOTE: Record<Shelf, string> = {
-  tbr: 'On the pile, waiting its turn.',
-  read: 'A book you’ve finished.',
-  favorite: 'A keeper — also shelved under Read.',
-}
+import { useLibrary } from '../library/useLibrary'
 
 /**
- * The "Add to Library" control for a book: a button that opens a small sheet to
+ * The "Add to Library" control: a button that opens a small, centred menu to
  * pick a shelf (To Read · Read · Favorites). Favorite implies Read. If the book
- * is already shelved, the button shows where, and the sheet can move or remove
- * it. Writes go straight to `users/{uid}/library` via the live provider.
+ * is already shelved, the button shows where, and the menu can move or remove
+ * it. Writes go to `users/{uid}/library` via the live provider.
  */
 export function AddToLibrary({ uid, book }: { uid: string; book: LibraryBook }) {
   const { items } = useLibrary()
   const [open, setOpen] = useState(false)
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useState<Shelf | 'remove' | null>(null)
+  const [error, setError] = useState(false)
 
   const current = items.find((i) => i.id === book.id)?.shelf ?? null
   const currentLabel = SHELVES.find((s) => s.key === current)?.label ?? null
 
   const choose = async (shelf: Shelf) => {
-    setBusy(true)
+    setBusy(shelf)
+    setError(false)
     try {
       await setShelf(uid, book, shelf)
       setOpen(false)
+    } catch {
+      setError(true)
     } finally {
-      setBusy(false)
+      setBusy(null)
     }
   }
 
   const remove = async () => {
-    setBusy(true)
+    setBusy('remove')
+    setError(false)
     try {
       await removeFromLibrary(uid, book.id)
       setOpen(false)
+    } catch {
+      setError(true)
     } finally {
-      setBusy(false)
+      setBusy(null)
     }
   }
 
@@ -53,7 +53,10 @@ export function AddToLibrary({ uid, book }: { uid: string; book: LibraryBook }) 
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setError(false)
+          setOpen(true)
+        }}
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface px-5 py-3.5 font-medium text-text-muted transition-colors hover:border-accent/40 hover:text-text ipad:w-auto ipad:px-10"
       >
         <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -64,62 +67,66 @@ export function AddToLibrary({ uid, book }: { uid: string; book: LibraryBook }) 
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-30 flex items-end justify-center">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-6"
+          role="dialog"
+          aria-modal="true"
+        >
           <button
             type="button"
             aria-label="Close"
             onClick={() => setOpen(false)}
-            className="overlay-enter absolute inset-0 bg-black/55"
+            className="overlay-enter absolute inset-0 bg-black/40 backdrop-blur-sm"
           />
-          <div className="sheet-enter relative w-full max-w-app rounded-t-[28px] bg-surface px-6 pb-8 pt-3 shadow-[0_-20px_50px_-20px_rgba(0,0,0,0.5)]">
-            <div className="mx-auto mb-4 h-1.5 w-10 rounded-full bg-border" />
-            <h2 className="font-display text-2xl leading-tight text-text">
-              Shelve <span className="italic">{book.title}</span>
-            </h2>
-            <Eyebrow className="mt-1 block">Choose a shelf</Eyebrow>
+          <div className="pop-enter relative w-full max-w-xs rounded-2xl border border-border bg-surface p-5 shadow-xl">
+            <h2 className="font-display text-lg leading-tight text-text">Add to library</h2>
+            <p className="mt-0.5 truncate text-sm text-text-muted">{book.title}</p>
 
-            <ul className="mt-4 space-y-2.5">
+            <ul className="mt-4 space-y-2">
               {SHELVES.map((s) => {
                 const on = current === s.key
                 return (
                   <li key={s.key}>
                     <button
                       type="button"
-                      disabled={busy}
+                      disabled={busy !== null}
                       onClick={() => void choose(s.key)}
-                      className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors disabled:opacity-60 ${
+                      className={`flex w-full items-center justify-between rounded-xl border px-4 py-2.5 text-left transition-colors disabled:opacity-60 ${
                         on
                           ? 'border-accent bg-accent/10'
                           : 'border-border bg-surface-alt hover:border-accent/40'
                       }`}
                     >
-                      <span className="min-w-0 flex-1">
-                        <span className="block font-display text-lg leading-tight text-text">
-                          {s.label}
-                        </span>
-                        <span className="block text-sm text-text-muted">
-                          {SHELF_NOTE[s.key]}
-                        </span>
+                      <span className="font-display text-lg leading-none text-text">
+                        {s.label}
                       </span>
-                      {on && (
-                        <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-accent">
-                          ✓ here
-                        </span>
-                      )}
+                      <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-accent">
+                        {busy === s.key ? '…' : on ? '✓ here' : ''}
+                      </span>
                     </button>
                   </li>
                 )
               })}
             </ul>
 
+            <p className="mt-2.5 text-center font-mono text-[9px] uppercase tracking-[0.08em] text-text-faint">
+              Favorites are also shelved under Read
+            </p>
+
+            {error && (
+              <p className="mt-2 text-center text-sm text-text-muted">
+                That didn't save. Try again in a moment.
+              </p>
+            )}
+
             {current && (
               <button
                 type="button"
-                disabled={busy}
+                disabled={busy !== null}
                 onClick={() => void remove()}
-                className="mt-4 w-full rounded-xl py-3 text-sm font-medium text-text-muted transition-colors hover:text-accent disabled:opacity-60"
+                className="mt-3 w-full rounded-xl py-2 text-sm font-medium text-text-muted transition-colors hover:text-accent disabled:opacity-60"
               >
-                Remove from library
+                {busy === 'remove' ? 'Removing…' : 'Remove from library'}
               </button>
             )}
           </div>
