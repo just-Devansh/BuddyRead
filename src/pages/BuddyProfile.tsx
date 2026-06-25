@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { Avatar } from '../components/Avatar'
 import { BookCover } from '../components/BookCover'
-import { BookshelfFlat } from '../components/BookshelfFlat'
+import { Bookshelf } from '../components/Bookshelf'
 import { BookSpotlight } from '../components/BookSpotlight'
 import { Eyebrow } from '../components/Eyebrow'
 import { useAuth } from '../auth/useAuth'
@@ -130,7 +130,7 @@ export function BuddyProfile() {
             No books shelved yet.
           </p>
         ) : (
-          <BookshelfFlat items={lib} onSelect={setSelected} />
+          <Bookshelf items={lib} onSelect={setSelected} />
         )}
       </section>
 
