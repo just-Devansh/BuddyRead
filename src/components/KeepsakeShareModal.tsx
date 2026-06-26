@@ -35,19 +35,52 @@ export function KeepsakeShareModal({
   const filename = `${book.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'read'}-buddyread.png`
 
   const render = async (): Promise<string> => {
-    if (!cardRef.current) throw new Error('no card')
-    return toPng(cardRef.current, { pixelRatio: 3, cacheBust: true })
+    const node = cardRef.current
+    if (!node) throw new Error('no card')
+    // Give web fonts a chance to settle before rasterizing — but never block on
+    // it: document.fonts.ready can hang, and the export must not.
+    if (document.fonts?.ready) {
+      await Promise.race([
+        document.fonts.ready,
+        new Promise((r) => setTimeout(r, 1500)),
+      ])
+    }
+
+    // html-to-image notoriously returns a blank/half-baked image on the very
+    // first pass (cross-origin cover + fonts not yet inlined), so we prime it
+    // and keep the second pass. `cacheBust` is off on purpose — it appends a
+    // query string that turns the cacheable cover into a CORS-blocked fetch.
+    const opts = { pixelRatio: 3, cacheBust: false }
+    const twice = async (o: typeof opts & { skipFonts?: boolean }) => {
+      await toPng(node, o)
+      return toPng(node, o)
+    }
+    try {
+      return await twice(opts)
+    } catch {
+      // Embedding Google Fonts can reject behind a CORS wall — fall back to
+      // system serifs rather than failing the whole export.
+      return twice({ ...opts, skipFonts: true })
+    }
   }
 
   const download = async () => {
     setBusy(true)
     setError(null)
     try {
-      const url = await render()
+      const dataUrl = await render()
+      // A blob: object URL downloads more reliably than a huge data: URL, and
+      // the anchor must be in the document for some browsers to honour it.
+      const blob = await (await fetch(dataUrl)).blob()
+      const objUrl = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.download = filename
-      a.href = url
+      a.href = objUrl
+      a.rel = 'noopener'
+      document.body.appendChild(a)
       a.click()
+      a.remove()
+      setTimeout(() => URL.revokeObjectURL(objUrl), 10_000)
     } catch {
       setError('Could not save the image. Try again, or screenshot it instead.')
     } finally {
