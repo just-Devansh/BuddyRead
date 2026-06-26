@@ -239,7 +239,7 @@ export const KeepsakeCard = forwardRef<
         )}
 
         {/* Ornament */}
-        <p className="mt-6 text-center text-[15px]" style={{ color: p.faint }} aria-hidden="true">
+        <p className="mt-6 text-center text-[22px] leading-none" style={{ color: p.muted }} aria-hidden="true">
           ❧
         </p>
 
