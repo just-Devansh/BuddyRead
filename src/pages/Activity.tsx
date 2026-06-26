@@ -72,6 +72,10 @@ function describe(it: ActivityItem): { body: ReactNode; quote?: string; mood?: M
       return { body: <>{strong(who)} turned the last page of {em(book)}.</> }
     case 'read_set_down':
       return { body: <>{strong(who)} set {em(book)} down for now.</> }
+    default:
+      // An unknown/legacy event type must never crash the feed — render a
+      // quiet, generic line instead of returning undefined.
+      return { body: <>{strong(who)} did something in {em(book)}.</> }
   }
 }
 

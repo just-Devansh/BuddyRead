@@ -4,6 +4,7 @@ import { RequireAuth } from './auth/RequireAuth'
 import { ThemeProvider } from './theme/ThemeProvider'
 import { ThemeSync } from './theme/ThemeSync'
 import { DeviceFrame } from './components/DeviceFrame'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { Welcome } from './pages/Welcome'
 import { Home } from './pages/Home'
 import { Search } from './pages/Search'
@@ -28,21 +29,23 @@ export default function App() {
         <ThemeSync />
         <BrowserRouter>
           <DeviceFrame>
-            <Routes>
-              <Route path="/" element={<Welcome />} />
-              <Route element={<RequireAuth />}>
-                <Route path="/home" element={<Home />} />
-                <Route path="/search" element={<Search />} />
-                <Route path="/book/:id" element={<BookDetail />} />
-                <Route path="/read/:id" element={<CoRead />} />
-                <Route path="/library" element={<Library />} />
-                <Route path="/friends" element={<Friends />} />
-                <Route path="/u/:uid" element={<BuddyProfile />} />
-                <Route path="/activity" element={<Activity />} />
-                <Route path="/profile" element={<Profile />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <ErrorBoundary>
+              <Routes>
+                <Route path="/" element={<Welcome />} />
+                <Route element={<RequireAuth />}>
+                  <Route path="/home" element={<Home />} />
+                  <Route path="/search" element={<Search />} />
+                  <Route path="/book/:id" element={<BookDetail />} />
+                  <Route path="/read/:id" element={<CoRead />} />
+                  <Route path="/library" element={<Library />} />
+                  <Route path="/friends" element={<Friends />} />
+                  <Route path="/u/:uid" element={<BuddyProfile />} />
+                  <Route path="/activity" element={<Activity />} />
+                  <Route path="/profile" element={<Profile />} />
+                </Route>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </ErrorBoundary>
           </DeviceFrame>
         </BrowserRouter>
       </ThemeProvider>
