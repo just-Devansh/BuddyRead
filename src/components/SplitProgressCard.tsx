@@ -94,12 +94,15 @@ export function SplitProgressCard({
 }) {
   return (
     <>
-      <div className="relative flex rounded-2xl border border-border bg-surface px-1.5 py-5 shadow-[0_18px_34px_-24px_rgba(60,40,20,0.45)]">
+      <div className="read-hero flex rounded-3xl px-1.5 py-6">
         {buddy && (
           <>
-            <span className="absolute inset-y-5 left-1/2 w-px bg-border" aria-hidden="true" />
             <span
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-surface px-1 text-xs text-text-faint"
+              className="absolute inset-y-6 left-1/2 w-px bg-[color-mix(in_srgb,var(--accent)_22%,var(--border))]"
+              aria-hidden="true"
+            />
+            <span
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-surface px-1 text-xs text-gold"
               aria-hidden="true"
             >
               ❧
