@@ -307,6 +307,74 @@ h1, h2, h3, h4 {
   animation: ptr-dot 1400ms ease-in-out infinite;
 }
 
+/* The nook lamp (see components/Lamp.tsx). Off, it's quiet line-art; tapped,
+   the shade fills with light, a bulb-bloom glows, and the `.lamp-wash` overlay
+   settles a warm pool over the cards. The wash is screened inside an isolated
+   stacking context (the .nook wrapper) so the glow never bleeds past the nook.
+   prefers-reduced-motion (below) drops the flicker but keeps the warmth. */
+.lamp {
+  color: var(--text-faint);
+  -webkit-tap-highlight-color: transparent;
+  transition: filter 500ms ease, color 500ms ease, transform 280ms ease;
+}
+.lamp:hover {
+  transform: translateY(-1px);
+}
+.lamp:active {
+  transform: translateY(0) scale(0.97);
+}
+.lamp .lamp-shade {
+  fill: transparent;
+  transition: fill 600ms ease;
+}
+.lamp .lamp-bulb {
+  opacity: 0;
+  transition: opacity 700ms ease;
+}
+.lamp--lit {
+  color: #c89a58;
+  filter: drop-shadow(0 4px 15px rgba(233, 182, 96, 0.55));
+}
+.lamp--lit .lamp-shade {
+  fill: url(#lampShade);
+}
+.lamp--lit .lamp-bulb {
+  opacity: 1;
+}
+
+@keyframes lamp-flicker {
+  0%, 100% { opacity: 1; }
+  42% { opacity: 0.85; }
+  47% { opacity: 0.95; }
+  58% { opacity: 0.78; }
+  64% { opacity: 0.92; }
+  80% { opacity: 0.88; }
+}
+.lamp-wash {
+  position: absolute;
+  top: -2rem;
+  right: -2.5rem;
+  width: 24rem;
+  max-width: 132%;
+  height: 27rem;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0;
+  transition: opacity 900ms ease;
+  background: radial-gradient(
+    58% 50% at 84% 13%,
+    rgba(245, 206, 132, 0.46) 0%,
+    rgba(227, 163, 88, 0.24) 36%,
+    rgba(201, 131, 71, 0.09) 56%,
+    transparent 72%
+  );
+  mix-blend-mode: screen;
+}
+.lamp-wash.is-lit {
+  opacity: 1;
+  animation: lamp-flicker 6s ease-in-out infinite;
+}
+
 /* Honour the reader who prefers stillness. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
