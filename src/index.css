@@ -259,12 +259,13 @@ h1, h2, h3, h4 {
     transform: translateY(-6px);
   }
 }
-/* The tap response: a quick press-in on touch (and on click), so a cover feels
-   pressed before its page opens. Defined last so it wins over :hover on a click.
-   Snappier than the lift — a press should feel immediate. */
+/* The tap response: a soft, slow press-in on touch (and on click), so a cover
+   eases under the finger before its page opens. Defined last so it wins over
+   :hover on a click; a gentle decelerating ease makes it feel smooth, not snappy. */
 .shelf-book:active {
-  transform: scale(0.95);
-  transition-duration: 90ms;
+  transform: scale(0.955);
+  transition-duration: 280ms;
+  transition-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 /* The curated shelf unrolls: each book settles onto the shelf in turn, like a

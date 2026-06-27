@@ -1,6 +1,6 @@
 # BuddyRead — Project Journey
 
-An append-only logbook. One chapter per milestone: what we built, *why*, the trade-offs, gotchas, and interview-style Q&A. Earlier chapters are never rewritten.
+An append-only logbook. One chapter per milestone: what we built, _why_, the trade-offs, gotchas, and interview-style Q&A. Earlier chapters are never rewritten.
 
 ---
 
@@ -21,13 +21,13 @@ Concretely, M0 delivers:
 
 ### Architecture & tech-stack decisions (and what we rejected)
 
-- **Tailwind v4 (CSS-first) over v3.** v4's `@theme` lets us declare design tokens as CSS variables *and* expose them as Tailwind color utilities in one place, with `@custom-variant dark` giving class-based dark mode without a `tailwind.config.js`. This matches the brief's "light/dark is a single token swap" exactly. Rejected: v3 + a JS config + a separate `darkMode: 'class'` setup — more files, more indirection, the token values duplicated between CSS and config.
+- **Tailwind v4 (CSS-first) over v3.** v4's `@theme` lets us declare design tokens as CSS variables _and_ expose them as Tailwind color utilities in one place, with `@custom-variant dark` giving class-based dark mode without a `tailwind.config.js`. This matches the brief's "light/dark is a single token swap" exactly. Rejected: v3 + a JS config + a separate `darkMode: 'class'` setup — more files, more indirection, the token values duplicated between CSS and config.
 
 - **CSS-variable tokens, not Tailwind theme colors directly.** Colors live as `--bg`, `--accent`, etc. on `:root`/`.dark`, and `@theme inline` maps them to `bg-bg`, `text-accent`… The swap happens in CSS, so it's instant, FOUC-free, and reusable outside Tailwind. This also leaves a clean seam for M1 to drive theme from the user's Firestore doc.
 
 - **Theme context split into three files** (`theme-context.ts` for the context object, `ThemeProvider.tsx`, `useTheme.ts`). Keeping the context and the component in separate modules keeps React Fast Refresh happy (a file that exports a component shouldn't also export non-component values) and keeps the hook import-light.
 
-- **React Router v7** with all routes public *for now*. Auth gating is deliberately deferred to M1 so the skeleton walks end-to-end today. The `Welcome → /home` CTA is a placeholder that becomes Google sign-in later.
+- **React Router v7** with all routes public _for now_. Auth gating is deliberately deferred to M1 so the skeleton walks end-to-end today. The `Welcome → /home` CTA is a placeholder that becomes Google sign-in later.
 
 - **SVG app icons** instead of generating PNGs. Avoids pulling in a native image dependency (`sharp`) just to ship M0; modern browsers accept SVG manifest icons, and we include a dedicated maskable variant with a safe-zone glyph. Crisp raster icons are a cheap M7 polish task if any target platform needs them.
 
@@ -72,7 +72,7 @@ After the M0 skeleton, the user set a hard product rule: **BuddyRead targets exa
 
 ### How we enforced it (not just styled for it)
 
-- **Two layouts, one breakpoint.** Base Tailwind styles target the phone; a single custom `ipad:` breakpoint (768px) switches to the iPad layout. To make the rule structural rather than a matter of discipline, we *cleared* Tailwind's default breakpoints (`--breakpoint-*: initial`) so `sm/md/lg/xl/2xl` no longer exist — a stray `lg:` can't silently introduce a third layout; only `ipad:` compiles.
+- **Two layouts, one breakpoint.** Base Tailwind styles target the phone; a single custom `ipad:` breakpoint (768px) switches to the iPad layout. To make the rule structural rather than a matter of discipline, we _cleared_ Tailwind's default breakpoints (`--breakpoint-*: initial`) so `sm/md/lg/xl/2xl` no longer exist — a stray `lg:` can't silently introduce a third layout; only `ipad:` compiles.
 - **Desktop = the iPad screen.** A new `DeviceFrame` wraps every route: it fills the viewport with the themed background and caps the app at `max-w-app` (`--container-app`, ~832px ≈ iPad portrait), centred. Phones run full-width; iPads run ≈ full-width; anything wider gets the iPad column centred with hairline side borders so the cap reads as intentional, not stranded.
 - **Pages stopped capping themselves.** `AppShell` and `Welcome` dropped their own `max-w-*`/background wrappers and now just fill the frame, with padding stepping up slightly at `ipad:`. Readability caps on prose (e.g. `max-w-md`) stay, since an 832px-wide line of text is too long regardless of device.
 
@@ -113,7 +113,7 @@ Concretely:
 
 ### Decisions & trade-offs (and what we rejected)
 
-- **An `inviteCodes` lookup collection — a deliberate addition to the kickoff data model.** The original model put `inviteCode` only on the user doc. But two needs push for a dedicated collection: (1) guaranteeing uniqueness, and (2) letting M2 resolve a typed-in code → uid. Doing that against the `users` collection would require granting *list/query* permission over all users — leaking everyone's profile. A tiny `inviteCodes/{code} → { uid }` doc, claimed in a transaction, gives atomic uniqueness and a rule-friendly point lookup (`get` by id, not a query) without opening `users` at all. The cost is one extra write at signup and a second collection to reason about — well worth it. (Flagged to the product owner since it extends the agreed model.)
+- **An `inviteCodes` lookup collection — a deliberate addition to the kickoff data model.** The original model put `inviteCode` only on the user doc. But two needs push for a dedicated collection: (1) guaranteeing uniqueness, and (2) letting M2 resolve a typed-in code → uid. Doing that against the `users` collection would require granting _list/query_ permission over all users — leaking everyone's profile. A tiny `inviteCodes/{code} → { uid }` doc, claimed in a transaction, gives atomic uniqueness and a rule-friendly point lookup (`get` by id, not a query) without opening `users` at all. The cost is one extra write at signup and a second collection to reason about — well worth it. (Flagged to the product owner since it extends the agreed model.)
 
 - **Invite-code alphabet.** 6 chars from a 31-symbol set with `0/O/1/I/L` removed (~887M combinations). Ambiguous glyphs are dropped because the code gets read off a screen or spoken to a friend; collision odds at two-user scale are negligible, and the transaction handles the rare clash by retrying.
 
@@ -153,11 +153,11 @@ Concretely:
 
 ### What we built and why
 
-Reading "together" needs a someone. M2 adds the relationship layer: a bottom tab bar (**Shelf · Friends · You**), and a Friends screen where you type a buddy's invite code → preview "Send request to *Name*?" → they see it under **Friends** → **Accept**, and you're both in each other's circle, ready to start a shared read in M4. Decline, cancel, and remove-friend are all there too. Everything is live — one `onSnapshot` keeps requests and the circle current without a refresh, and the Friends tab carries a small count badge for pending invites.
+Reading "together" needs a someone. M2 adds the relationship layer: a bottom tab bar (**Shelf · Friends · You**), and a Friends screen where you type a buddy's invite code → preview "Send request to _Name_?" → they see it under **Friends** → **Accept**, and you're both in each other's circle, ready to start a shared read in M4. Decline, cancel, and remove-friend are all there too. Everything is live — one `onSnapshot` keeps requests and the circle current without a refresh, and the Friends tab carries a small count badge for pending invites.
 
 ### The headline decision: derive friends from requests, no subcollection
 
-The kickoff modelled friendships as a `users/{uid}/friends/{friendUid}` subcollection on **both** readers. Making that reciprocal on the client (without the Cloud Functions v0 excludes) runs straight into a Firestore rules limitation: **rules can't see other writes in the same batch.** So the obvious "flip the request to `accepted` *and* write both friend edges atomically" fails — when the rule evaluates the edge write, it still sees the request as `pending`.
+The kickoff modelled friendships as a `users/{uid}/friends/{friendUid}` subcollection on **both** readers. Making that reciprocal on the client (without the Cloud Functions v0 excludes) runs straight into a Firestore rules limitation: **rules can't see other writes in the same batch.** So the obvious "flip the request to `accepted` _and_ write both friend edges atomically" fails — when the rule evaluates the edge write, it still sees the request as `pending`.
 
 We sidestepped the whole problem by making **`friendRequests/{pairId}` the single source of truth** and deriving everything from it:
 
@@ -166,12 +166,12 @@ We sidestepped the whole problem by making **`friendRequests/{pairId}` the singl
 - **No cross-user writes ever.** Accept updates one field on one doc the recipient is allowed to touch. There are no two edges to keep consistent.
 - **No `declined` state.** Decline, cancel, and unfriend are all a single `delete`, which also means re-requesting is a clean `create` rather than a special-cased revival.
 
-This is simpler *and* safer than the subcollection design, and it needs no Cloud Function. The product owner signed off on the deviation.
+This is simpler _and_ safer than the subcollection design, and it needs no Cloud Function. The product owner signed off on the deviation.
 
 ### Other decisions & trade-offs
 
-- **Denormalize name/photo onto `inviteCodes` (and onto each request).** To preview "Send request to *Devansh*?" the sender needs the target's name — but we keep `users` locked to owner-only reads. So the invite-code lookup doc carries `displayName`/`photoURL` (refreshed on each sign-in), and both parties' display data is copied onto the request. Net effect: nobody ever reads anyone else's `users` doc, yet every list renders from a single query. Cost: a little duplicated profile data that can go stale until next sign-in — fine for v0.
-- **No composite indexes.** Querying `participants array-contains me` *and* `orderBy(createdAt)` would force a composite index; sorting client-side keeps us on the free single-field `array-contains` index. With a two-person circle the in-memory sort is free.
+- **Denormalize name/photo onto `inviteCodes` (and onto each request).** To preview "Send request to _Devansh_?" the sender needs the target's name — but we keep `users` locked to owner-only reads. So the invite-code lookup doc carries `displayName`/`photoURL` (refreshed on each sign-in), and both parties' display data is copied onto the request. Net effect: nobody ever reads anyone else's `users` doc, yet every list renders from a single query. Cost: a little duplicated profile data that can go stale until next sign-in — fine for v0.
+- **No composite indexes.** Querying `participants array-contains me` _and_ `orderBy(createdAt)` would force a composite index; sorting client-side keeps us on the free single-field `array-contains` index. With a two-person circle the in-memory sort is free.
 - **One shared `FriendsProvider` behind `RequireAuth`.** A single listener feeds both the Friends page and the nav badge, and it only runs while signed in. Rejected: a hook with its own listener per consumer (duplicate reads, duplicate cost).
 - **`NotFound` left the `AppShell`.** Once `AppShell` grew a `BottomNav` that reads `useFriends`, the public 404 (outside the provider) would have thrown. The 404 is now a standalone screen — which is right anyway: a not-found page shouldn't wear the app's tab bar.
 
@@ -204,7 +204,7 @@ This is simpler *and* safer than the subcollection design, and it needs no Cloud
 
 ### What we built and why
 
-The Shelf has been empty since M0 — there was no way to *find* a book. M3 fills that gap with the catalog: a debounced search over the **Google Books API**, a per-book detail page, and cover art that degrades gracefully. It's deliberately read-only — browsing, not committing. Choosing a book and snapshotting it into a *read* is M4's job; here the "Start a read" button is a quiet, disabled promise.
+The Shelf has been empty since M0 — there was no way to _find_ a book. M3 fills that gap with the catalog: a debounced search over the **Google Books API**, a per-book detail page, and cover art that degrades gracefully. It's deliberately read-only — browsing, not committing. Choosing a book and snapshotting it into a _read_ is M4's job; here the "Start a read" button is a quiet, disabled promise.
 
 - **`lib/books.ts`** — a thin typed client. `searchBooks` / `getBook` hit Google Books, and both funnel through one `normalizeVolume` that flattens Google's sprawling `volumeInfo` into a small `Book` we control. Google's HTML blurb is run through `htmlToText` (DOMParser → `textContent`, never `innerHTML`) so descriptions are injection-safe plain text.
 - **`components/BookCover.tsx`** — a 2:3 frame that tries Google's image, then Open Library by ISBN, then settles into a title-bearing placeholder. A missing cover still reads as a book.
@@ -212,7 +212,7 @@ The Shelf has been empty since M0 — there was no way to *find* a book. M3 fill
 
 ### Decisions & trade-offs (and what we rejected)
 
-- **Keyless to start.** Google Books volume queries work without an API key at a lower, *shared anonymous* quota. We ship keyless and treat the `.env.example` placeholder as unset, appending `&key=` only when a real key is present. Trade-off surfaced immediately: a test call from a shared CI IP returned **HTTP 429** (the anonymous quota is pooled per source). A home browser gets its own fresh quota, but this is exactly why a free, referrer-restricted key is the recommended next step — it moves us off the shared pool. The error path already handles 429 like any failed fetch.
+- **Keyless to start.** Google Books volume queries work without an API key at a lower, _shared anonymous_ quota. We ship keyless and treat the `.env.example` placeholder as unset, appending `&key=` only when a real key is present. Trade-off surfaced immediately: a test call from a shared CI IP returned **HTTP 429** (the anonymous quota is pooled per source). A home browser gets its own fresh quota, but this is exactly why a free, referrer-restricted key is the recommended next step — it moves us off the shared pool. The error path already handles 429 like any failed fetch.
 - **Normalize at the edge.** Every Google volume is mapped to our `Book` the moment it arrives, so pages never touch `volumeInfo.imageLinks.thumbnail`-shaped paths. One place to fix when Google's shape shifts.
 - **Cover fallback as a data list, not branching JSX.** `coverCandidates(book)` returns an ordered `[google, openLibrary]`; `BookCover` walks the index on each `onError`. Open Library is requested with `default=false` so it 404s (firing `onError`) instead of serving a blank, which is what makes the chain reach the placeholder.
 - **No new dependencies.** No HTTP client, no HTML sanitizer, no image library — `fetch`, `DOMParser`, and an `<img>` error chain cover it.
@@ -220,8 +220,8 @@ The Shelf has been empty since M0 — there was no way to *find* a book. M3 fill
 ### Notable details & gotchas
 
 - **react-hooks lint, again: no synchronous `setState` in an effect body** (it bit us in M2 too). Two different fixes for two different shapes:
-  - *Search* moves **all** state writes inside the debounce `setTimeout` callback — a callback isn't the effect body, and the 350 ms debounce wanted to own the "searching/idle" transitions anyway.
-  - *Book detail* has no debounce to hide behind, so instead of resetting state on `id` change it **derives** status: state holds `{ id, book }` (with `book === null` meaning that id failed), and `loading`/`done`/`error` are computed by comparing the stored id to the current route param. A new id reads as "loading" until its own fetch lands — no reset write needed.
+  - _Search_ moves **all** state writes inside the debounce `setTimeout` callback — a callback isn't the effect body, and the 350 ms debounce wanted to own the "searching/idle" transitions anyway.
+  - _Book detail_ has no debounce to hide behind, so instead of resetting state on `id` change it **derives** status: state holds `{ id, book }` (with `book === null` meaning that id failed), and `loading`/`done`/`error` are computed by comparing the stored id to the current route param. A new id reads as "loading" until its own fetch lands — no reset write needed.
 - **`AbortController` on every effect.** Both pages abort in their cleanup, so a fast-typing search or a quick back-navigation can't land a stale response over a newer one.
 - **PWA was ready for this.** M0 had already added a `CacheFirst` runtime rule for `books.google` / `googleusercontent` / `openlibrary` hosts, so covers cache offline with no further work.
 
@@ -243,7 +243,7 @@ The Shelf has been empty since M0 — there was no way to *find* a book. M3 fill
 
 ### What we built and why
 
-Three milestones of features had accumulated against a placeholder skin — Fraunces + Inter, a single olive accent, the right *instincts* but never the actual *vibe*. This chapter anchors the look. Working from a nine-screen Claude Design mockup (imported via the `claude_design` MCP), we adopted a real design system and applied it across the whole app: **Cormorant Garamond** for display, **EB Garamond** for body (serif now, not sans), **IBM Plex Mono** for the uppercase micro-labels that thread through every screen. Parchment by day, espresso by night, with **terracotta** as the primary accent and **gold** reserved for pace and ratings.
+Three milestones of features had accumulated against a placeholder skin — Fraunces + Inter, a single olive accent, the right _instincts_ but never the actual _vibe_. This chapter anchors the look. Working from a nine-screen Claude Design mockup (imported via the `claude_design` MCP), we adopted a real design system and applied it across the whole app: **Cormorant Garamond** for display, **EB Garamond** for body (serif now, not sans), **IBM Plex Mono** for the uppercase micro-labels that thread through every screen. Parchment by day, espresso by night, with **terracotta** as the primary accent and **gold** reserved for pace and ratings.
 
 Crucially, the mockup shows screens the data model can't back yet — the co-read split card (the heart of the app), logging a session, inviting a buddy, the activity inbox, the finished-books history. All of those are **M4 work**. So the revamp split cleanly in two:
 
@@ -252,8 +252,8 @@ Crucially, the mockup shows screens the data model can't back yet — the co-rea
 
 ### Decisions & trade-offs (and what we rejected)
 
-- **Two accents, deliberately.** CLAUDE.md had said "one muted accent, never bright." The mockup introduces a second — gold — specifically for a buddy's pace and for star ratings. We adopted it because it *serves the thesis*: terracotta is you/your action, gold is the other reader, and the two never compete on the same bar. Updated the design-system rule rather than quietly breaking it.
-- **Keep Google sign-in; drop the mockup's code entry.** The Welcome mock shows a friend's-code field and a "Begin together" button — a different auth model than the one that's actually built (M1 Google). We kept the working sign-in and took only the *look* (the wordmark, the "Est. MMXXVI · a reading compact" framing, the fleuron). Building a non-functional code field would have been a lie on the most important first screen.
+- **Two accents, deliberately.** CLAUDE.md had said "one muted accent, never bright." The mockup introduces a second — gold — specifically for a buddy's pace and for star ratings. We adopted it because it _serves the thesis_: terracotta is you/your action, gold is the other reader, and the two never compete on the same bar. Updated the design-system rule rather than quietly breaking it.
+- **Keep Google sign-in; drop the mockup's code entry.** The Welcome mock shows a friend's-code field and a "Begin together" button — a different auth model than the one that's actually built (M1 Google). We kept the working sign-in and took only the _look_ (the wordmark, the "Est. MMXXVI · a reading compact" framing, the fleuron). Building a non-functional code field would have been a lie on the most important first screen.
 - **Mocks over stubs over nothing.** We could have shipped only the design system, or only the real screens. Mocking the M4 screens with throwaway demo data costs a little now and gets deleted later — but it's the only way the co-read card, the thing the entire app exists for, is visible before the backend for it exists.
 - **Fluid, not 390px.** The mockup is pixel-fixed at one phone size. We translated proportions into the existing phone/`ipad:` system rather than hardcoding widths, and dropped the mockup's fake iOS status bar and phone bezel — those are presentation chrome; a real PWA gets the OS status bar and the existing `DeviceFrame` cap.
 
@@ -283,10 +283,10 @@ Seeing the mocks in the running app, we pulled them. Fabricated activity, a fake
 
 ### What we built and why
 
-BuddyRead worked, but it didn't yet *feel* like two people in a room. This pass added the texture that makes a reading compact social rather than transactional:
+BuddyRead worked, but it didn't yet _feel_ like two people in a room. This pass added the texture that makes a reading compact social rather than transactional:
 
-- **Tappable readers → `BuddyProfile` (`/u/:uid`).** Avatars and names are now links — from the Friends circle, the Activity feed, the split card's buddy half, and Profile's buddies list. The page is deliberately small and privacy-honest: it shows a buddy's denormalized identity, "buddies since", and the reads you *share* — nothing of their wider shelf, because the owner-only rules still hold. It reads entirely from data the client already has (relationships + shared reads); no new Firestore reads, no rules change.
-- **Activity that tells the whole story.** Two gaps closed: a `read_started` event (written to your *own* feed when you accept, naming who you're reading with — "You began reading X with Arushi"), and **mood** riding along on every logged session. Actor avatars in the feed tap through to profiles.
+- **Tappable readers → `BuddyProfile` (`/u/:uid`).** Avatars and names are now links — from the Friends circle, the Activity feed, the split card's buddy half, and Profile's buddies list. The page is deliberately small and privacy-honest: it shows a buddy's denormalized identity, "buddies since", and the reads you _share_ — nothing of their wider shelf, because the owner-only rules still hold. It reads entirely from data the client already has (relationships + shared reads); no new Firestore reads, no rules change.
+- **Activity that tells the whole story.** Two gaps closed: a `read_started` event (written to your _own_ feed when you accept, naming who you're reading with — "You began reading X with Arushi"), and **mood** riding along on every logged session. Actor avatars in the feed tap through to profiles.
 - **The split card got faces and feelings.** Real profile photos when available (gradient initial otherwise), and each reader's latest end-of-session mood under their percent.
 - **A log sheet that respects the gesture.** The +/− stepper became a draggable page bar (with fine ± for precision), a curated mood picker (emoji + word), a handle you can actually drag down to dismiss, a slide-up entrance, and a scroll-locked background so the drag never leaks into the page.
 - **One motion language.** `view-enter` / `pop-enter` / `sheet-enter` / `overlay-enter` in `index.css`, applied everywhere a new surface appears — all flattened by `prefers-reduced-motion`.
@@ -295,15 +295,15 @@ BuddyRead worked, but it didn't yet *feel* like two people in a room. This pass 
 ### Decisions & trade-offs (and what we rejected)
 
 - **A profile of what you share, not a profile of them.** The instinct is to show a buddy's full reading life — total reads, all their friends. But those collections are owner-scoped, and opening them would mean denormalizing public stats onto every user. We shipped the honest subset (shared reads + identity) now, and flagged the richer version as deliberate later work rather than quietly relaxing the security model.
-- **`read_started` self-appends.** Every other activity event is appended by the *other* party to your feed. "You began reading…" has no other party to write it, so the accepter writes it to their own feed — still attributable (`actorUid == auth.uid`), still within the existing create rule, no new permissions.
+- **`read_started` self-appends.** Every other activity event is appended by the _other_ party to your feed. "You began reading…" has no other party to write it, so the accepter writes it to their own feed — still attributable (`actorUid == auth.uid`), still within the existing create rule, no new permissions.
 - **Mood as a curated set, not free emoji.** Six hand-picked moods (emoji + word) render identically in the card and the feed and never degrade into an inconsistent wall of glyphs. Stored by `key`; emoji/word are presentation only.
 - **A draggable bar, not a wheel picker.** An iOS-style scroll wheel is heavier and fussier on the web across phone + iPad; a filled range "volume bar" is one familiar gesture, sets any page in a flick, and keeps fine ± for the last-page nudge.
 
 ### Notable details & gotchas
 
-- **`Math.random` is impure — even inside `useMemo`.** The lint rule (`react-hooks/purity`) rejects calling it during render. The fix that actually fit the lifecycle: pick the splash quote once at *module scope*. The splash only really shows at startup, so a per-load pick is exactly right and render stays pure.
+- **`Math.random` is impure — even inside `useMemo`.** The lint rule (`react-hooks/purity`) rejects calling it during render. The fix that actually fit the lifecycle: pick the splash quote once at _module scope_. The splash only really shows at startup, so a per-load pick is exactly right and render stays pure.
 - **JS-driven slide beats a CSS keyframe for a draggable sheet.** The log sheet manages its own `translateY` (open → 0, drag follows the finger, release past a threshold dismisses) because a CSS entrance animation with `fill: both` would keep overriding the inline transform the drag needs. Other sheets/modals, which don't drag, use the shared CSS classes.
-- **A minimum splash, in the guard not the component.** Auth can resolve in a blink, which would flash the quote away. `RequireAuth` holds `Splash` until *both* auth has resolved and a 3s timer has fired — keeping the timing concern next to the thing that decides what renders.
+- **A minimum splash, in the guard not the component.** Auth can resolve in a blink, which would flash the quote away. `RequireAuth` holds `Splash` until _both_ auth has resolved and a 3s timer has fired — keeping the timing concern next to the thing that decides what renders.
 
 ### Questions an interviewer might ask
 
@@ -327,8 +327,8 @@ Navigation was reworked to make room: **Friends left the tab bar and moved into 
 
 ### Decisions & trade-offs (and what we rejected)
 
-- **3D as a guarded experiment, not a commitment.** The user wanted to try 3D and be able to roll it back cleanly. So `components/Bookshelf.tsx` is a chooser: a `USE_3D` flag, `React.lazy` for the 3D scene, and the flat CSS shelf as *both* the Suspense fallback and — via a tiny `ThreeBoundary` error boundary — an automatic crash fallback. If WebGL is unavailable or the chunk fails, the reader still gets a real bookshelf. Rollback is a one-line flag flip, then deleting one folder and two deps. We built the **CSS shelf first** precisely so the rollback target already existed.
-- **Covers as HTML, spines as geometry.** Book-cover images come from Google/Open Library with no guaranteed CORS headers — loading them as WebGL textures risks tainted-canvas failures. So the 3D scene draws only coloured spines (no external textures, no font fetch), and the *cover* reveal is the existing `BookCover` (a plain `<img>`) in a centred `BookSpotlight` overlay. The 3D shelf stays offline-safe and asset-free; the cover still shows in full.
+- **3D as a guarded experiment, not a commitment.** The user wanted to try 3D and be able to roll it back cleanly. So `components/Bookshelf.tsx` is a chooser: a `USE_3D` flag, `React.lazy` for the 3D scene, and the flat CSS shelf as _both_ the Suspense fallback and — via a tiny `ThreeBoundary` error boundary — an automatic crash fallback. If WebGL is unavailable or the chunk fails, the reader still gets a real bookshelf. Rollback is a one-line flag flip, then deleting one folder and two deps. We built the **CSS shelf first** precisely so the rollback target already existed.
+- **Covers as HTML, spines as geometry.** Book-cover images come from Google/Open Library with no guaranteed CORS headers — loading them as WebGL textures risks tainted-canvas failures. So the 3D scene draws only coloured spines (no external textures, no font fetch), and the _cover_ reveal is the existing `BookCover` (a plain `<img>`) in a centred `BookSpotlight` overlay. The 3D shelf stays offline-safe and asset-free; the cover still shows in full.
 - **Favorite ⇒ read, modelled as one field.** Rather than two booleans or two docs, a book has a single `shelf` of `tbr | read | favorite`, and the Read shelf simply gathers `read` + `favorite`. One source of truth, no way to desync "favorited but not read".
 - **Friends can read your whole library.** The user chose all three shelves visible (TBR included). That made the rule a clean `isSelf(uid) || isFriendOf(uid)` on the subcollection, where `isFriendOf` checks for an accepted `friendRequests` doc — reusing the same pair-id the rest of the model is built on.
 
@@ -344,17 +344,17 @@ Navigation was reworked to make room: **Friends left the tab bar and moved into 
   Isolate and guard it. All three.js code lives in one folder behind a `lazy()` boundary, so it's a separate chunk that never affects the main bundle's load. A flag switches it off instantly, and an error boundary + Suspense fallback mean even a runtime failure degrades to the CSS shelf rather than a blank screen. The rollback is mechanical: flip the flag, delete the folder, drop the deps.
 
 - **Q: Why not render the real covers inside the 3D scene?**
-  Because external cover images don't promise CORS headers, and a WebGL texture from a tainted image fails. Keeping the 3D layer to coloured geometry (no textures, no fonts) makes it robust and offline-safe, and the cover still gets its moment as an HTML overlay on tap. The 3D is for the *shelf feeling*; the DOM is for the *image*.
+  Because external cover images don't promise CORS headers, and a WebGL texture from a tainted image fails. Keeping the 3D layer to coloured geometry (no textures, no fonts) makes it robust and offline-safe, and the cover still gets its moment as an HTML overlay on tap. The 3D is for the _shelf feeling_; the DOM is for the _image_.
 
 - **Q: You moved a primary tab (Friends) into a sub-screen. How do you avoid losing it?**
-  By checking where its weight actually goes. Friend *requests* already surface in Activity (and its badge), and the *circle* is management you reach occasionally — so it sits well one level down in You, with a clear "Your reading circle" entry. The everyday surface (the new Library) earns the tab; the occasional surface (managing friends) doesn't need one.
+  By checking where its weight actually goes. Friend _requests_ already surface in Activity (and its badge), and the _circle_ is management you reach occasionally — so it sits well one level down in You, with a clear "Your reading circle" entry. The everyday surface (the new Library) earns the tab; the occasional surface (managing friends) doesn't need one.
 
 ### Addendum — the 3D came down
 
-Seeing it running, the 3D shelf read as "mid" — flat-looking despite the tech, and not worth a heavy dependency. So we pulled it (deleted `src/library3d/`, removed `three` + `@react-three/fiber`, `Eyebrow` reverted to plain JSX since the r3f JSX augmentation was gone) and built what the shelf actually wanted: a **static 2D bookcase**, pure CSS. A drawn walnut case with recessed shelf backs and lit planks; each book a bound spine whose **colour is washed from its own cover** — a blurred copy of the cover sits under a leather tint and gold-stamped title. The trick that makes "spine colour from the cover" work without CORS: it's a `background-image`, which only needs to *display* the pixels, never *read* them (canvas sampling would taint and fail). Covers-less books fall back to the muted palette.
+Seeing it running, the 3D shelf read as "mid" — flat-looking despite the tech, and not worth a heavy dependency. So we pulled it (deleted `src/library3d/`, removed `three` + `@react-three/fiber`, `Eyebrow` reverted to plain JSX since the r3f JSX augmentation was gone) and built what the shelf actually wanted: a **static 2D bookcase**, pure CSS. A drawn walnut case with recessed shelf backs and lit planks; each book a bound spine whose **colour is washed from its own cover** — a blurred copy of the cover sits under a leather tint and gold-stamped title. The trick that makes "spine colour from the cover" work without CORS: it's a `background-image`, which only needs to _display_ the pixels, never _read_ them (canvas sampling would taint and fail). Covers-less books fall back to the muted palette.
 
 One bug the 3D era left behind, fixed here: the **Add-to-Library menu opened off-screen and needed scrolling**. Cause — the route-enter animation (`view-enter`) used `animation-fill-mode: both`, which retains the final keyframe's `transform: translateY(0)` forever. Any non-`none` transform makes that element (`<main>`) the containing block for `position: fixed`, so every modal anchored to the scrolled page instead of the viewport. Switching `view-enter` to `backwards` (the resting state has no transform) re-centres all overlays at once. A reminder that `fill-mode: both` on a long-lived ancestor is quietly load-bearing for `position: fixed` everywhere beneath it.
 
 ### Addendum — covers face-out (the look that finally worked)
 
-The 2D spine bookcase looked mediocre too: fat domino spines, and a "spine colour washed from the cover" that just read as a smudged front cover squished sideways (real spines show *spine* art, not the cover). The honest fix wasn't more tuning — it was admitting the concept was wrong. There are only two ways to draw a book: show its **spine** (needs invented spine art; "colour from cover" is unreliable without CORS pixel reads) or show its **cover face-out**. We went face-out: real covers standing on slim wooden ledges, themed to the app (warm oak by day, walnut by night) instead of a dark cavern — a boutique-bookstore display. You get the actual art, instant recognition, and the CORS colour problem vanishes (a cover is just shown, never sampled). Each cover gets a drop shadow to ground it and a thin page-block edge for thickness; tapping goes straight to the book's page, so the old spotlight step (and the `BookshelfProps` renderer contract) were deleted as dead weight. Lesson: when something "looks mediocre" after two attempts, it's usually the concept, not the CSS.
+The 2D spine bookcase looked mediocre too: fat domino spines, and a "spine colour washed from the cover" that just read as a smudged front cover squished sideways (real spines show _spine_ art, not the cover). The honest fix wasn't more tuning — it was admitting the concept was wrong. There are only two ways to draw a book: show its **spine** (needs invented spine art; "colour from cover" is unreliable without CORS pixel reads) or show its **cover face-out**. We went face-out: real covers standing on slim wooden ledges, themed to the app (warm oak by day, walnut by night) instead of a dark cavern — a boutique-bookstore display. You get the actual art, instant recognition, and the CORS colour problem vanishes (a cover is just shown, never sampled). Each cover gets a drop shadow to ground it and a thin page-block edge for thickness; tapping goes straight to the book's page, so the old spotlight step (and the `BookshelfProps` renderer contract) were deleted as dead weight. Lesson: when something "looks mediocre" after two attempts, it's usually the concept, not the CSS.
