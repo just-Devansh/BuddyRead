@@ -22,6 +22,45 @@ function backLabel(from?: string): string {
   return 'Back'
 }
 
+/** One of the two equal ways to start a read — a filled, icon-led tile with a
+ *  premium press (lift + glow, scale + gold shift). Solo and Together are peers. */
+function ReadAction({
+  onClick,
+  busy,
+  label,
+  icon,
+}: {
+  onClick: () => void
+  busy: boolean
+  label: string
+  icon: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={onClick}
+      className="group flex flex-col items-center justify-center gap-2.5 rounded-2xl bg-accent px-3 py-5 text-accent-contrast shadow-[0_10px_24px_-12px_rgba(138,69,54,0.7)] outline-none transition-[transform,box-shadow,background-color] duration-300 ease-[cubic-bezier(0.22,0.61,0.18,1)] hover:-translate-y-0.5 hover:shadow-[0_16px_30px_-12px_rgba(138,69,54,0.92)] hover:brightness-105 active:scale-[0.94] active:bg-gold active:shadow-[0_6px_22px_-4px_rgba(168,130,47,0.9)] active:duration-150 disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="26"
+        height="26"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+        className="transition-transform duration-300 ease-[cubic-bezier(0.22,0.61,0.18,1)] group-active:scale-90"
+      >
+        {icon}
+      </svg>
+      <span className="font-medium">{busy ? 'One moment…' : label}</span>
+    </button>
+  )
+}
+
 /** A small muted fact, shown only when we actually have it. */
 function Meta({ label, value }: { label: string; value: string | null }) {
   if (!value) return null
@@ -143,6 +182,14 @@ export function BookDetail() {
     }
   }
 
+  // Read together: send straight to a friend arrived-with (?with=), open the
+  // buddy picker, or — with no buddies yet — go add one first.
+  const together = () => {
+    if (directBuddy) void send(directBuddy)
+    else if (buddies.length === 0) navigate('/friends')
+    else setPicking(true)
+  }
+
   return (
     <AppShell>
       {/* Go *back* through history (to wherever you came from), not a forward
@@ -194,7 +241,7 @@ export function BookDetail() {
             </div>
           </div>
 
-          {/* The send action — the soul of the app */}
+          {/* The two ways to read — peers, never a hierarchy. */}
           {sentTo ? (
             <div className="mt-6 rounded-xl border border-accent/40 bg-surface p-4 text-center">
               <p className="text-text">
@@ -211,47 +258,33 @@ export function BookDetail() {
                 Back to shelf ›
               </Link>
             </div>
-          ) : buddies.length === 0 ? (
-            <Link
-              to="/friends"
-              className="mt-6 flex w-full items-center justify-center rounded-xl border border-border bg-surface px-5 py-3.5 font-medium text-text-muted transition-colors hover:text-text ipad:w-auto ipad:px-10"
-            >
-              Add a buddy to read together
-            </Link>
-          ) : directBuddy ? (
-            <button
-              type="button"
-              disabled={busyUid !== null}
-              onClick={() => void send(directBuddy)}
-              className="mt-6 flex w-full items-center justify-center rounded-xl bg-accent px-5 py-3.5 font-medium text-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-60 ipad:w-auto ipad:px-10"
-            >
-              {busyUid ? 'Sending…' : `Read this with ${directBuddy.displayName ?? 'them'}`}
-            </button>
           ) : (
-            <button
-              type="button"
-              onClick={() => setPicking(true)}
-              className="mt-6 flex w-full items-center justify-center rounded-xl bg-accent px-5 py-3.5 font-medium text-accent-contrast transition-opacity hover:opacity-90 ipad:w-auto ipad:px-10"
-            >
-              Read this together
-            </button>
-          )}
-
-          {/* Read solo — always available, even with no buddies. Continues an
-              existing solo read of this book rather than starting a duplicate. */}
-          {!sentTo && (
-            <button
-              type="button"
-              disabled={soloBusy}
-              onClick={() => void startSolo()}
-              className="mt-3 flex w-full items-center justify-center rounded-xl border border-border bg-surface px-5 py-3 font-medium text-text-muted transition-colors hover:text-text disabled:opacity-60 ipad:w-auto ipad:px-10"
-            >
-              {existingSolo
-                ? 'Continue your solo read'
-                : soloBusy
-                  ? 'Starting…'
-                  : 'Read solo'}
-            </button>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <ReadAction
+                onClick={() => void startSolo()}
+                busy={soloBusy}
+                label={existingSolo ? 'Continue Solo' : 'Read Solo'}
+                icon={
+                  <>
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </>
+                }
+              />
+              <ReadAction
+                onClick={together}
+                busy={busyUid !== null}
+                label="Read Together"
+                icon={
+                  <>
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </>
+                }
+              />
+            </div>
           )}
 
           {user && (
