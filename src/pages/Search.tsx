@@ -80,19 +80,6 @@ export function Search() {
         />
       </div>
 
-      {/* Source tabs — Search is live; the others are the M4/manual doorways. */}
-      <div className="mt-4 flex gap-5 border-b border-border-soft">
-        <span className="-mb-px border-b-2 border-accent pb-2.5 font-mono text-[10px] uppercase tracking-[0.1em] text-accent">
-          Search
-        </span>
-        <span className="pb-2.5 font-mono text-[10px] uppercase tracking-[0.1em] text-text-faint">
-          My shelf
-        </span>
-        <span className="pb-2.5 font-mono text-[10px] uppercase tracking-[0.1em] text-text-faint">
-          Manual
-        </span>
-      </div>
-
       {status === 'searching' && (
         <p className="mt-8 text-center text-sm text-text-muted">Looking…</p>
       )}
