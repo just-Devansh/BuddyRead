@@ -210,9 +210,14 @@ export function CoRead() {
     try {
       await finishRead(read.id, uid, verdict, mine?.totalPages ?? null)
       // A finish files the book on your shelf automatically; loving it favorites
-      // it (and favorite implies read). Setting it down touches no shelf.
+      // it (and favorite implies read). Setting it down touches no shelf. The
+      // rating/review is mirrored onto the library doc so the circle feed can
+      // show it (reads are participant-only; the library is friend-readable).
       if (!verdict.dnf)
-        await setShelf(uid, read.book, verdict.favorite ? 'favorite' : 'read')
+        await setShelf(uid, read.book, verdict.favorite ? 'favorite' : 'read', {
+          rating: verdict.rating,
+          review: verdict.review,
+        })
       if (user) {
         const type = verdict.dnf ? 'read_set_down' : 'read_finished'
         const detail = { bookTitle: read.book.title, bookId: read.book.id }

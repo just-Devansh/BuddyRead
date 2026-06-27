@@ -37,6 +37,12 @@ export interface LibraryDoc {
   shelf: Shelf
   addedAt: Timestamp | null
   updatedAt: Timestamp | null
+  /** A closing verdict, mirrored here from the read when the book is finished, so
+   *  it's visible to friends (reads are participant-only; the library is
+   *  friend-readable). Absent until the book is finished with a rating/review. */
+  rating?: number | null
+  review?: string | null
+  reviewedAt?: Timestamp | null
 }
 
 export interface LibraryItem extends LibraryDoc {
@@ -57,11 +63,14 @@ export const SHELVES: {
 ]
 
 /** Place (or move) a book onto a shelf. Favorite is stored as-is and also reads
- *  onto the Read shelf via {@link booksOnShelf}. */
+ *  onto the Read shelf via {@link booksOnShelf}. An optional `verdict` mirrors a
+ *  finished read's rating/review onto the (friend-readable) library doc, so the
+ *  circle feed can surface it — pass it only when closing a book. */
 export async function setShelf(
   uid: string,
   book: LibraryBook,
   shelf: Shelf,
+  verdict?: { rating: number | null; review: string | null },
 ): Promise<void> {
   await setDoc(
     doc(db, 'users', uid, 'library', book.id),
@@ -70,6 +79,13 @@ export async function setShelf(
       shelf,
       addedAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
+      ...(verdict
+        ? {
+            rating: verdict.rating,
+            review: verdict.review?.trim() || null,
+            reviewedAt: serverTimestamp(),
+          }
+        : {}),
     },
     { merge: true },
   )
