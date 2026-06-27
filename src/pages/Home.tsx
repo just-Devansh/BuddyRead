@@ -31,16 +31,18 @@ function MiniRow({ label, frac, tone }: { label: string; frac: number | null; to
   )
 }
 
-/** An active buddy read on the shelf. */
+/** An active read on the shelf — a buddy read (two paces) or a solo read (one). */
 function ReadCard({ read, uid }: { read: Read; uid: string }) {
-  const buddy = otherReader(read, uid)
-  const buddyName = buddy.displayName ?? 'Your buddy'
+  const solo = read.solo === true
+  const buddy = solo ? null : otherReader(read, uid)
+  const buddyName = buddy?.displayName ?? 'Your buddy'
   // The mini progress rows are tight (a truncated label) — a last name only ever
   // shows half. First name only, on both phone and iPad.
   const buddyFirst = buddyName.trim().split(' ')[0]
   return (
     <Link
       to={`/read/${read.id}`}
+      state={{ from: '/home' }}
       className="flex gap-4 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-accent/40"
     >
       <BookCover
@@ -55,10 +57,12 @@ function ReadCard({ read, uid }: { read: Read; uid: string }) {
       />
       <div className="min-w-0 flex-1">
         <h3 className="font-display text-xl leading-tight text-text">{read.book.title}</h3>
-        <Eyebrow className="mt-1 block">with {buddyName}</Eyebrow>
+        <Eyebrow className="mt-1 block">{solo ? 'Reading solo' : `with ${buddyName}`}</Eyebrow>
         <div className="mt-3 space-y-2">
           <MiniRow label="You" frac={fractionFor(read, uid)} tone="accent" />
-          <MiniRow label={buddyFirst} frac={fractionFor(read, buddy.uid)} tone="gold" />
+          {buddy && (
+            <MiniRow label={buddyFirst} frac={fractionFor(read, buddy.uid)} tone="gold" />
+          )}
         </div>
       </div>
     </Link>
@@ -116,7 +120,7 @@ export function Home() {
               Nothing on the go yet
             </span>
             <span className="block text-pretty text-sm leading-relaxed text-text-muted">
-              Find a book and ask a buddy to read it with you.
+              Find a book — read it with a buddy, or on your own.
             </span>
           </span>
           <span className="font-mono text-lg text-text-faint" aria-hidden="true">

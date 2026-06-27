@@ -195,7 +195,7 @@ export function Profile() {
             ) : (
               <ul className="space-y-2.5">
                 {active.map((r) => {
-                  const o = otherReader(r, uid)
+                  const o = r.solo ? null : otherReader(r, uid)
                   const f = fractionFor(r, uid)
                   return (
                     <li key={r.id}>
@@ -213,7 +213,7 @@ export function Profile() {
                             {r.book.title}
                           </p>
                           <Eyebrow className="mt-0.5 block">
-                            with {o.displayName ?? 'your buddy'} ·{' '}
+                            {o ? `with ${o.displayName ?? 'your buddy'}` : 'Solo'} ·{' '}
                             {f == null ? 'yet to begin' : `${Math.round(f * 100)}%`}
                           </Eyebrow>
                         </div>

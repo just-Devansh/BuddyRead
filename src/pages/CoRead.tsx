@@ -14,7 +14,7 @@ import { useConfirm } from '../components/useConfirm'
 import { useAuth } from '../auth/useAuth'
 import { useTheme } from '../theme/useTheme'
 import { useReads } from '../reads/useReads'
-import { logActivity } from '../lib/activity'
+import { clearReadActivity, logActivity } from '../lib/activity'
 import { setShelf } from '../lib/library'
 import { formatRating } from '../lib/rating'
 import {
@@ -22,6 +22,7 @@ import {
   finishFor,
   finishRead,
   fractionFor,
+  isSolo,
   logMyProgress,
   otherReader,
   removeRead,
@@ -164,29 +165,36 @@ export function CoRead() {
     )
   }
 
-  const buddy = otherReader(read, uid)
+  const solo = isSolo(read)
+  const buddy = solo ? null : otherReader(read, uid)
   const mine = read.progress?.[uid]
-  const theirs = read.progress?.[buddy.uid]
-  const buddyName = buddy.displayName ?? 'Your buddy'
+  const theirs = buddy ? read.progress?.[buddy.uid] : undefined
+  const buddyName = buddy?.displayName ?? 'Your buddy'
   const myFinish = finishFor(read, uid)
-  const theirFinish = finishFor(read, buddy.uid)
-  const bothDone = bothFinished(read) // verdicts unseal only once you both close
+  const theirFinish = buddy ? finishFor(read, buddy.uid) : null
+  const bothDone = bothFinished(read) // verdicts unseal once finished (both, or you if solo)
 
-  // The keepsake's two sides (only meaningful once both have closed the book).
+  // The keepsake's sides (only meaningful once the book's been closed).
   const startedAt = read.respondedAt?.toMillis() ?? read.createdAt?.toMillis() ?? null
   const youSide =
     myFinish && { name: 'You', src: user?.photoURL, finish: myFinish, progress: mine }
   const buddySide =
-    theirFinish &&
-    { name: buddyName, src: buddy.photoURL, finish: theirFinish, progress: theirs }
+    buddy && theirFinish
+      ? { name: buddyName, src: buddy.photoURL, finish: theirFinish, progress: theirs }
+      : null
+  // Solo keepsakes show once you close; buddy keepsakes once you both have.
+  const keepsakeReady = bothDone && youSide && (solo || buddySide)
 
   const save = async (page: number, note: string, mood: string | null) => {
     setSaving(true)
     try {
       await logMyProgress(read.id, uid, page, note, mood)
-      if (user)
+      // Page logs go to the buddy's feed (never your own); a solo read has no one
+      // to notify, so it logs nothing.
+      if (user && buddy)
         await logActivity(buddy.uid, user, 'read_logged', {
           bookTitle: read.book.title,
+          bookId: read.book.id,
           page,
           note: note.trim() || null,
           mood,
@@ -205,13 +213,13 @@ export function CoRead() {
       // it (and favorite implies read). Setting it down touches no shelf.
       if (!verdict.dnf)
         await setShelf(uid, read.book, verdict.favorite ? 'favorite' : 'read')
-      if (user)
-        await logActivity(
-          buddy.uid,
-          user,
-          verdict.dnf ? 'read_set_down' : 'read_finished',
-          { bookTitle: read.book.title },
-        )
+      if (user) {
+        const type = verdict.dnf ? 'read_set_down' : 'read_finished'
+        const detail = { bookTitle: read.book.title, bookId: read.book.id }
+        // Buddy reads tell the buddy; a solo read records it in your own feed.
+        if (buddy) await logActivity(buddy.uid, user, type, detail)
+        else await logActivity(uid, user, type, detail)
+      }
       setClosing(false)
     } finally {
       setSaving(false)
@@ -229,13 +237,32 @@ export function CoRead() {
   }
 
   const leave = async () => {
-    const ok = await confirm({
-      title: 'Leave this read?',
-      message: `You'll both drop out of “${read.book.title}” and lose its progress and notes. You can always start it again later.`,
-      confirmLabel: 'Leave',
-    })
+    const ok = await confirm(
+      solo
+        ? {
+            title: 'Set this read aside?',
+            message: `You'll clear your progress on “${read.book.title}”. You can always start it again later.`,
+            confirmLabel: 'Set aside',
+          }
+        : {
+            title: 'Leave this read?',
+            message: `You'll both drop out of “${read.book.title}” and the shared card will be cleared. You can always start it again later.`,
+            confirmLabel: 'Leave',
+          },
+    )
     if (!ok) return
-    if (user) await logActivity(buddy.uid, user, 'read_left', { bookTitle: read.book.title })
+    if (user) {
+      // Tidy your own feed: keep only the "begun" line, then record that you left.
+      await clearReadActivity(uid, read.book.id)
+      const detail = { bookTitle: read.book.title, bookId: read.book.id }
+      if (buddy) {
+        // withName marks it a buddy-read leave (vs solo) in the feed copy.
+        await logActivity(buddy.uid, user, 'read_left', { ...detail, withName: user.displayName })
+        await logActivity(uid, user, 'read_left', { ...detail, withName: buddyName })
+      } else {
+        await logActivity(uid, user, 'read_left', detail)
+      }
+    }
     await removeRead(read.id)
     navigate('/home')
   }
@@ -249,13 +276,13 @@ export function CoRead() {
         >
           ‹ Shelf
         </Link>
-        <Eyebrow>Reading together</Eyebrow>
+        <Eyebrow>{solo ? 'Reading solo' : 'Reading together'}</Eyebrow>
         <button
           type="button"
           onClick={() => void leave()}
           className="font-mono text-[10px] uppercase tracking-[0.1em] text-text-faint transition-colors hover:text-accent"
         >
-          Leave
+          {solo ? 'Set aside' : 'Leave'}
         </button>
       </div>
 
@@ -276,7 +303,7 @@ export function CoRead() {
             {read.book.title}
           </h1>
           <p className="text-text-muted">{read.book.authors.join(', ')}</p>
-          <Eyebrow className="mt-1.5 block">with {buddyName}</Eyebrow>
+          <Eyebrow className="mt-1.5 block">{solo ? 'On your own' : `with ${buddyName}`}</Eyebrow>
         </div>
       </div>
 
@@ -285,13 +312,15 @@ export function CoRead() {
         <SetupMine readId={read.id} uid={uid} defaultTotal={read.book.pageCount} />
       ) : (
         <>
-          {bothDone && youSide && buddySide ? (
-            /* Both closed the book — the seal breaks, the keepsake appears. */
+          {keepsakeReady && youSide ? (
+            /* The book's closed — the keepsake appears (solo: just yours). */
             <div className="mt-6">
               <div className="text-center">
-                <Eyebrow className="block">You've both closed the book</Eyebrow>
+                <Eyebrow className="block">
+                  {solo ? "You've closed the book" : "You've both closed the book"}
+                </Eyebrow>
                 <p className="mx-auto mt-2 max-w-md text-pretty leading-relaxed text-text-muted">
-                  Here's what “{read.book.title}” left you both.
+                  Here's what “{read.book.title}” left you{solo ? '' : ' both'}.
                 </p>
               </div>
               <div className="mt-6">
@@ -318,23 +347,27 @@ export function CoRead() {
               <div className="mt-5">
                 <SplitProgressCard
                   you={{ name: 'You', tone: 'terracotta', src: user?.photoURL, progress: mine }}
-                  buddy={{
-                    name: buddyName,
-                    tone: 'gold',
-                    src: buddy.photoURL,
-                    to: `/u/${buddy.uid}`,
-                    progress: theirs,
-                  }}
-                  paceLine={paceLine(
-                    fractionFor(read, uid),
-                    fractionFor(read, buddy.uid),
-                    buddyName,
-                  )}
+                  buddy={
+                    buddy
+                      ? {
+                          name: buddyName,
+                          tone: 'gold',
+                          src: buddy.photoURL,
+                          to: `/u/${buddy.uid}`,
+                          progress: theirs,
+                        }
+                      : null
+                  }
+                  paceLine={
+                    buddy
+                      ? paceLine(fractionFor(read, uid), fractionFor(read, buddy.uid), buddyName)
+                      : null
+                  }
                 />
               </div>
 
               {/* Buddy's latest note, if any */}
-              {theirs?.note && (
+              {buddy && theirs?.note && (
                 <div className="mt-5 rounded-xl border border-border bg-surface p-4">
                   <div className="flex items-center justify-between">
                     <Eyebrow>{buddyName}'s note</Eyebrow>
@@ -419,13 +452,14 @@ export function CoRead() {
               open
               bookTitle={read.book.title}
               buddyName={buddyName}
+              solo={solo}
               saving={saving}
               onSave={(verdict) => void finish(verdict)}
               onClose={() => setClosing(false)}
             />
           )}
 
-          {sharing && youSide && buddySide && (
+          {sharing && youSide && (
             <KeepsakeShareModal
               book={read.book}
               you={youSide}

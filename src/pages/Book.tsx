@@ -8,8 +8,9 @@ import { Eyebrow } from '../components/Eyebrow'
 import { useAuth } from '../auth/useAuth'
 import { useFriends } from '../friends/useFriends'
 import { useReads } from '../reads/useReads'
+import { logActivity } from '../lib/activity'
 import { otherParty } from '../lib/friends'
-import { otherReader, sendReadRequest, type ReadBook } from '../lib/reads'
+import { otherReader, sendReadRequest, startSoloRead, type ReadBook } from '../lib/reads'
 import { authorLine, getBook, type Book } from '../lib/books'
 
 /** A friendly "back to ___" label from the route we arrived from (passed as
@@ -53,6 +54,7 @@ export function BookDetail() {
   const [picking, setPicking] = useState(false)
   const [busyUid, setBusyUid] = useState<string | null>(null)
   const [sentTo, setSentTo] = useState<string | null>(null)
+  const [soloBusy, setSoloBusy] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -72,11 +74,12 @@ export function BookDetail() {
   const myUid = user?.uid ?? ''
   const buddies = friends.map((r) => otherParty(r, myUid))
 
-  // Friends already reading / invited to this exact book — shown disabled.
+  // Friends already reading / invited to this exact book — shown disabled. Solo
+  // reads have no buddy, so they never disable anyone.
   const disabled: Record<string, string> = {}
   if (book) {
     for (const r of [...active, ...outgoing]) {
-      if (r.book.id === book.id) {
+      if (r.book.id === book.id && !r.solo) {
         const o = otherReader(r, myUid)
         disabled[o.uid] = r.status === 'active' ? 'Already reading' : 'Invited'
       }
@@ -88,6 +91,12 @@ export function BookDetail() {
     withUid && !disabled[withUid]
       ? buddies.find((b) => b.uid === withUid)
       : undefined
+
+  // An existing solo read of this exact book — so the button continues it rather
+  // than starting a duplicate.
+  const existingSolo = book
+    ? active.find((r) => r.solo && r.book.id === book.id)
+    : undefined
 
   const send = async (buddy: { uid: string; displayName: string | null; photoURL: string | null }) => {
     if (!user || !book) return
@@ -105,6 +114,32 @@ export function BookDetail() {
       setPicking(false)
     } finally {
       setBusyUid(null)
+    }
+  }
+
+  const startSolo = async () => {
+    if (!user || !book) return
+    if (existingSolo) {
+      navigate(`/read/${existingSolo.id}`, { state: { from: location.pathname } })
+      return
+    }
+    setSoloBusy(true)
+    try {
+      const snapshot: ReadBook = {
+        id: book.id,
+        title: book.title,
+        authors: book.authors,
+        coverUrl: book.coverUrl,
+        pageCount: book.pageCount,
+      }
+      const newId = await startSoloRead(user, snapshot)
+      await logActivity(user.uid, user, 'read_started', {
+        bookTitle: book.title,
+        bookId: book.id,
+      })
+      navigate(`/read/${newId}`, { state: { from: location.pathname } })
+    } finally {
+      setSoloBusy(false)
     }
   }
 
@@ -199,6 +234,23 @@ export function BookDetail() {
               className="mt-6 flex w-full items-center justify-center rounded-xl bg-accent px-5 py-3.5 font-medium text-accent-contrast transition-opacity hover:opacity-90 ipad:w-auto ipad:px-10"
             >
               Read this together
+            </button>
+          )}
+
+          {/* Read solo — always available, even with no buddies. Continues an
+              existing solo read of this book rather than starting a duplicate. */}
+          {!sentTo && (
+            <button
+              type="button"
+              disabled={soloBusy}
+              onClick={() => void startSolo()}
+              className="mt-3 flex w-full items-center justify-center rounded-xl border border-border bg-surface px-5 py-3 font-medium text-text-muted transition-colors hover:text-text disabled:opacity-60 ipad:w-auto ipad:px-10"
+            >
+              {existingSolo
+                ? 'Continue your solo read'
+                : soloBusy
+                  ? 'Starting…'
+                  : 'Read solo'}
             </button>
           )}
 

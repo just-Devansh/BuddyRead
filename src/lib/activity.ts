@@ -2,7 +2,11 @@ import type { User } from 'firebase/auth'
 import {
   addDoc,
   collection,
+  deleteDoc,
+  getDocs,
+  query,
   serverTimestamp,
+  where,
   type Timestamp,
 } from 'firebase/firestore'
 import { db } from './firebase'
@@ -33,6 +37,8 @@ export interface ActivityEventDoc {
   actorPhotoURL: string | null
   type: ActivityType
   bookTitle: string | null
+  /** The book's id, so a read's events can be found/cleared as a group. */
+  bookId: string | null
   /** The other reader's name, when an event reads better with it (e.g. starts). */
   withName: string | null
   page: number | null
@@ -48,6 +54,7 @@ export interface ActivityItem extends ActivityEventDoc {
 
 type Detail = {
   bookTitle?: string | null
+  bookId?: string | null
   withName?: string | null
   page?: number | null
   note?: string | null
@@ -67,6 +74,7 @@ export async function logActivity(
       actorPhotoURL: actor.photoURL,
       type,
       bookTitle: detail.bookTitle ?? null,
+      bookId: detail.bookId ?? null,
       withName: detail.withName ?? null,
       page: detail.page ?? null,
       note: detail.note ?? null,
@@ -75,5 +83,27 @@ export async function logActivity(
     })
   } catch {
     // Best-effort — the action it records already succeeded.
+  }
+}
+
+/**
+ * Clear my own activity for one read (by book id) when I leave it, keeping only
+ * the "begun together" line (read_started / read_accepted) so the feed reads:
+ * we started this, then I left. Best-effort; only ever touches my own feed (the
+ * rules don't permit deleting from anyone else's).
+ */
+export async function clearReadActivity(uid: string, bookId: string): Promise<void> {
+  const keep = new Set<ActivityType>(['read_started', 'read_accepted'])
+  try {
+    const snap = await getDocs(
+      query(collection(db, 'users', uid, 'activity'), where('bookId', '==', bookId)),
+    )
+    await Promise.all(
+      snap.docs
+        .filter((d) => !keep.has((d.data() as ActivityEventDoc).type))
+        .map((d) => deleteDoc(d.ref)),
+    )
+  } catch {
+    // Best-effort — leaving the read already succeeded.
   }
 }

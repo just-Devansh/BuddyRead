@@ -79,7 +79,8 @@ function Half({ side, tone }: { side: Side; tone: 'accent' | 'gold' }) {
 /**
  * The heart of the app: two readers, side by side, never racing. Your pace in
  * terracotta, your buddy's in gold, parted by a fleuron. The optional `paceLine`
- * below is a nudge to keep company, not a scoreboard.
+ * below is a nudge to keep company, not a scoreboard. Omit `buddy` for a solo
+ * read — the same card, just your one side, full width and undivided.
  */
 export function SplitProgressCard({
   you,
@@ -87,23 +88,27 @@ export function SplitProgressCard({
   paceLine,
 }: {
   you: Side
-  buddy: Side
+  buddy?: Side | null
   paceLine?: string | null
 }) {
   return (
     <>
       <div className="relative flex rounded-2xl border border-border bg-surface px-1.5 py-5 shadow-[0_18px_34px_-24px_rgba(60,40,20,0.45)]">
-        <span className="absolute inset-y-5 left-1/2 w-px bg-border" aria-hidden="true" />
-        <span
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-surface px-1 text-xs text-text-faint"
-          aria-hidden="true"
-        >
-          ❧
-        </span>
+        {buddy && (
+          <>
+            <span className="absolute inset-y-5 left-1/2 w-px bg-border" aria-hidden="true" />
+            <span
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-surface px-1 text-xs text-text-faint"
+              aria-hidden="true"
+            >
+              ❧
+            </span>
+          </>
+        )}
         <Half side={you} tone="accent" />
-        <Half side={buddy} tone="gold" />
+        {buddy && <Half side={buddy} tone="gold" />}
       </div>
-      {paceLine && (
+      {buddy && paceLine && (
         <p className="mt-3.5 text-center font-mono text-[10px] uppercase tracking-[0.12em] text-gold">
           {paceLine}
         </p>

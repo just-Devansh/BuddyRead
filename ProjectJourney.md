@@ -8,7 +8,9 @@ An append-only logbook. One chapter per milestone: what we built, _why_, the tra
 
 ### What we built and why
 
-The goal of M0 was to prove the whole pipeline end-to-end on day one — a real, installable PWA you can deploy — before writing a single feature. A deployed skeleton de-risks everything after it: routing, the design system, theming, the build, and the service worker are all the kind of plumbing that's miserable to debug late, so we stand it up first and layer features onto something that already ships.
+The goal of M0 was to prove the whole pipeline end-to-end on day one — a real, installable PWA you can deploy — before writing a single feature. A deployed skeleton de-risks everything a
+
+fter it: routing, the design system, theming, the build, and the service worker are all the kind of plumbing that's miserable to debug late, so we stand it up first and layer features onto something that already ships.
 
 Concretely, M0 delivers:
 
@@ -358,3 +360,33 @@ One bug the 3D era left behind, fixed here: the **Add-to-Library menu opened off
 ### Addendum — covers face-out (the look that finally worked)
 
 The 2D spine bookcase looked mediocre too: fat domino spines, and a "spine colour washed from the cover" that just read as a smudged front cover squished sideways (real spines show _spine_ art, not the cover). The honest fix wasn't more tuning — it was admitting the concept was wrong. There are only two ways to draw a book: show its **spine** (needs invented spine art; "colour from cover" is unreliable without CORS pixel reads) or show its **cover face-out**. We went face-out: real covers standing on slim wooden ledges, themed to the app (warm oak by day, walnut by night) instead of a dark cavern — a boutique-bookstore display. You get the actual art, instant recognition, and the CORS colour problem vanishes (a cover is just shown, never sampled). Each cover gets a drop shadow to ground it and a thin page-block edge for thickness; tapping goes straight to the book's page, so the old spotlight step (and the `BookshelfProps` renderer contract) were deleted as dead weight. Lesson: when something "looks mediocre" after two attempts, it's usually the concept, not the CSS.
+
+---
+
+## Chapter — Solo reads, kinder closings, and a feed that forgets
+
+Three asks landed together: soften the closing-ceremony copy, stop a left buddy-read from cluttering the feed, and — the big one — let a reader read **solo**, not only with a buddy.
+
+### Wording
+
+Two label changes, both toward plainer, more recognisable language. "The line it left you" became **"What do you feel about it?"** above the review box — an invitation, not a literary demand. "I set this one down unfinished" became **"Not for me. DNF."** — DNF is instantly legible to anyone who's used a reading app.
+
+### A feed that forgets the rest, but not the start
+
+Leaving a buddy read used to leave a trail: every page the buddy logged, the accept, the start — all still sitting in your "Lately". The ask: after you leave, keep only the "begun together" line and a single "left — the card's been cleared" line. Implemented as `clearReadActivity(uid, bookId)`: it queries your own feed by `bookId` (a new field now stamped on every read event) and deletes everything except `read_started`/`read_accepted`, then logs `read_left`. The honest limitation: the rules only let you delete from **your own** feed, so the buddy's copy of your old page-logs survives (no cloud functions in v0 to fan a cleanup out). We tell the buddy you left; we can't tidy their feed for them. The `read_left` copy is first-person in your feed ("You left the buddy-read…") and third-person in theirs, distinguished by `withName` — also the flag that separates a buddy leave from a solo set-aside.
+
+### Solo reads — the same machine, one side
+
+The temptation was a parallel "soloReads" collection. Rejected: it would fork the listener, the card, the keepsake, the activity, every guard. Instead a solo read is the **same `reads/{readId}` doc** with `solo: true`, `participants: [you]`, `from`/`to` both you, created **active** (no acceptance — so no friendship is required). The one `array-contains` listener still finds it; it lands in `active`; `incoming`/`outgoing` never see it (it's never pending). Everything else became "render one side instead of two": `SplitProgressCard` and `KeepsakeCard`/`KeepsakeShareModal` took an optional `buddy`; the shelf card, the co-read screen, and the profile "reading" row each branch on `isSolo`. The keepsake reads "A read, finished" with one centred verdict and no "together". Closing a solo read finishes it immediately — there's no second verdict to seal against.
+
+`otherReader` of a solo read is *you*, which turned out to be a useful property: a solo read silently fails the `otherReader(r).uid === them` filter on a buddy profile, so it never shows up as something you're "reading together". The two places that render "with {name}" off `otherReader` (Home, Profile) had to learn to say "Solo" instead — without the guard they'd cheerfully announce you were reading with yourself.
+
+### The rules gotcha that would've broken everything
+
+Adding a solo create-branch to `firestore.rules` nearly broke **buddy** reads. The buddy branch is gated by `solo != true`, and `sendReadRequest` never writes a `solo` field — so `request.resource.data.solo` reads a **missing key**, which in Firestore rules is an error that denies the whole write. Every buddy-read send would have failed. The fix is `request.resource.data.get('solo', false)` everywhere `solo` is read (create branches and the `solo`-pinned-on-update invariant). Lesson, re-learned: in security rules, never touch a field that might be absent without `.get(field, default)`.
+
+### Q&A
+
+- **Why not a `soloReads` collection?** Every read behaviour — the live listener, progress/finish own-key rules, the card, the keepsake, the activity feed — would have to be duplicated and kept in sync. One flag on the existing doc reuses all of it; the cost is a handful of `solo ?` branches at the render edges, which is far cheaper than a parallel data path.
+- **Why does solo log to your own feed when buddy reads don't?** A buddy read's events are *news for the other person* (their feed). A solo read has no other person, so the only place its history can live is your own feed — start and finish, but not page-logs (those would be self-noise, and buddy reads never log your pages to yourself either).
+- **Can a solo read be sent / accepted?** No. It's born active. There's no recipient, so it never enters the pending/incoming/outgoing partitions, and the accept rule (recipient flips pending→active) can't apply.

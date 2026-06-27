@@ -39,8 +39,13 @@ function ago(ms: number): string {
 const strong = (s: string) => <strong className="font-semibold">{s}</strong>
 const em = (s: string) => <em className="font-display italic">{s}</em>
 
-/** Turn one logged event into its line, an optional quoted note, and a mood. */
-function describe(it: ActivityItem): { body: ReactNode; quote?: string; mood?: Mood | null } {
+/** Turn one logged event into its line, an optional quoted note, and a mood.
+ *  `mine` = the actor is the viewer (events that land in your own feed), so
+ *  first-person reads naturally ("You…") instead of repeating your name. */
+function describe(
+  it: ActivityItem,
+  mine: boolean,
+): { body: ReactNode; quote?: string; mood?: Mood | null } {
   const who = it.actorName ?? 'A reader'
   const book = it.bookTitle ?? 'your book'
   switch (it.type) {
@@ -67,11 +72,32 @@ function describe(it: ActivityItem): { body: ReactNode; quote?: string; mood?: M
         mood: moodByKey(it.mood),
       }
     case 'read_left':
-      return { body: <>{strong(who)} stepped away from {em(book)}.</> }
+      // withName set ⇒ it was a buddy read; absent ⇒ solo.
+      if (it.withName)
+        return {
+          body: mine ? (
+            <>You left the buddy-read of {em(book)} — the card's been cleared.</>
+          ) : (
+            <>{strong(who)} left your buddy-read of {em(book)} — the card's been cleared.</>
+          ),
+        }
+      return { body: <>You set {em(book)} aside — the card's been cleared.</> }
     case 'read_finished':
-      return { body: <>{strong(who)} turned the last page of {em(book)}.</> }
+      return {
+        body: mine ? (
+          <>You turned the last page of {em(book)}.</>
+        ) : (
+          <>{strong(who)} turned the last page of {em(book)}.</>
+        ),
+      }
     case 'read_set_down':
-      return { body: <>{strong(who)} set {em(book)} down for now.</> }
+      return {
+        body: mine ? (
+          <>You set {em(book)} down for now.</>
+        ) : (
+          <>{strong(who)} set {em(book)} down for now.</>
+        ),
+      }
     default:
       // An unknown/legacy event type must never crash the feed — render a
       // quiet, generic line instead of returning undefined.
@@ -199,10 +225,12 @@ export function Activity() {
                         if (user) {
                           await logActivity(r.fromUid, user, 'read_accepted', {
                             bookTitle: r.book.title,
+                            bookId: r.book.id,
                           })
                           // A start entry for my own feed, naming who I'm reading with.
                           await logActivity(user.uid, user, 'read_started', {
                             bookTitle: r.book.title,
+                            bookId: r.book.id,
                             withName: r.fromName,
                           })
                         }
@@ -227,6 +255,7 @@ export function Activity() {
                           if (user)
                             await logActivity(r.fromUid, user, 'read_declined', {
                               bookTitle: r.book.title,
+                              bookId: r.book.id,
                             })
                           await removeRead(r.id)
                         })
@@ -248,8 +277,8 @@ export function Activity() {
           <Eyebrow className="mb-1 block">Lately</Eyebrow>
           <ul>
             {events.map((it) => {
-              const { body, quote, mood } = describe(it)
               const isOther = it.actorUid && it.actorUid !== user?.uid
+              const { body, quote, mood } = describe(it, !isOther)
               const avatar = (
                 <Avatar src={it.actorPhotoURL} name={it.actorName} size="h-9 w-9" />
               )

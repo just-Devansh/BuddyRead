@@ -137,7 +137,8 @@ export const KeepsakeCard = forwardRef<
   {
     book: ReadBook
     you: KeepsakeSide
-    buddy: KeepsakeSide
+    /** The buddy's side — omit (or null) for a solo read's single-side keepsake. */
+    buddy?: KeepsakeSide | null
     startedAt: number | null
     mode: Mode
   }
@@ -145,7 +146,7 @@ export const KeepsakeCard = forwardRef<
   const p = PALETTE[mode]
   const finishedAt = Math.max(
     you.finish.finishedAt?.toMillis() ?? 0,
-    buddy.finish.finishedAt?.toMillis() ?? 0,
+    buddy?.finish.finishedAt?.toMillis() ?? 0,
   )
   const nights =
     startedAt && finishedAt
@@ -168,7 +169,7 @@ export const KeepsakeCard = forwardRef<
           className="text-center font-mono text-[9.5px] uppercase tracking-[0.32em]"
           style={{ color: p.faint }}
         >
-          A read, finished together
+          {buddy ? 'A read, finished together' : 'A read, finished'}
         </p>
         <div
           className="mx-auto mt-3 h-px w-12"
@@ -234,7 +235,8 @@ export const KeepsakeCard = forwardRef<
             style={{ color: p.faint }}
           >
             {startedAt ? `${monthDay(startedAt)} – ` : ''}
-            {monthDay(finishedAt)} · {nights} {nights === 1 ? 'night' : 'nights'} together
+            {monthDay(finishedAt)} · {nights} {nights === 1 ? 'night' : 'nights'}
+            {buddy ? ' together' : ''}
           </p>
         )}
 
@@ -243,11 +245,17 @@ export const KeepsakeCard = forwardRef<
           ❧
         </p>
 
-        {/* Verdicts */}
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <Verdict side={you} color={p.accent} tone="terracotta" p={p} />
-          <Verdict side={buddy} color={p.gold} tone="gold" p={p} />
-        </div>
+        {/* Verdicts — two side by side for a buddy read, one centred for solo */}
+        {buddy ? (
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <Verdict side={you} color={p.accent} tone="terracotta" p={p} />
+            <Verdict side={buddy} color={p.gold} tone="gold" p={p} />
+          </div>
+        ) : (
+          <div className="mt-5">
+            <Verdict side={you} color={p.accent} tone="terracotta" p={p} />
+          </div>
+        )}
 
         {/* Footer wordmark */}
         <div className="mt-8 flex items-center justify-center gap-2">

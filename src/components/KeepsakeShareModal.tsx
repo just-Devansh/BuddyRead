@@ -70,7 +70,8 @@ export function KeepsakeShareModal({
 }: {
   book: ReadBook
   you: KeepsakeSide
-  buddy: KeepsakeSide
+  /** Omit (or null) for a solo read's single-side keepsake. */
+  buddy?: KeepsakeSide | null
   startedAt: number | null
   defaultMode: 'light' | 'dark'
   onClose: () => void
@@ -86,7 +87,7 @@ export function KeepsakeShareModal({
   const [assets, setAssets] = useState({
     cover: book.coverUrl ?? null,
     you: you.src ?? null,
-    buddy: buddy.src ?? null,
+    buddy: buddy?.src ?? null,
   })
   const assetsReady = useRef<Promise<void> | null>(null)
 
@@ -96,7 +97,7 @@ export function KeepsakeShareModal({
         const [cover, youSrc, buddySrc] = await Promise.all([
           book.coverUrl ? inlineImage(book.coverUrl) : null,
           you.src ? inlineImage(you.src) : null,
-          buddy.src ? inlineImage(buddy.src) : null,
+          buddy?.src ? inlineImage(buddy.src) : null,
         ])
         setAssets({ cover, you: youSrc, buddy: buddySrc })
       })()
@@ -263,7 +264,7 @@ export function KeepsakeShareModal({
               ref={cardRef}
               book={{ ...book, coverUrl: assets.cover }}
               you={{ ...you, src: assets.you }}
-              buddy={{ ...buddy, src: assets.buddy }}
+              buddy={buddy ? { ...buddy, src: assets.buddy } : null}
               startedAt={startedAt}
               mode={mode}
             />

@@ -71,6 +71,10 @@ export interface ReadDoc {
   toName: string | null
   toPhotoURL: string | null
   book: ReadBook
+  /** A solo read — just you, no buddy. participants is [you], from/to are both
+   *  you, it starts active (no acceptance), and the card/keepsake render as a
+   *  single side. Absent/false on a buddy read. */
+  solo?: boolean
   status: 'pending' | 'active'
   progress: Record<string, ProgressEntry>
   /** Per-reader closing verdicts. Absent until someone closes the book. A read
@@ -111,6 +115,31 @@ export async function sendReadRequest(
     createdAt: serverTimestamp(),
     respondedAt: null,
   })
+}
+
+/**
+ * Start a solo read — no buddy, no acceptance. `from`/`to` are both you and
+ * `participants` is just you, so the one own-key listener and rules still apply
+ * unchanged; `solo` flips the UI to a single side. Returns the new read's id so
+ * the caller can navigate straight to it.
+ */
+export async function startSoloRead(me: User, book: ReadBook): Promise<string> {
+  const ref = await addDoc(collection(db, 'reads'), {
+    participants: [me.uid],
+    fromUid: me.uid,
+    toUid: me.uid,
+    fromName: me.displayName,
+    fromPhotoURL: me.photoURL,
+    toName: me.displayName,
+    toPhotoURL: me.photoURL,
+    book,
+    solo: true,
+    status: 'active',
+    progress: {},
+    createdAt: serverTimestamp(),
+    respondedAt: serverTimestamp(),
+  })
+  return ref.id
 }
 
 /** Recipient accepts — the request becomes an active read. */
@@ -217,10 +246,18 @@ export function finishFor(read: Read, uid: string): FinishEntry | null {
   return read.finish?.[uid] ?? null
 }
 
-/** Both readers have closed the book — the read is finished, a shared keepsake. */
+/** A solo read — just you, no buddy. */
+export function isSolo(read: Read): boolean {
+  return read.solo === true
+}
+
+/** The read is finished — for a buddy read, both have closed the book; for a
+ *  solo read, you have. Derived, not a status; it's what unseals the keepsake. */
 export function bothFinished(read: Read): boolean {
   const f = read.finish
-  return !!f && !!f[read.fromUid] && !!f[read.toUid]
+  if (!f) return false
+  if (read.solo) return !!f[read.fromUid]
+  return !!f[read.fromUid] && !!f[read.toUid]
 }
 
 /** The other reader, relative to me. */

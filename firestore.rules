@@ -120,16 +120,30 @@ service cloud.firestore {
       allow read: if signedIn()
                   && request.auth.uid in resource.data.participants;
 
-      // Only the sender creates it, only as pending, addressed to an actual
-      // friend (an accepted relationship must exist), never to oneself.
+      // You create your own reads, with no progress yet. Two shapes:
+      //  (a) a buddy read — pending, addressed to an actual friend (an accepted
+      //      relationship must exist), never to yourself; or
+      //  (b) a solo read — solo == true, just you, active immediately (no
+      //      acceptance, so no friendship needed). `solo != true` short-circuits
+      //      the buddy branch first, so friendDoc() is never read for a solo read.
       allow create: if signedIn()
                     && request.auth.uid == request.resource.data.fromUid
-                    && request.resource.data.fromUid != request.resource.data.toUid
-                    && request.resource.data.status == 'pending'
-                    && request.resource.data.participants
-                       == [request.resource.data.fromUid, request.resource.data.toUid]
                     && request.resource.data.progress == {}
-                    && friendDoc().data.status == 'accepted';
+                    && (
+                      ( request.resource.data.get('solo', false) != true
+                        && request.resource.data.fromUid != request.resource.data.toUid
+                        && request.resource.data.status == 'pending'
+                        && request.resource.data.participants
+                           == [request.resource.data.fromUid, request.resource.data.toUid]
+                        && friendDoc().data.status == 'accepted'
+                      )
+                      ||
+                      ( request.resource.data.get('solo', false) == true
+                        && request.resource.data.toUid == request.resource.data.fromUid
+                        && request.resource.data.status == 'active'
+                        && request.resource.data.participants == [request.resource.data.fromUid]
+                      )
+                    );
 
       // Updates keep the parties and the book fixed. Two shapes are allowed:
       //  (a) the recipient accepts (pending -> active, nothing else changes), or
@@ -143,6 +157,7 @@ service cloud.firestore {
         && request.resource.data.fromUid == resource.data.fromUid
         && request.resource.data.toUid == resource.data.toUid
         && request.resource.data.book == resource.data.book
+        && request.resource.data.get('solo', false) == resource.data.get('solo', false)
         && (
           ( request.auth.uid == resource.data.toUid
             && resource.data.status == 'pending'

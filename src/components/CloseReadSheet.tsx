@@ -8,8 +8,8 @@ const DISMISS_PX = 120 // drag past this and the sheet lets go
 
 /**
  * The closing ceremony — a bottom sheet you reach for once, at the end. Stars to
- * the nearest quarter, a heart if you loved it, and the line it left you. Or set
- * the book down unfinished, no rating, no shame. Mirrors LogSessionSheet's
+ * the nearest quarter, a heart if you loved it, and how you felt about it. Or
+ * mark it DNF, no rating, no shame. Mirrors LogSessionSheet's
  * slide-up / drag-to-dismiss / scroll-lock so the two feel of a piece.
  *
  * Calls `onSave(verdict)` — the co-read screen writes it (and shelves the book).
@@ -18,6 +18,7 @@ export function CloseReadSheet({
   open,
   bookTitle,
   buddyName,
+  solo = false,
   saving,
   onSave,
   onClose,
@@ -25,6 +26,8 @@ export function CloseReadSheet({
   open: boolean
   bookTitle: string
   buddyName: string
+  /** Solo read — no buddy to seal the verdict against; closing finishes it. */
+  solo?: boolean
   saving: boolean
   onSave: (verdict: Verdict) => void
   onClose: () => void
@@ -132,8 +135,8 @@ export function CloseReadSheet({
           </div>
         </div>
 
-        {/* The line it left you */}
-        <Eyebrow className="mb-2 mt-7 block">The line it left you</Eyebrow>
+        {/* Your closing thoughts */}
+        <Eyebrow className="mb-2 mt-7 block">What do you feel about it?</Eyebrow>
         <textarea
           rows={3}
           value={review}
@@ -151,8 +154,9 @@ export function CloseReadSheet({
           {saving ? 'Closing…' : 'Close the book'}
         </button>
         <p className="mt-2.5 text-center text-xs leading-relaxed text-text-muted">
-          Your verdict stays sealed until {buddyName} finishes too — then you'll
-          read each other's at once.
+          {solo
+            ? 'This closes the book and files it on your shelf.'
+            : `Your verdict stays sealed until ${buddyName} finishes too — then you'll read each other's at once.`}
         </p>
 
         <button
@@ -161,7 +165,7 @@ export function CloseReadSheet({
           onClick={setDown}
           className="mx-auto mt-4 block font-mono text-[10px] uppercase tracking-[0.1em] text-text-faint transition-colors hover:text-accent disabled:opacity-60"
         >
-          I set this one down unfinished
+          Not for me. DNF.
         </button>
       </div>
     </div>
