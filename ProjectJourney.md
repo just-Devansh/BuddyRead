@@ -390,3 +390,47 @@ Adding a solo create-branch to `firestore.rules` nearly broke **buddy** reads. T
 - **Why not a `soloReads` collection?** Every read behaviour — the live listener, progress/finish own-key rules, the card, the keepsake, the activity feed — would have to be duplicated and kept in sync. One flag on the existing doc reuses all of it; the cost is a handful of `solo ?` branches at the render edges, which is far cheaper than a parallel data path.
 - **Why does solo log to your own feed when buddy reads don't?** A buddy read's events are *news for the other person* (their feed). A solo read has no other person, so the only place its history can live is your own feed — start and finish, but not page-logs (those would be self-noise, and buddy reads never log your pages to yourself either).
 - **Can a solo read be sent / accepted?** No. It's born active. There's no recipient, so it never enters the pending/incoming/outgoing partitions, and the accept rule (recipient flips pending→active) can't apply.
+
+---
+
+## Chapter — The quiet masters: export, the cabinet, PWA feel, navigation, covers
+
+A batch of detail decisions that don't show up as "features" but are what make the app feel finished rather than webby. Documented here because the *reasoning* — root cause, what was rejected, the trade-off — is the point.
+
+### The keepsake that wouldn't download (a canvas-taint detective story)
+
+Symptom: Download and Share on the finished-read keepsake both failed with "Could not save the image." A first attempt (priming `html-to-image` with a double pass, blob-vs-dataURL download, `document.fonts.ready`) didn't fix it — a sign the diagnosis was wrong, so we stopped guessing and found the **root cause**.
+
+`html-to-image` rasterizes by serialising the DOM into an SVG `<foreignObject>`, painting it to a `<canvas>`, and calling `canvas.toDataURL()`. The moment a **cross-origin image with no CORS headers** is drawn onto a canvas, the canvas is **tainted**, and `toDataURL()` throws a `SecurityError` — which our `catch` swallowed into the generic error string. We confirmed it empirically with `curl -I`: `books.google.com/books/content` returns **no** `Access-Control-Allow-Origin`, while `covers.openlibrary.org` returns `ACAO: *`. So keepsakes with a Google cover always failed; the rare ones that had fallen back to an Open Library cover quietly worked — which is exactly why it looked intermittent. The verdict avatars (Google profile photos, `googleusercontent.com`) had the same problem.
+
+The fix: before rasterising, **inline every remote image to a `data:` URL** (a data URL can never taint a canvas). Strategy with graceful degradation: try a direct `fetch` first (works for CORS-enabled hosts like Open Library and anything same-origin); on failure, route through the `images.weserv.nl` proxy, which re-serves any image with `ACAO: *`; if even that fails, drop that image to the card's typographic/initial fallback so the export *never* throws again. The trade-off we accepted and flagged: at export time the (public) cover/photo URL passes through a third-party proxy — there is no client-only way around a host that refuses CORS. Lesson: when two fixes don't work, stop tuning and reproduce the root cause; a swallowed `SecurityError` is the canonical tell of a tainted canvas.
+
+### Junk covers — a heuristic for "is this actually a cover?"
+
+Older titles (e.g. *East of Eden*) sometimes return a Google image that isn't a cover at all: a near-square page scan, or a tiny low-res placeholder with plain black text on white. `object-cover` on our 2:3 tile then *zooms into a blurry crop of garbage*. There's no API field that says "this is a bad cover", so we judge the pixels: on `<img> onLoad`, read `naturalWidth/naturalHeight` and if it's too small (`< 90px`) or far from a portrait book aspect (`height/width < 1.25`), treat it as a miss and advance the candidate chain (Google → Open Library → typographic cover). We chose to fall through rather than `object-contain`-letterbox it, because the design wants real art filling the tile, not white bars. The trade-off is a heuristic: a genuinely square cover could be rejected, a bad-but-correctly-shaped one could slip through — tunable thresholds, deliberately biased toward "never show the zoomed-crap version."
+
+### Navigation: ending the back-button loop
+
+The book page's back control was a hardcoded `<Link to="/search">`. Two bugs in one: it always said "Back to search" even from the Library, and — worse — it was a *forward push*, so from `library → book` it pushed `/search` on top, and the phone back button then popped you back *into* the book. A back control that adds a history entry is the bug. Fix: call `navigate(-1)` — genuine history back, which lands wherever you actually came from and adds nothing to pop. The label (the only thing that needs "where from" knowledge) comes from `state.from`, passed by each entry point, mapping to "Back to library / …to profile / …to search"; a cold deep-link with no app history falls back to `/library`. The insight: don't encode a brittle per-source routing table — let the browser's history be the source of truth for *destination*, and carry only a label hint for copy.
+
+### Making the installed PWA feel like an app, not a page
+
+Press-and-holding a cover in the installed app popped the OS web callout (Copy link / Download image / Share image / Open in Chrome) — pure web-page chrome that shattered the app illusion and pre-empted our own gestures. Decision: suppress it **only when running standalone**, so the website in a browser tab still behaves like a website. `lib/standalone.ts` detects `display-mode: standalone` (plus iOS's flag), tags `<html class="standalone">`, and adds a capturing `contextmenu` handler that `preventDefault()`s (real text fields exempted so paste still works). CSS scoped under `.standalone` does the rest: `-webkit-touch-callout: none` (iOS), `-webkit-user-drag: none`, transparent tap-highlight. The scope to standalone is the whole point — capability, not blanket suppression.
+
+### Press-in, and the hover that sticks
+
+We debated whether library covers need a press-and-hold effect and concluded they don't — there's no secondary action to reveal; the natural interaction is a tap. The real gap was *touch feedback*: a tap gave nothing before the route changed (webby). So covers now dip on `:active` (`scale(0.955)`, ~280ms with a gentle decelerating curve — the first pass at 90ms felt snappy; a reading app wants it to *settle*). And the existing hover-lift was gated behind `@media (hover: hover)`: on a touch screen, `:hover` *sticks* after a tap and can freeze a cover mid-lift, so hover is now pointer-only and press-in is the touch response.
+
+### The library cabinet (imported from the design source)
+
+The Library moved from "face-out covers on ledges" to a single **wooden cabinet** — three recessed compartments, the wood crossbars between them reading as the shelves — pulled from the claude.ai/design "BuddyRead Screens" reference via the design-sync tool. Each shelf is a horizontal-scroll row of fixed-width curved covers; empty shelves show dashed placeholder slots with a quiet hint, so the whole-library empty state is just the cabinet itself. `BookCover` gained an overridable `rounded` prop so only the Library curves its covers, leaving every other use untouched. Built as pure CSS (`.shelf-cabinet`/`.shelf-compartment`, themed for both palettes) rather than images, so it stays crisp and theme-correct.
+
+### Deletable activity
+
+Small, but worth the note: every "Lately" row got a `⋯` menu whose one action is Delete (with a confirm dialog). It only deletes from *your own* feed — the same ownership boundary that runs through the whole data model (the rules already allowed owner-delete on `users/{uid}/activity`). No new rule needed; the affordance just exposes a capability the model already had.
+
+### Q&A
+
+- **How did you debug the keepsake export?** Recognised that a swallowed `SecurityError` from `canvas.toDataURL()` means a tainted canvas; confirmed the cause with `curl -I` showing Google covers lack `Access-Control-Allow-Origin`; fixed by inlining images to data URLs (direct fetch → CORS proxy → typographic fallback) so the canvas is never tainted.
+- **Why `navigate(-1)` instead of routing back to the origin explicitly?** A "back" affordance should pop history, not push a new entry — pushing is what created the loop. History is the correct source of truth for the destination; only the label needs an origin hint, which we pass as route state.
+- **Why scope the long-press suppression to standalone?** On the website, the native callout is expected behaviour. We only want the app-like suppression when the app *is* installed — so we gate both the JS and the CSS on `display-mode: standalone`.
