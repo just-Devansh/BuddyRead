@@ -6,6 +6,45 @@ import { MOODS } from '../lib/moods'
 const DISMISS_PX = 120 // drag past this and the sheet lets go
 
 /**
+ * Press-and-hold auto-repeat for the ± buttons — the way a phone volume rocker
+ * or a remote behaves. A tap nudges once; holding fires once, waits out a short
+ * delay, then repeats, *accelerating* the step so you can travel 50 pages
+ * without 50 taps (1 → 5 → 10 a tick the longer you hold). Returns a `start`
+ * factory (called with the direction) and a `stop` to wire to pointer-up/leave.
+ */
+function useHoldRepeat(action: (delta: number) => void) {
+  const actionRef = useRef(action)
+  useEffect(() => {
+    actionRef.current = action
+  })
+  const timers = useRef<{ to?: number; iv?: number }>({})
+
+  const stop = () => {
+    if (timers.current.to) clearTimeout(timers.current.to)
+    if (timers.current.iv) clearInterval(timers.current.iv)
+    timers.current = {}
+  }
+  useEffect(() => stop, [])
+
+  const start = (dir: 1 | -1) => (e: ReactPointerEvent) => {
+    if (e.button != null && e.button > 0) return // ignore non-primary pointers
+    e.preventDefault()
+    stop()
+    actionRef.current(dir) // the immediate nudge (so a plain tap still works)
+    const began = Date.now()
+    timers.current.to = window.setTimeout(() => {
+      timers.current.iv = window.setInterval(() => {
+        const held = Date.now() - began
+        const mag = held > 2600 ? 10 : held > 1300 ? 5 : 1
+        actionRef.current(dir * mag)
+      }, 90)
+    }, 380)
+  }
+
+  return { start, stop }
+}
+
+/**
  * A bottom-sheet for logging tonight's pages: a draggable page bar (with fine
  * ± nudges), a curated end-of-session mood, and an optional line worth keeping.
  * Calls `onSave(page, note, mood)` — the co-read screen writes it to the read.
@@ -60,6 +99,12 @@ export function LogSessionSheet({
     }
   }, [])
 
+  // Auto-repeat for the ± steppers (kept above the early return so the hook
+  // order is stable). Clamps against `total` itself so it never overruns.
+  const hold = useHoldRepeat((d) =>
+    setPage((p) => Math.max(0, Math.min(total, p + d))),
+  )
+
   if (!open) return null
 
   // Slide the sheet out, then let the parent unmount it.
@@ -84,7 +129,6 @@ export function LogSessionSheet({
   }
 
   const clamp = (v: number) => Math.max(0, Math.min(total, v))
-  const step = (d: number) => setPage((p) => clamp(p + d))
   const pct = total ? Math.round((page / total) * 100) : 0
 
   const translateY = show ? `${dragY}px` : '100%'
@@ -121,45 +165,58 @@ export function LogSessionSheet({
           </Eyebrow>
         </div>
 
-        {/* Page count with fine nudges */}
-        <div className="mt-6 flex items-center justify-center gap-5">
-          <button
-            type="button"
-            onClick={() => step(-1)}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface-alt text-2xl text-accent transition-colors hover:bg-bg"
-            aria-label="One page back"
-          >
-            −
-          </button>
-          <div className="min-w-[4ch] text-center font-display text-6xl font-semibold leading-none text-text">
-            {page}
+        {/* Page count + slider, lifted onto a warm accent-lit stage. Holding the
+            ± buttons auto-repeats (and accelerates) — see useHoldRepeat. */}
+        <div className="log-stage mt-6 rounded-3xl px-5 pb-6 pt-5">
+          <div className="flex items-center justify-center gap-6">
+            <button
+              type="button"
+              onPointerDown={hold.start(-1)}
+              onPointerUp={hold.stop}
+              onPointerLeave={hold.stop}
+              onPointerCancel={hold.stop}
+              onContextMenu={(e) => e.preventDefault()}
+              className="flex h-12 w-12 select-none touch-none items-center justify-center rounded-full border border-border bg-surface-alt text-2xl text-accent transition-colors hover:bg-bg active:scale-95"
+              aria-label="Page back (hold to rewind)"
+            >
+              −
+            </button>
+            <div className="flex min-w-[4ch] flex-col items-center">
+              <span className="font-display text-6xl font-semibold leading-none text-text">
+                {page}
+              </span>
+            </div>
+            <button
+              type="button"
+              onPointerDown={hold.start(1)}
+              onPointerUp={hold.stop}
+              onPointerLeave={hold.stop}
+              onPointerCancel={hold.stop}
+              onContextMenu={(e) => e.preventDefault()}
+              className="flex h-12 w-12 select-none touch-none items-center justify-center rounded-full bg-accent text-2xl text-accent-contrast shadow-[0_10px_22px_-10px_rgba(190,90,55,0.8)] transition-transform hover:opacity-95 active:scale-95"
+              aria-label="Page forward (hold to fast-forward)"
+            >
+              +
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => step(1)}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-accent text-2xl text-accent-contrast transition-opacity hover:opacity-90"
-            aria-label="One page forward"
-          >
-            +
-          </button>
-        </div>
-        <p className="mt-2 text-center font-mono text-[11px] text-text-faint">
-          {pct}% · of {total}
-        </p>
+          <p className="mt-2.5 text-center font-mono text-[11px] text-text-faint">
+            <span className="text-accent">{pct}%</span> · of {total}
+          </p>
 
-        {/* Draggable page bar */}
-        <input
-          type="range"
-          min={0}
-          max={total}
-          value={page}
-          onChange={(e) => setPage(clamp(Number(e.target.value)))}
-          aria-label="Set current page"
-          style={{
-            background: `linear-gradient(to right, var(--accent) ${pct}%, var(--bar-track) ${pct}%)`,
-          }}
-          className="page-range mt-4 w-full"
-        />
+          {/* Draggable page bar */}
+          <input
+            type="range"
+            min={0}
+            max={total}
+            value={page}
+            onChange={(e) => setPage(clamp(Number(e.target.value)))}
+            aria-label="Set current page"
+            style={{
+              background: `linear-gradient(to right, var(--accent) ${pct}%, var(--bar-track) ${pct}%)`,
+            }}
+            className="page-range mt-4 w-full"
+          />
+        </div>
 
         {/* End-of-session mood */}
         <Eyebrow className="mb-2 mt-6 block">Mood tonight</Eyebrow>
@@ -172,15 +229,17 @@ export function LogSessionSheet({
                 type="button"
                 aria-pressed={on}
                 onClick={() => setMood((cur) => (cur === m.key ? null : m.key))}
-                className={`flex flex-col items-center gap-1 rounded-xl border py-2.5 transition-colors ${
+                className={`flex flex-col items-center gap-1.5 rounded-xl border py-3 transition-all ${
                   on
-                    ? 'border-accent bg-accent/10'
-                    : 'border-border bg-surface-alt hover:border-accent/40'
+                    ? 'border-accent bg-accent/10 shadow-[0_10px_24px_-14px_rgba(190,90,55,0.85)]'
+                    : 'border-border bg-surface-alt hover:border-accent/40 hover:bg-accent/[0.04]'
                 }`}
               >
                 <MoodIcon
                   mood={m.key}
-                  className={`h-6 w-6 ${on ? 'text-accent' : 'text-text-muted'}`}
+                  className={`h-7 w-7 transition-transform ${
+                    on ? 'scale-110 text-accent' : 'text-text-muted'
+                  }`}
                 />
                 <span
                   className={`font-mono text-[9px] uppercase tracking-[0.08em] ${
@@ -208,7 +267,7 @@ export function LogSessionSheet({
           type="button"
           disabled={saving}
           onClick={() => onSave(page, note, mood)}
-          className="mt-6 w-full rounded-xl bg-accent py-3.5 font-medium text-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-60"
+          className="mt-7 w-full rounded-xl bg-accent py-3.5 font-medium text-accent-contrast shadow-[0_14px_30px_-14px_rgba(190,90,55,0.9)] transition-opacity hover:opacity-90 disabled:opacity-60"
         >
           {saving ? 'Saving…' : solo ? 'Save progress' : `Save & nudge ${buddyName}`}
         </button>
