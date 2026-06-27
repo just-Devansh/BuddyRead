@@ -188,7 +188,7 @@ export function LogSessionSheet({
 
         {/* Everything below the handle scrolls if it ever has to, so the sheet
             can never grow past the viewport and lose its drag-back handle. */}
-        <div className="-mx-6 min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-1">
+        <div className="no-scrollbar -mx-6 min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-1">
           {/* Page count, lifted onto a warm accent-lit stage. Tap a stepper to
               nudge; hold to auto-repeat and accelerate — see useHoldRepeat. */}
           <div className="log-stage mt-4 flex items-center justify-between rounded-3xl px-5 py-4">
