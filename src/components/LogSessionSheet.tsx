@@ -107,20 +107,16 @@ export function LogSessionSheet({
   const [dragging, setDragging] = useState(false)
   const startYRef = useRef(0)
 
-  // Slide up once mounted; lock the page behind from scrolling while open, and
-  // pin overscroll so a pull on the sheet's body can't chain to the document
-  // and trigger the browser's pull-to-refresh (which was shrinking the sheet).
+  // Slide up once mounted; lock the page behind from scrolling while open. That
+  // body lock is also the signal PullToRefresh watches to stand down, so a pull
+  // inside the sheet can't trip the app's custom refresh.
   useEffect(() => {
     const raf = requestAnimationFrame(() => setShow(true))
-    const root = document.documentElement
-    const prevOverflow = document.body.style.overflow
-    const prevOverscroll = root.style.overscrollBehaviorY
+    const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    root.style.overscrollBehaviorY = 'none'
     return () => {
       cancelAnimationFrame(raf)
-      document.body.style.overflow = prevOverflow
-      root.style.overscrollBehaviorY = prevOverscroll
+      document.body.style.overflow = prev
     }
   }, [])
 
