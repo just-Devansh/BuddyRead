@@ -2,7 +2,7 @@ import { useRef, useState, type ReactNode, type TouchEvent } from 'react'
 
 const THRESHOLD = 70 // pull past this (px) to trigger
 const MAX = 96 // furthest the content travels
-const MIN_SPIN = 750 // keep the spinner up at least this long, so it never blinks
+const MIN_SPIN = 1200 // keep the dots up at least this long, so it never blinks
 
 /**
  * A custom pull-to-refresh that only engages when the page is already scrolled to

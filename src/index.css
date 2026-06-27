@@ -304,7 +304,7 @@ h1, h2, h3, h4 {
 }
 .ptr-dot {
   transform-origin: center;
-  animation: ptr-dot 1000ms ease-in-out infinite;
+  animation: ptr-dot 1400ms ease-in-out infinite;
 }
 
 /* Honour the reader who prefers stillness. */
