@@ -178,41 +178,51 @@ h1, h2, h3, h4 {
   animation: pop-in 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
-/* ---- The Library: face-out covers on candlelit wooden ledges ------------
-   Real covers stand on a slim wooden ledge, themed to the app (warm oak by day,
-   walnut by night) rather than a dark box. A drop shadow grounds each book; a
-   thin page-block on the right gives it thickness; it lifts gently on hover. */
+/* ---- The Library: a candlelit cabinet of shelves -----------------------
+   The three shelves live inside one wooden cabinet — a thick frame (warm oak by
+   day, walnut by night) wrapping recessed back panels, with the wood crossbars
+   between them reading as the shelves the books stand on. The frame and the
+   crossbars are simply the cabinet's wood background showing through its padding
+   and the gap between compartments. Each shelf scrolls sideways; a book lifts
+   gently on hover. */
+.shelf-cabinet {
+  display: flex;
+  flex-direction: column;
+  gap: 9px; /* the wood crossbar between shelves */
+  padding: 9px; /* the wood frame around everything */
+  border-radius: 20px;
+  background: linear-gradient(180deg, #d7b27e 0%, #c49a5f 46%, #a87c45 100%);
+  box-shadow:
+    0 24px 44px -24px rgba(70, 40, 15, 0.55),
+    inset 0 1px 0 rgba(255, 244, 222, 0.6),
+    inset 0 -2px 3px rgba(70, 40, 15, 0.35);
+}
+.dark .shelf-cabinet {
+  background: linear-gradient(180deg, #7c5731 0%, #5d3f22 46%, #412b15 100%);
+  box-shadow:
+    0 24px 44px -24px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 224, 180, 0.18),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.5);
+}
+.shelf-compartment {
+  border-radius: 10px;
+  padding: 13px 13px 14px;
+  background: #e7dbc2; /* recessed parchment back panel */
+  box-shadow:
+    inset 0 2px 6px rgba(70, 45, 18, 0.16),
+    inset 0 -1px 0 rgba(255, 248, 230, 0.5);
+}
+.dark .shelf-compartment {
+  background: #14100a;
+  box-shadow:
+    inset 0 2px 7px rgba(0, 0, 0, 0.6),
+    inset 0 -1px 0 rgba(255, 224, 180, 0.05);
+}
 .shelf-book {
   transition: transform 240ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .shelf-book:hover {
-  transform: translateY(-7px);
-}
-.book-edge {
-  position: absolute;
-  top: 3%;
-  bottom: 3%;
-  right: -3px;
-  width: 4px;
-  border-radius: 0 2px 2px 0;
-  background: repeating-linear-gradient(180deg, #efe4cf 0 1.2px, #cdbd9e 1.2px 2.4px);
-  box-shadow: 1px 0 2px rgba(0, 0, 0, 0.25);
-}
-.shelf-ledge {
-  height: 11px;
-  border-radius: 2px;
-  background: linear-gradient(180deg, #caa676 0%, #a9824f 42%, #7d5d36 100%);
-  box-shadow:
-    0 11px 16px -8px rgba(70, 40, 15, 0.45),
-    inset 0 1px 0 rgba(255, 243, 219, 0.7),
-    inset 0 -3px 4px -2px rgba(0, 0, 0, 0.28);
-}
-.dark .shelf-ledge {
-  background: linear-gradient(180deg, #6a4a2e 0%, #4d3420 45%, #33220f 100%);
-  box-shadow:
-    0 11px 16px -8px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(255, 224, 180, 0.26),
-    inset 0 -3px 4px -2px rgba(0, 0, 0, 0.5);
+  transform: translateY(-6px);
 }
 
 /* The curated shelf unrolls: each book settles onto the shelf in turn, like a

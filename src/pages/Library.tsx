@@ -11,7 +11,7 @@ function SearchButton() {
     <Link
       to="/search"
       aria-label="Search for a book"
-      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-accent transition-colors hover:border-accent/50"
+      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-accent-contrast shadow-[0_8px_18px_-8px_rgba(138,69,54,0.85)] transition-opacity hover:opacity-90"
     >
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <circle cx="11" cy="11" r="7" />
@@ -43,20 +43,6 @@ export function Library() {
       <section className="mt-6">
         {loading ? (
           <p className="py-16 text-center text-sm text-text-muted">Pulling your books…</p>
-        ) : items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-surface/50 p-10 text-center">
-            <p className="font-display text-2xl text-text">An empty bookcase</p>
-            <p className="mx-auto mt-2 max-w-sm text-pretty leading-relaxed text-text-muted">
-              Find a book and add it to a shelf — To Read, Read, or Favorites —
-              and it'll take its place here.
-            </p>
-            <Link
-              to="/search"
-              className="mt-4 inline-block font-mono text-[10px] uppercase tracking-[0.12em] text-accent"
-            >
-              Find a book ›
-            </Link>
-          </div>
         ) : (
           <Bookshelf items={items} />
         )}

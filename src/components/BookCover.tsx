@@ -19,11 +19,14 @@ export function BookCover({
   author,
   tone = 'olive',
   className = '',
+  rounded = 'rounded-sm',
 }: {
   book: CoverBook
   author?: string
   tone?: SpineTone
   className?: string
+  /** Corner-radius utility — overridable so e.g. the Library can curve covers. */
+  rounded?: string
 }) {
   const sources = coverCandidates(book)
   const [idx, setIdx] = useState(0)
@@ -32,7 +35,7 @@ export function BookCover({
 
   return (
     <div
-      className={`relative aspect-[2/3] overflow-hidden rounded-sm border border-border bg-surface-alt ${className}`}
+      className={`relative aspect-[2/3] overflow-hidden border border-border bg-surface-alt ${rounded} ${className}`}
     >
       {!exhausted ? (
         <img

@@ -4,14 +4,18 @@ import { Eyebrow } from './Eyebrow'
 import { booksOnShelf, SHELVES, spineToneFor, type LibraryItem } from '../lib/library'
 
 /**
- * The Library shelf — real covers standing face-out on a slim wooden ledge,
- * themed to the app (warm oak by day, walnut by night). A boutique-bookstore
- * display rather than a dark box of spines: you see the actual art, and tapping
- * a book goes straight to its page. One row per shelf (To Read · Read ·
- * Favorites); rows scroll sideways when full.
+ * The Library — one wooden cabinet holding three shelves (To Read · Read ·
+ * Favorites), themed to the app (warm oak by day, walnut by night). Each shelf
+ * is a recessed compartment with a horizontal-scroll row of fixed-width covers;
+ * the wood crossbars between compartments read as the shelves the books stand
+ * on. Tapping a cover goes straight to its page. An empty shelf shows dashed
+ * placeholder slots with a quiet hint.
  */
 
-/** One book standing on the ledge — its cover, a page-block edge, a Link out. */
+/** Shared cover width — fixed so 3–4 stand visible per shelf on a phone. */
+const COVER = 'w-[80px] ipad:w-[92px]'
+
+/** One book standing on the shelf — its cover, curved, with a Link out. */
 function ShelfBook({ item }: { item: LibraryItem }) {
   return (
     <li className="shelf-book shrink-0">
@@ -19,7 +23,7 @@ function ShelfBook({ item }: { item: LibraryItem }) {
         to={`/book/${item.book.id}`}
         aria-label={item.book.title}
         title={item.book.title}
-        className="relative block w-[72px] ipad:w-[88px] rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className={`block ${COVER} rounded-[8px] outline-none focus-visible:ring-2 focus-visible:ring-accent`}
       >
         <BookCover
           book={{
@@ -30,47 +34,74 @@ function ShelfBook({ item }: { item: LibraryItem }) {
           }}
           author={item.book.authors[0]}
           tone={spineToneFor(item.id)}
-          className="w-full shadow-[0_12px_16px_-9px_rgba(40,22,8,0.55)]"
+          rounded="rounded-[7px]"
+          className="w-full shadow-[0_10px_18px_-10px_rgba(20,12,4,0.7)]"
         />
-        <span className="book-edge" aria-hidden="true" />
       </Link>
     </li>
   )
 }
 
-/** One shelf: a label, the row of books, the ledge they stand on. */
-function Shelf({ label, items }: { label: string; items: LibraryItem[] }) {
+/** An empty shelf — two dashed cover-slots and a one-line hint. */
+function EmptyShelf({ hint }: { hint: string }) {
   return (
-    <section>
-      <div className="mb-2 flex items-baseline justify-between px-0.5">
+    <div className="flex items-stretch gap-3">
+      <div
+        className={`flex ${COVER} aspect-[2/3] shrink-0 items-center justify-center rounded-[7px] border border-dashed border-text-faint/45 text-2xl font-light text-text-faint/70`}
+        aria-hidden="true"
+      >
+        +
+      </div>
+      <div
+        className={`${COVER} aspect-[2/3] shrink-0 rounded-[7px] border border-dashed border-text-faint/30`}
+        aria-hidden="true"
+      />
+      <p className="max-w-[8rem] self-center font-display text-[15px] italic leading-snug text-text-faint">
+        {hint}
+      </p>
+    </div>
+  )
+}
+
+/** One compartment: a label + count, then the books (or the empty hint). */
+function Shelf({
+  label,
+  hint,
+  items,
+}: {
+  label: string
+  hint: string
+  items: LibraryItem[]
+}) {
+  return (
+    <section className="shelf-compartment">
+      <div className="mb-3 flex items-baseline justify-between">
         <Eyebrow>{label}</Eyebrow>
         <span className="font-mono text-[10px] text-text-faint">{items.length}</span>
       </div>
-      <div className="relative">
-        {items.length === 0 ? (
-          <div className="flex h-[120px] items-end px-1 pb-3 ipad:h-[146px]">
-            <span className="font-display text-sm italic text-text-faint">
-              Nothing here yet.
-            </span>
-          </div>
-        ) : (
-          <ul className="no-scrollbar flex items-end gap-4 overflow-x-auto px-1 pt-3 pb-0">
-            {items.map((it) => (
-              <ShelfBook key={it.id} item={it} />
-            ))}
-          </ul>
-        )}
-        <div className="shelf-ledge" />
-      </div>
+      {items.length === 0 ? (
+        <EmptyShelf hint={hint} />
+      ) : (
+        <ul className="no-scrollbar flex gap-3 overflow-x-auto pb-1 pt-1">
+          {items.map((it) => (
+            <ShelfBook key={it.id} item={it} />
+          ))}
+        </ul>
+      )}
     </section>
   )
 }
 
 export function Bookshelf({ items }: { items: LibraryItem[] }) {
   return (
-    <div className="space-y-7">
+    <div className="shelf-cabinet">
       {SHELVES.map((s) => (
-        <Shelf key={s.key} label={s.label} items={booksOnShelf(items, s.key)} />
+        <Shelf
+          key={s.key}
+          label={s.label}
+          hint={s.empty}
+          items={booksOnShelf(items, s.key)}
+        />
       ))}
     </div>
   )

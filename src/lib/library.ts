@@ -43,11 +43,17 @@ export interface LibraryItem extends LibraryDoc {
   id: string // === book.id
 }
 
-/** The three shelves, in display order, with their labels. */
-export const SHELVES: { key: Shelf; label: string; eyebrow: string }[] = [
-  { key: 'tbr', label: 'To Read', eyebrow: 'TBR' },
-  { key: 'read', label: 'Read', eyebrow: 'Read' },
-  { key: 'favorite', label: 'Favorites', eyebrow: 'Favorites' },
+/** The three shelves, in display order, with their labels and an empty-shelf
+ *  hint (shown beside the dashed placeholder slots when a shelf has no books). */
+export const SHELVES: {
+  key: Shelf
+  label: string
+  eyebrow: string
+  empty: string
+}[] = [
+  { key: 'tbr', label: 'To Read', eyebrow: 'TBR', empty: 'Your next reads will live here.' },
+  { key: 'read', label: 'Read', eyebrow: 'Read', empty: 'Books you finish will gather here.' },
+  { key: 'favorite', label: 'Favorites', eyebrow: 'Favorites', empty: 'The ones you loved most.' },
 ]
 
 /** Place (or move) a book onto a shelf. Favorite is stored as-is and also reads
