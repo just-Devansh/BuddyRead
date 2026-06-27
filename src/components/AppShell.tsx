@@ -26,7 +26,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <main
         key={location.pathname}
-        className="view-enter flex-1 px-5 py-8 ipad:px-8 ipad:py-10"
+        className="view-enter flex-1 overflow-x-clip px-5 py-8 ipad:px-8 ipad:py-10"
       >
         <PullToRefresh>{children}</PullToRefresh>
       </main>
