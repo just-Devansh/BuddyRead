@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Avatar, type AvatarTone } from './Avatar'
+import { MoodIcon } from './MoodIcon'
 import { ProgressBar } from './ProgressBar'
 import { moodByKey } from '../lib/moods'
 import type { ProgressEntry } from '../lib/reads'
@@ -60,7 +61,7 @@ function Half({ side, tone }: { side: Side; tone: 'accent' | 'gold' }) {
           />
           {mood && (
             <p className="mt-2.5 flex items-center gap-1.5 text-sm text-text-muted">
-              <span aria-hidden="true">{mood.emoji}</span>
+              <MoodIcon mood={mood.key} className="h-4 w-4" />
               <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-text-faint">
                 {mood.word}
               </span>

@@ -1,25 +1,24 @@
 /**
- * The end-of-session mood — a tiny, playful read on how the night left you. A
+ * The end-of-session mood — a tiny, quiet read on how the night left you. A
  * curated set so it renders the same everywhere (the split card, the activity
  * feed) and never turns into a wall of arbitrary emoji. Stored by `key`; the
- * emoji and word are presentation only.
+ * word is presentation, and the icon is drawn by MoodIcon (keyed by `key`).
  */
 export interface Mood {
   key: string
-  emoji: string
   word: string
 }
 
 export const MOODS: Mood[] = [
-  { key: 'hooked', emoji: '🤩', word: 'Hooked' },
-  { key: 'cozy', emoji: '😌', word: 'Cozy' },
-  { key: 'wrecked', emoji: '😭', word: 'Wrecked' },
-  { key: 'drowsy', emoji: '😴', word: 'Drowsy' },
-  { key: 'puzzled', emoji: '🤔', word: 'Puzzled' },
-  { key: 'restless', emoji: '😐', word: 'Restless' },
+  { key: 'hooked', word: 'Hooked' },
+  { key: 'cozy', word: 'Cozy' },
+  { key: 'wrecked', word: 'Wrecked' },
+  { key: 'drowsy', word: 'Drowsy' },
+  { key: 'slog', word: 'Slog' },
+  { key: 'moved', word: 'Moved' },
 ]
 
-/** Look a stored mood key back up to its emoji + word, or null if unknown. */
+/** Look a stored mood key back up to its word, or null if unknown. */
 export function moodByKey(key: string | null | undefined): Mood | null {
   if (!key) return null
   return MOODS.find((m) => m.key === key) ?? null

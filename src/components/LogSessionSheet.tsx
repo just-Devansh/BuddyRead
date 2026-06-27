@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { Eyebrow } from './Eyebrow'
+import { MoodIcon } from './MoodIcon'
 import { MOODS } from '../lib/moods'
 
 const DISMISS_PX = 120 // drag past this and the sheet lets go
@@ -177,9 +178,10 @@ export function LogSessionSheet({
                     : 'border-border bg-surface-alt hover:border-accent/40'
                 }`}
               >
-                <span className="text-2xl leading-none" aria-hidden="true">
-                  {m.emoji}
-                </span>
+                <MoodIcon
+                  mood={m.key}
+                  className={`h-6 w-6 ${on ? 'text-accent' : 'text-text-muted'}`}
+                />
                 <span
                   className={`font-mono text-[9px] uppercase tracking-[0.08em] ${
                     on ? 'text-accent' : 'text-text-faint'

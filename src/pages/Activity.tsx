@@ -12,6 +12,7 @@ import {
 import { AppShell } from '../components/AppShell'
 import { Avatar } from '../components/Avatar'
 import { Eyebrow } from '../components/Eyebrow'
+import { MoodIcon } from '../components/MoodIcon'
 import { useConfirm } from '../components/useConfirm'
 import { db } from '../lib/firebase'
 import { useAuth } from '../auth/useAuth'
@@ -359,8 +360,8 @@ export function Activity() {
                       <p className="mt-1 font-display italic text-text-muted">“{quote}”</p>
                     )}
                     {mood && (
-                      <p className="mt-1 text-sm text-text-muted">
-                        <span aria-hidden="true">{mood.emoji}</span>{' '}
+                      <p className="mt-1 flex items-center gap-1.5 text-sm text-text-muted">
+                        <MoodIcon mood={mood.key} className="h-4 w-4" />
                         <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-text-faint">
                           {mood.word}
                         </span>
