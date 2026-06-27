@@ -2,6 +2,8 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
   collection,
+  deleteDoc,
+  doc,
   limit,
   onSnapshot,
   orderBy,
@@ -38,6 +40,52 @@ function ago(ms: number): string {
 
 const strong = (s: string) => <strong className="font-semibold">{s}</strong>
 const em = (s: string) => <em className="font-display italic">{s}</em>
+
+/** A small ⋯ menu on an activity row — its one action is Delete. The invisible
+ *  full-screen button below the menu closes it on an outside tap. */
+function RowMenu({ onDelete }: { onDelete: () => void }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="relative shrink-0">
+      <button
+        type="button"
+        aria-label="Activity options"
+        aria-haspopup="menu"
+        onClick={() => setOpen((v) => !v)}
+        className="-mr-1 flex h-7 w-7 items-center justify-center rounded-full text-text-faint transition-colors hover:bg-surface-alt hover:text-text"
+      >
+        <span aria-hidden="true" className="text-lg leading-none">⋯</span>
+      </button>
+      {open && (
+        <>
+          <button
+            type="button"
+            aria-hidden="true"
+            tabIndex={-1}
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-10 cursor-default"
+          />
+          <div
+            role="menu"
+            className="pop-enter absolute right-0 top-8 z-20 min-w-32 overflow-hidden rounded-xl border border-border bg-surface shadow-[0_14px_30px_-12px_rgba(0,0,0,0.45)]"
+          >
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false)
+                onDelete()
+              }}
+              className="block w-full px-4 py-2.5 text-left text-sm text-accent transition-colors hover:bg-surface-alt"
+            >
+              Delete
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
 
 /** Turn one logged event into its line, an optional quoted note, and a mood.
  *  `mine` = the actor is the viewer (events that land in your own feed), so
@@ -137,6 +185,17 @@ export function Activity() {
     } finally {
       setBusy(null)
     }
+  }
+
+  const deleteEvent = async (id: string) => {
+    const ok = await confirm({
+      title: 'Delete this activity?',
+      message: "It'll be removed from your feed for good.",
+      confirmLabel: 'Delete',
+    })
+    if (!ok || !user) return
+    // The live listener drops it from the list as soon as it's gone.
+    await deleteDoc(doc(db, 'users', user.uid, 'activity', id))
   }
 
   const requests = friendIn.length + readIn.length
@@ -311,6 +370,7 @@ export function Activity() {
                       {ago(it.createdAt?.toMillis() ?? 0)}
                     </p>
                   </div>
+                  <RowMenu onDelete={() => void deleteEvent(it.id)} />
                 </li>
               )
             })}

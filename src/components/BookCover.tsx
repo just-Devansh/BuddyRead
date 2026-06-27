@@ -43,6 +43,16 @@ export function BookCover({
           alt={`Cover of ${book.title}`}
           loading="lazy"
           onError={() => setIdx((i) => i + 1)}
+          onLoad={(e) => {
+            // Google sometimes serves a tiny or oddly-shaped scan for older
+            // titles (a near-square page photo, or a low-res placeholder), which
+            // object-cover then zooms into a blurry crop. Reject anything too
+            // small or far from a portrait book aspect (~1:1.5) so we fall through
+            // to Open Library, then the typographic cover, instead of showing it.
+            const img = e.currentTarget
+            const { naturalWidth: w, naturalHeight: h } = img
+            if (w && h && (w < 90 || h / w < 1.25)) setIdx((i) => i + 1)
+          }}
           className="h-full w-full object-cover"
         />
       ) : (

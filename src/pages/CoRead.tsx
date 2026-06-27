@@ -303,7 +303,7 @@ export function CoRead() {
             {read.book.title}
           </h1>
           <p className="text-text-muted">{read.book.authors.join(', ')}</p>
-          <Eyebrow className="mt-1.5 block">{solo ? 'On your own' : `with ${buddyName}`}</Eyebrow>
+          <Eyebrow className="mt-1.5 block">{solo ? 'Solo' : `with ${buddyName}`}</Eyebrow>
         </div>
       </div>
 
@@ -441,6 +441,7 @@ export function CoRead() {
               total={mine.totalPages}
               edition={mine.edition}
               buddyName={buddyName}
+              solo={solo}
               saving={saving}
               onSave={(page, note, mood) => void save(page, note, mood)}
               onClose={() => setLogging(false)}

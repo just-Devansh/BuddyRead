@@ -20,6 +20,7 @@ export function LogSessionSheet({
   total,
   edition,
   buddyName,
+  solo = false,
   saving,
   onSave,
   onClose,
@@ -30,6 +31,8 @@ export function LogSessionSheet({
   total: number
   edition: string
   buddyName: string
+  /** Solo read — no buddy to nudge, so the save button reads plainly. */
+  solo?: boolean
   saving: boolean
   onSave: (page: number, note: string, mood: string | null) => void
   onClose: () => void
@@ -205,7 +208,7 @@ export function LogSessionSheet({
           onClick={() => onSave(page, note, mood)}
           className="mt-6 w-full rounded-xl bg-accent py-3.5 font-medium text-accent-contrast transition-opacity hover:opacity-90 disabled:opacity-60"
         >
-          {saving ? 'Saving…' : `Save & nudge ${buddyName}`}
+          {saving ? 'Saving…' : solo ? 'Save progress' : `Save & nudge ${buddyName}`}
         </button>
       </div>
     </div>
