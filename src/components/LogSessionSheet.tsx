@@ -107,14 +107,20 @@ export function LogSessionSheet({
   const [dragging, setDragging] = useState(false)
   const startYRef = useRef(0)
 
-  // Slide up once mounted; lock the page behind from scrolling while open.
+  // Slide up once mounted; lock the page behind from scrolling while open, and
+  // pin overscroll so a pull on the sheet's body can't chain to the document
+  // and trigger the browser's pull-to-refresh (which was shrinking the sheet).
   useEffect(() => {
     const raf = requestAnimationFrame(() => setShow(true))
-    const prev = document.body.style.overflow
+    const root = document.documentElement
+    const prevOverflow = document.body.style.overflow
+    const prevOverscroll = root.style.overscrollBehaviorY
     document.body.style.overflow = 'hidden'
+    root.style.overscrollBehaviorY = 'none'
     return () => {
       cancelAnimationFrame(raf)
-      document.body.style.overflow = prev
+      document.body.style.overflow = prevOverflow
+      root.style.overscrollBehaviorY = prevOverscroll
     }
   }, [])
 
@@ -167,7 +173,7 @@ export function LogSessionSheet({
           transform: `translateY(${translateY})`,
           transition: dragging ? 'none' : 'transform 320ms cubic-bezier(0.22,0.61,0.18,1)',
         }}
-        className="relative flex max-h-[88dvh] w-full max-w-app flex-col rounded-t-[28px] bg-surface px-6 pb-6 pt-3 shadow-[0_-20px_50px_-20px_rgba(0,0,0,0.5)]"
+        className="relative flex max-h-[90dvh] w-full max-w-app flex-col rounded-t-[28px] bg-surface px-6 pb-5 pt-3 shadow-[0_-20px_50px_-20px_rgba(0,0,0,0.5)]"
       >
         {/* Grab handle — drag this down to dismiss. Kept outside the scroll
             area so the title + handle never clip off the top of the screen. */}
@@ -186,7 +192,7 @@ export function LogSessionSheet({
 
         {/* Everything below the handle scrolls if it ever has to, so the sheet
             can never grow past the viewport and lose its drag-back handle. */}
-        <div className="-mx-6 min-h-0 flex-1 overflow-y-auto px-6">
+        <div className="-mx-6 min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-1">
           {/* Page count, lifted onto a warm accent-lit stage. Tap a stepper to
               nudge; hold to auto-repeat and accelerate — see useHoldRepeat. */}
           <div className="log-stage mt-4 flex items-center justify-between rounded-3xl px-5 py-4">
