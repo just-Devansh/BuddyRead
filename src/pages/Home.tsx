@@ -53,7 +53,7 @@ function ReadCard({ read, uid }: { read: Read; uid: string }) {
     <Link
       to={`/read/${read.id}`}
       state={{ from: '/home' }}
-      className="flex gap-4 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-accent/40"
+      className="flex items-start gap-4 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-accent/40"
     >
       <BookCover
         book={{
@@ -63,7 +63,7 @@ function ReadCard({ read, uid }: { read: Read; uid: string }) {
           isbn10: null,
         }}
         author={read.book.authors[0]}
-        className="w-14 shrink-0"
+        className="w-14 shrink-0 self-start"
       />
       <div className="min-w-0 flex-1">
         <h3 className="font-display text-xl leading-tight text-text">{read.book.title}</h3>
