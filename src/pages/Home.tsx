@@ -76,7 +76,7 @@ function ReadCard({ read, uid }: { read: Read; uid: string }) {
  */
 export function Home() {
   const { user, userDoc } = useAuth()
-  const { active } = useReads()
+  const { active, loading } = useReads()
   const uid = user?.uid ?? ''
 
   const firstName = (userDoc?.displayName ?? user?.displayName ?? 'reader')
@@ -93,7 +93,11 @@ export function Home() {
         <h1 className="mt-1 font-display text-4xl text-text">The nightstand</h1>
       </section>
 
-      {active.length > 0 ? (
+      {/* Hold the dynamic sections until reads load, so the first paint never
+          shows the empty layout and then snaps to your reads (the entry flicker). */}
+      {!loading && (
+        <>
+          {active.length > 0 ? (
         <section className="mt-6">
           <Eyebrow className="mb-3 block">Reading now</Eyebrow>
           <ul className="space-y-3">
@@ -162,6 +166,8 @@ export function Home() {
           ))}
         </ul>
       </section>
+        </>
+      )}
     </AppShell>
   )
 }
