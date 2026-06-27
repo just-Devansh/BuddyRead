@@ -121,6 +121,7 @@ export function Search() {
             <li key={book.id}>
               <Link
                 to={bookHref(book.id)}
+                state={{ from: '/search' }}
                 className="flex items-center gap-4 border-t border-border-soft py-3.5 transition-colors hover:bg-surface/60"
               >
                 <BookCover book={book} className="w-11 shrink-0" />

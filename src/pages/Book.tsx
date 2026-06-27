@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { AddToLibrary } from '../components/AddToLibrary'
 import { BookCover } from '../components/BookCover'
@@ -11,6 +11,15 @@ import { useReads } from '../reads/useReads'
 import { otherParty } from '../lib/friends'
 import { otherReader, sendReadRequest, type ReadBook } from '../lib/reads'
 import { authorLine, getBook, type Book } from '../lib/books'
+
+/** A friendly "back to ___" label from the route we arrived from (passed as
+ *  `state.from` by whoever linked here). Falls back to a plain "Back". */
+function backLabel(from?: string): string {
+  if (from?.startsWith('/library')) return 'Back to library'
+  if (from?.startsWith('/u/')) return 'Back to profile'
+  if (from?.startsWith('/search')) return 'Back to search'
+  return 'Back'
+}
 
 /** A small muted fact, shown only when we actually have it. */
 function Meta({ label, value }: { label: string; value: string | null }) {
@@ -31,6 +40,9 @@ function Meta({ label, value }: { label: string; value: string | null }) {
 export function BookDetail() {
   const { id } = useParams<{ id: string }>()
   const [params] = useSearchParams()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const from = (location.state as { from?: string } | null)?.from
   const { user } = useAuth()
   const { friends } = useFriends()
   const { active, outgoing } = useReads()
@@ -98,12 +110,20 @@ export function BookDetail() {
 
   return (
     <AppShell>
-      <Link
-        to="/search"
+      {/* Go *back* through history (to wherever you came from), not a forward
+          push to /search — pushing was what created the back-button loop. Fall
+          back to a sensible route only on a cold deep-link with no app history. */}
+      <button
+        type="button"
+        onClick={() => {
+          const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0
+          if (idx > 0) navigate(-1)
+          else navigate(from ?? '/library')
+        }}
         className="font-mono text-[11px] uppercase tracking-[0.1em] text-text-muted transition-colors hover:text-text"
       >
-        ‹ Back to search
-      </Link>
+        ‹ {backLabel(from)}
+      </button>
 
       {status === 'loading' && (
         <p className="mt-10 text-center text-sm text-text-muted">

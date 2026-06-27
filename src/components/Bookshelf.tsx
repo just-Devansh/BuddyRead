@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { BookCover } from './BookCover'
 import { Eyebrow } from './Eyebrow'
 import { booksOnShelf, SHELVES, spineToneFor, type LibraryItem } from '../lib/library'
@@ -15,12 +15,16 @@ import { booksOnShelf, SHELVES, spineToneFor, type LibraryItem } from '../lib/li
 /** Shared cover width — fixed so 3–4 stand visible per shelf on a phone. */
 const COVER = 'w-[80px] ipad:w-[92px]'
 
-/** One book standing on the shelf — its cover, curved, with a Link out. */
+/** One book standing on the shelf — its cover, curved, with a Link out. The
+ *  current route is carried as `state.from` so the book page's back control
+ *  reads "Back to library" (or "…to profile" on a buddy's shelf). */
 function ShelfBook({ item }: { item: LibraryItem }) {
+  const { pathname } = useLocation()
   return (
     <li className="shelf-book shrink-0">
       <Link
         to={`/book/${item.book.id}`}
+        state={{ from: pathname }}
         aria-label={item.book.title}
         title={item.book.title}
         className={`block ${COVER} rounded-[8px] outline-none focus-visible:ring-2 focus-visible:ring-accent`}
