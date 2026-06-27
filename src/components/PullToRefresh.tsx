@@ -30,8 +30,13 @@ export function PullToRefresh({
   const atTop = () =>
     (window.scrollY || document.documentElement.scrollTop || 0) <= 0
 
+  // A modal/sheet locks the body's scroll while open. When one is up, the page
+  // behind is "at top" but a pull belongs to the sheet, not us — so stand down,
+  // or we'd hijack a scroll inside the sheet and flash the dots.
+  const blocked = () => document.body.style.overflow === 'hidden'
+
   const onTouchStart = (e: TouchEvent) => {
-    if (refreshing || !atTop()) {
+    if (refreshing || blocked() || !atTop()) {
       startY.current = null
       return
     }
@@ -43,7 +48,7 @@ export function PullToRefresh({
     const dy = e.touches[0].clientY - startY.current
     // Only a downward pull from the top counts; anything else hands control back
     // to normal scrolling.
-    if (dy <= 0 || !atTop()) {
+    if (dy <= 0 || blocked() || !atTop()) {
       if (pull !== 0) setPull(0)
       startY.current = atTop() ? startY.current : null
       return

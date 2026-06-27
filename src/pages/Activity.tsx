@@ -68,7 +68,7 @@ function RowMenu({ onDelete }: { onDelete: () => void }) {
           />
           <div
             role="menu"
-            className="pop-enter absolute right-0 top-8 z-20 min-w-32 overflow-hidden rounded-xl border border-border bg-surface shadow-[0_14px_30px_-12px_rgba(0,0,0,0.45)]"
+            className="pop-enter absolute right-0 top-8 z-20 w-max overflow-hidden rounded-xl border border-border bg-surface shadow-[0_14px_30px_-12px_rgba(0,0,0,0.45)]"
           >
             <button
               type="button"
@@ -77,7 +77,7 @@ function RowMenu({ onDelete }: { onDelete: () => void }) {
                 setOpen(false)
                 onDelete()
               }}
-              className="block w-full px-4 py-2.5 text-left text-sm text-accent transition-colors hover:bg-surface-alt"
+              className="block px-4 py-2 text-sm text-accent transition-colors hover:bg-surface-alt"
             >
               Delete
             </button>
