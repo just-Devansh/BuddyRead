@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { Logo } from './Logo'
 import { BottomNav } from './BottomNav'
+import { PullToRefresh } from './PullToRefresh'
 
 /**
  * The frame every signed-in screen sits inside: a hairline sticky header with
@@ -27,7 +28,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         key={location.pathname}
         className="view-enter flex-1 px-5 py-8 ipad:px-8 ipad:py-10"
       >
-        {children}
+        <PullToRefresh>{children}</PullToRefresh>
       </main>
 
       <BottomNav />

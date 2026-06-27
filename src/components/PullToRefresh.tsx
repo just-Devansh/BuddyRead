@@ -1,0 +1,132 @@
+import { useRef, useState, type ReactNode, type TouchEvent } from 'react'
+
+const THRESHOLD = 70 // pull past this (px) to trigger
+const MAX = 96 // furthest the content travels
+const MIN_SPIN = 750 // keep the spinner up at least this long, so it never blinks
+
+/**
+ * A custom pull-to-refresh that only engages when the page is already scrolled to
+ * the very top. On-theme (terracotta arc on the app background), adaptive to
+ * light/dark via tokens, and deliberately gentle: the content follows the finger
+ * with damping, springs back on release, and the spinner is held a beat so a
+ * fast refresh never flashes. Native overscroll-refresh is disabled in CSS, so
+ * this is the only refresh gesture.
+ *
+ * `onRefresh` is awaited; with a realtime backend the data is already live, so
+ * by default the gesture just settles smoothly (the indicator is the point).
+ */
+export function PullToRefresh({
+  children,
+  onRefresh,
+}: {
+  children: ReactNode
+  onRefresh?: () => Promise<void> | void
+}) {
+  const [pull, setPull] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+  const [dragging, setDragging] = useState(false)
+  const startY = useRef<number | null>(null)
+
+  const atTop = () =>
+    (window.scrollY || document.documentElement.scrollTop || 0) <= 0
+
+  const onTouchStart = (e: TouchEvent) => {
+    if (refreshing || !atTop()) {
+      startY.current = null
+      return
+    }
+    startY.current = e.touches[0].clientY
+  }
+
+  const onTouchMove = (e: TouchEvent) => {
+    if (startY.current == null || refreshing) return
+    const dy = e.touches[0].clientY - startY.current
+    // Only a downward pull from the top counts; anything else hands control back
+    // to normal scrolling.
+    if (dy <= 0 || !atTop()) {
+      if (pull !== 0) setPull(0)
+      startY.current = atTop() ? startY.current : null
+      return
+    }
+    setDragging(true)
+    // Resistance: the further you pull, the slower it gives.
+    setPull(Math.min(MAX, dy * 0.5))
+  }
+
+  const onTouchEnd = async () => {
+    if (startY.current == null) return
+    startY.current = null
+    setDragging(false)
+    if (pull < THRESHOLD) {
+      setPull(0)
+      return
+    }
+    setRefreshing(true)
+    setPull(THRESHOLD * 0.62) // rest at a calm spot while it spins
+    try {
+      await Promise.all([
+        Promise.resolve(onRefresh?.()),
+        new Promise((r) => setTimeout(r, MIN_SPIN)),
+      ])
+    } finally {
+      setRefreshing(false)
+      setPull(0)
+    }
+  }
+
+  const progress = Math.min(1, pull / THRESHOLD)
+  const C = 2 * Math.PI * 9 // circle circumference (r = 9)
+  // A lingering transform makes this the containing block for fixed children
+  // (every modal), so when idle we set no transform at all.
+  const lifted = pull > 0 || refreshing
+
+  return (
+    <div
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchEnd}
+      className="relative"
+    >
+      {/* The indicator descends from above the top edge as you pull. */}
+      <div
+        aria-hidden={!lifted}
+        className="pointer-events-none absolute left-1/2 top-0 z-20 -translate-x-1/2"
+        style={{
+          transform: `translate(-50%, ${pull - 34}px)`,
+          opacity: refreshing ? 1 : progress,
+          transition: dragging ? 'none' : 'transform 360ms cubic-bezier(0.22,0.61,0.18,1), opacity 200ms ease',
+        }}
+      >
+        <span className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-accent shadow-[0_6px_16px_-8px_rgba(0,0,0,0.4)]">
+          <svg
+            viewBox="0 0 24 24"
+            className={`h-5 w-5 ${refreshing ? 'ptr-spin' : ''}`}
+            style={refreshing ? undefined : { transform: `rotate(${progress * 270}deg)` }}
+          >
+            <circle
+              cx="12"
+              cy="12"
+              r="9"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeDasharray={C}
+              strokeDashoffset={refreshing ? C * 0.25 : C * (1 - progress * 0.75)}
+            />
+          </svg>
+        </span>
+      </div>
+
+      <div
+        style={{
+          transform: lifted ? `translateY(${pull}px)` : undefined,
+          transition: dragging ? 'none' : 'transform 360ms cubic-bezier(0.22,0.61,0.18,1)',
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
