@@ -22,30 +22,39 @@ function backLabel(from?: string): string {
   return 'Back'
 }
 
-/** One of the two equal ways to start a read — a filled, icon-led tile with a
- *  premium press (lift + glow, scale + gold shift). Solo and Together are peers. */
+/** One of the two equal-sized ways to start a read — an icon-led tile with a
+ *  premium press. Solo and Together are peers (same footprint) but colour-
+ *  distinct: Together is filled terracotta, Solo is terracotta-on-surface; each
+ *  fills on press. */
 function ReadAction({
   onClick,
   busy,
   label,
   icon,
+  variant,
 }: {
   onClick: () => void
   busy: boolean
   label: string
   icon: React.ReactNode
+  variant: 'solid' | 'outline'
 }) {
+  const solid = variant === 'solid'
   return (
     <button
       type="button"
       disabled={busy}
       onClick={onClick}
-      className="group flex flex-col items-center justify-center gap-2.5 rounded-2xl bg-accent px-3 py-5 text-accent-contrast shadow-[0_10px_24px_-12px_rgba(138,69,54,0.7)] outline-none transition-[transform,box-shadow,background-color] duration-300 ease-[cubic-bezier(0.22,0.61,0.18,1)] hover:-translate-y-0.5 hover:shadow-[0_16px_30px_-12px_rgba(138,69,54,0.92)] hover:brightness-105 active:scale-[0.94] active:bg-gold active:shadow-[0_6px_22px_-4px_rgba(168,130,47,0.9)] active:duration-150 disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+      className={`group flex flex-col items-center justify-center gap-1.5 rounded-2xl px-3 py-3.5 outline-none transition-[transform,box-shadow,background-color,color,border-color] duration-300 ease-[cubic-bezier(0.22,0.61,0.18,1)] hover:-translate-y-0.5 active:scale-[0.94] active:duration-150 disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg ${
+        solid
+          ? 'bg-accent text-accent-contrast shadow-[0_10px_24px_-12px_rgba(138,69,54,0.7)] hover:shadow-[0_16px_30px_-12px_rgba(138,69,54,0.92)] hover:brightness-105 active:bg-gold active:shadow-[0_6px_22px_-4px_rgba(168,130,47,0.9)]'
+          : 'border border-border bg-surface text-accent hover:border-accent/50 active:border-transparent active:bg-accent active:text-accent-contrast active:shadow-[0_6px_22px_-4px_rgba(138,69,54,0.7)]'
+      }`}
     >
       <svg
         viewBox="0 0 24 24"
-        width="26"
-        height="26"
+        width="23"
+        height="23"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.7"
@@ -261,6 +270,7 @@ export function BookDetail() {
           ) : (
             <div className="mt-6 grid grid-cols-2 gap-3">
               <ReadAction
+                variant="outline"
                 onClick={() => void startSolo()}
                 busy={soloBusy}
                 label={existingSolo ? 'Continue Solo' : 'Read Solo'}
@@ -272,6 +282,7 @@ export function BookDetail() {
                 }
               />
               <ReadAction
+                variant="solid"
                 onClick={together}
                 busy={busyUid !== null}
                 label="Read Together"
