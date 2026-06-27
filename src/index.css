@@ -290,16 +290,21 @@ h1, h2, h3, h4 {
   animation: unfurl-in 520ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
-/* Pull-to-refresh spinner (see PullToRefresh) — a smooth, endless rotation while
-   the refresh settles. */
-@keyframes ptr-spin {
-  to {
-    transform: rotate(360deg);
+/* Pull-to-refresh dots (see PullToRefresh) — three dots pulsing in sequence
+   while the refresh settles (staggered via inline animation-delay). */
+@keyframes ptr-dot {
+  0%, 100% {
+    transform: scale(0.55);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
   }
 }
-.ptr-spin {
+.ptr-dot {
   transform-origin: center;
-  animation: ptr-spin 900ms linear infinite;
+  animation: ptr-dot 1000ms ease-in-out infinite;
 }
 
 /* Honour the reader who prefers stillness. */

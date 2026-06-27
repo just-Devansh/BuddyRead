@@ -75,7 +75,6 @@ export function PullToRefresh({
   }
 
   const progress = Math.min(1, pull / THRESHOLD)
-  const C = 2 * Math.PI * 9 // circle circumference (r = 9)
   // A lingering transform makes this the containing block for fixed children
   // (every modal), so when idle we set no transform at all.
   const lifted = pull > 0 || refreshing
@@ -88,35 +87,28 @@ export function PullToRefresh({
       onTouchCancel={onTouchEnd}
       className="relative"
     >
-      {/* The indicator descends from above the top edge as you pull. */}
+      {/* Three terracotta dots, centred, that pulse in sequence while refreshing
+          and grow in as you pull. Descends from above the top edge. */}
       <div
         aria-hidden={!lifted}
-        className="pointer-events-none absolute left-1/2 top-0 z-20 -translate-x-1/2"
+        className="pointer-events-none absolute left-1/2 top-0 z-20 flex items-center gap-2"
         style={{
-          transform: `translate(-50%, ${pull - 34}px)`,
+          transform: `translate(-50%, ${pull - 26}px)`,
           opacity: refreshing ? 1 : progress,
           transition: dragging ? 'none' : 'transform 360ms cubic-bezier(0.22,0.61,0.18,1), opacity 200ms ease',
         }}
       >
-        <span className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-accent shadow-[0_6px_16px_-8px_rgba(0,0,0,0.4)]">
-          <svg
-            viewBox="0 0 24 24"
-            className={`h-5 w-5 ${refreshing ? 'ptr-spin' : ''}`}
-            style={refreshing ? undefined : { transform: `rotate(${progress * 270}deg)` }}
-          >
-            <circle
-              cx="12"
-              cy="12"
-              r="9"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeDasharray={C}
-              strokeDashoffset={refreshing ? C * 0.25 : C * (1 - progress * 0.75)}
-            />
-          </svg>
-        </span>
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className={`block h-2.5 w-2.5 rounded-full bg-accent ${refreshing ? 'ptr-dot' : ''}`}
+            style={
+              refreshing
+                ? { animationDelay: `${i * 160}ms` }
+                : { transform: `scale(${0.5 + progress * 0.5})` }
+            }
+          />
+        ))}
       </div>
 
       <div
