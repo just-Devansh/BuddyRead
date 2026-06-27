@@ -42,7 +42,7 @@ function ago(ms: number): string {
 const strong = (s: string) => <strong className="font-semibold">{s}</strong>
 const em = (s: string) => <em className="font-display italic">{s}</em>
 
-/** A small ⋯ menu on an activity row — its one action is Delete. The invisible
+/** A small ⋮ menu on an activity row — its one action is Delete. The invisible
  *  full-screen button below the menu closes it on an outside tap. */
 function RowMenu({ onDelete }: { onDelete: () => void }) {
   const [open, setOpen] = useState(false)
@@ -55,7 +55,7 @@ function RowMenu({ onDelete }: { onDelete: () => void }) {
         onClick={() => setOpen((v) => !v)}
         className="-mr-1 flex h-7 w-7 items-center justify-center rounded-full text-text-faint transition-colors hover:bg-surface-alt hover:text-text"
       >
-        <span aria-hidden="true" className="text-lg leading-none">⋯</span>
+        <span aria-hidden="true" className="text-lg leading-none">⋮</span>
       </button>
       {open && (
         <>
