@@ -1,35 +1,49 @@
-import { fetchLibrary, type LibraryBook } from './library'
+import { fetchLibrary, type LibraryBook, type Shelf } from './library'
 import type { Relationship } from './friends'
 import { otherParty } from './friends'
 
 /**
- * A book surfaced from your reading circle's shelves — something a buddy loved
- * or has lined up to read — offered as a thing to begin *together*. This is the
- * one genuinely relevant, non-fabricated "what next" we can show on the nook:
- * a buddy's reads aren't readable (participants only), but their library is
- * friend-readable, so we lean on that. Favorites carry the strongest signal
- * ("loved"), then to-read lists.
+ * A glimpse of what your reading circle is up to — not a recommendation to act
+ * on, just company. We surface two kinds of activity, both drawn from each
+ * buddy's (friend-readable) library: a book they've **shelved** (any shelf), and
+ * a book they've **rated or reviewed**. Buddy reads stay private — a read is
+ * readable only by its participants, so who someone is reading *with* never
+ * leaks here. The rating/review is mirrored onto the library doc when a book is
+ * finished (see `setShelf`), which is what makes it visible to friends at all.
  */
-export interface CirclePick {
+export type CircleEventType = 'shelved' | 'reviewed'
+
+export interface CircleActor {
+  uid: string
+  name: string
+  photoURL: string | null
+}
+
+export interface CircleEvent {
+  /** Stable key — one event per buddy+book (its latest meaningful state). */
+  id: string
+  type: CircleEventType
+  actor: CircleActor
   book: LibraryBook
-  /** The buddies behind this pick (those who loved or listed it), de-duplicated. */
-  owners: { uid: string; name: string; photoURL: string | null }[]
-  /** At least one buddy has this on their Favorites shelf. */
-  loved: boolean
+  shelf: Shelf
+  /** Present on a `reviewed` event — the rating (0–5) and/or the written line. */
+  rating: number | null
+  review: string | null
+  /** Sort key, in millis. */
+  at: number
 }
 
 /**
- * Gather picks from every buddy's library in one pass. Favorites rank above
- * to-read; a book several buddies share collapses into one pick crediting all
- * of them. `excludeBookIds` drops anything you're already reading. Best-effort
- * per friend — one unreadable library never sinks the rest.
+ * Gather the circle's recent shelf activity in one pass — newest first. One
+ * event per buddy+book: if they've left a rating or a line it reads as a
+ * **review**, otherwise as a plain **shelving**. Best-effort per friend — one
+ * unreadable library never sinks the rest.
  */
-export async function fetchCirclePicks(
+export async function fetchCircleFeed(
   friends: Relationship[],
   myUid: string,
-  excludeBookIds: Set<string>,
-  limit = 4,
-): Promise<CirclePick[]> {
+  limit = 8,
+): Promise<CircleEvent[]> {
   const buddies = friends.map((r) => otherParty(r, myUid))
 
   const libraries = await Promise.all(
@@ -42,30 +56,29 @@ export async function fetchCirclePicks(
     }),
   )
 
-  // Collapse to one pick per book, crediting every buddy who has it shelved.
-  const byBook = new Map<string, CirclePick>()
+  const events: CircleEvent[] = []
   for (const { buddy, items } of libraries) {
+    const actor: CircleActor = {
+      uid: buddy.uid,
+      name: buddy.displayName ?? 'A buddy',
+      photoURL: buddy.photoURL,
+    }
     for (const item of items) {
-      if (item.shelf !== 'favorite' && item.shelf !== 'tbr') continue
-      if (excludeBookIds.has(item.book.id)) continue
-
-      const owner = { uid: buddy.uid, name: buddy.displayName ?? 'A buddy', photoURL: buddy.photoURL }
-      const existing = byBook.get(item.book.id)
-      if (existing) {
-        if (!existing.owners.some((o) => o.uid === owner.uid)) existing.owners.push(owner)
-        existing.loved = existing.loved || item.shelf === 'favorite'
-      } else {
-        byBook.set(item.book.id, {
-          book: item.book,
-          owners: [owner],
-          loved: item.shelf === 'favorite',
-        })
-      }
+      const review = item.review?.trim() || null
+      const reviewed = item.rating != null || review !== null
+      const shelvedAt = item.updatedAt?.toMillis() ?? item.addedAt?.toMillis() ?? 0
+      events.push({
+        id: `${buddy.uid}:${item.book.id}`,
+        type: reviewed ? 'reviewed' : 'shelved',
+        actor,
+        book: item.book,
+        shelf: item.shelf,
+        rating: reviewed ? (item.rating ?? null) : null,
+        review: reviewed ? review : null,
+        at: (reviewed ? item.reviewedAt?.toMillis() : null) ?? shelvedAt,
+      })
     }
   }
 
-  // Loved books first, then those shared by more of the circle.
-  return [...byBook.values()]
-    .sort((a, b) => Number(b.loved) - Number(a.loved) || b.owners.length - a.owners.length)
-    .slice(0, limit)
+  return events.sort((a, b) => b.at - a.at).slice(0, limit)
 }

@@ -7,13 +7,14 @@ import { BookCover } from '../components/BookCover'
 import { Eyebrow } from '../components/Eyebrow'
 import { Ornament } from '../components/Ornament'
 import { ProgressBar } from '../components/ProgressBar'
+import { StarRating } from '../components/StarRating'
 import { useAuth } from '../auth/useAuth'
 import { useFriends } from '../friends/useFriends'
 import { useReads } from '../reads/useReads'
 import { useLibrary } from '../library/useLibrary'
 import { fractionFor, otherReader, type Read } from '../lib/reads'
 import { booksOnShelf, type LibraryBook } from '../lib/library'
-import { fetchCirclePicks, type CirclePick } from '../lib/circle'
+import { fetchCircleFeed, type CircleEvent } from '../lib/circle'
 import { pickLine } from '../lib/lines'
 
 /** Time-of-day greeting — always an actual greeting, never a goodbye. */
@@ -28,109 +29,150 @@ function firstName(n: string): string {
   return n.trim().split(' ')[0]
 }
 
-/** One reader's mini progress row inside a shelf card. */
-function MiniRow({ label, frac, tone }: { label: string; frac: number | null; tone: 'accent' | 'gold' }) {
+/**
+ * One reader's pace inside the hero read card — a labelled bar with the percentage
+ * called out large in the reader's colour (terracotta for you, gold for a buddy),
+ * so progress reads at a glance and gives the card its weight.
+ */
+function HeroRow({ label, frac, tone }: { label: string; frac: number | null; tone: 'accent' | 'gold' }) {
+  const pct = frac == null ? null : Math.round(frac * 100)
   return (
-    <div className="flex items-center gap-2">
-      <span className="w-14 truncate font-mono text-[10px] text-text-faint">{label}</span>
-      {frac == null ? (
-        <span className="flex-1 font-mono text-[10px] text-text-faint">yet to begin</span>
+    <div className="flex items-center gap-3">
+      <span className="w-14 shrink-0 truncate font-mono text-[10px] uppercase tracking-[0.1em] text-text-faint">
+        {label}
+      </span>
+      {pct == null ? (
+        <span className="flex-1 font-display text-base italic text-text-faint">yet to begin</span>
       ) : (
-        <ProgressBar value={frac} tone={tone} className="flex-1" />
+        <>
+          <ProgressBar value={frac ?? 0} tone={tone} className="flex-1" />
+          <span
+            className={`w-12 shrink-0 text-right font-display text-2xl font-semibold leading-none ${tone === 'gold' ? 'text-gold' : 'text-accent'}`}
+          >
+            {pct}
+            <span className="text-xs text-text-faint">%</span>
+          </span>
+        </>
       )}
     </div>
   )
 }
 
-/** An active read on the shelf — a buddy read (two paces) or a solo read (one). */
+/**
+ * An active read — the home screen's hero. A buddy read (two paces) or a solo read
+ * (one), raised on a warm lit panel (`.read-hero`) so it clearly outranks the
+ * quieter suggestions beneath it: a lifted cover, a large title, and each reader's
+ * pace called out.
+ */
 function ReadCard({ read, uid }: { read: Read; uid: string }) {
   const solo = read.solo === true
   const buddy = solo ? null : otherReader(read, uid)
   const buddyName = buddy?.displayName ?? 'Your buddy'
-  // The mini progress rows are tight (a truncated label) — a last name only ever
-  // shows half. First name only, on both phone and iPad.
+  // The progress rows are tight (a truncated label) — a last name only ever shows
+  // half. First name only, on both phone and iPad.
   const buddyFirst = buddyName.trim().split(' ')[0]
   return (
     <Link
       to={`/read/${read.id}`}
       state={{ from: '/home' }}
-      className="flex items-start gap-4 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-accent/40"
+      className="read-hero block rounded-3xl p-5 ipad:p-6"
     >
-      <BookCover
-        book={{
-          title: read.book.title,
-          coverUrl: read.book.coverUrl,
-          isbn13: null,
-          isbn10: null,
-        }}
-        author={read.book.authors[0]}
-        className="w-14 shrink-0 self-start"
-      />
-      <div className="min-w-0 flex-1">
-        <h3 className="font-display text-xl leading-tight text-text">{read.book.title}</h3>
-        <Eyebrow className="mt-1 block">{solo ? 'Reading solo' : `with ${buddyName}`}</Eyebrow>
-        <div className="mt-3 space-y-2">
-          <MiniRow label="You" frac={fractionFor(read, uid)} tone="accent" />
-          {buddy && (
-            <MiniRow label={buddyFirst} frac={fractionFor(read, buddy.uid)} tone="gold" />
-          )}
+      <div className="flex items-start gap-5">
+        <BookCover
+          book={{
+            title: read.book.title,
+            coverUrl: read.book.coverUrl,
+            isbn13: null,
+            isbn10: null,
+          }}
+          author={read.book.authors[0]}
+          className="w-20 shrink-0 self-start shadow-[0_12px_26px_-12px_rgba(50,30,15,0.65)] ipad:w-24"
+          rounded="rounded-lg"
+        />
+        <div className="min-w-0 flex-1 pt-1">
+          <Eyebrow className="block text-accent">{solo ? 'Reading solo' : `with ${buddyName}`}</Eyebrow>
+          <h3 className="mt-2 text-balance font-display text-2xl leading-[1.1] text-text ipad:text-3xl">
+            {read.book.title}
+          </h3>
         </div>
+      </div>
+      <div className="mt-5 space-y-3.5">
+        <HeroRow label="You" frac={fractionFor(read, uid)} tone="accent" />
+        {buddy && <HeroRow label={buddyFirst} frac={fractionFor(read, buddy.uid)} tone="gold" />}
       </div>
     </Link>
   )
 }
 
-/** The credit line on a circle pick — who loved or listed it. */
-function creditLine(pick: CirclePick): string {
-  const names = pick.owners.map((o) => firstName(o.name))
-  const who =
-    names.length === 1
-      ? names[0]
-      : names.length === 2
-        ? `${names[0]} & ${names[1]}`
-        : `${names[0]} & ${names.length - 1} others`
-  return pick.loved ? `${who} loved this` : `On ${who}'s list`
+/** How a circle event reads — what the buddy did with the book. */
+function verbFor(e: CircleEvent): string {
+  if (e.type === 'reviewed') return e.rating != null ? 'rated this' : 'wrote about this'
+  if (e.shelf === 'favorite') return 'loved this'
+  if (e.shelf === 'read') return 'finished this'
+  return 'added this'
 }
 
 /**
- * A book pulled from your circle's shelves — leads to the book, pre-aimed at the
- * buddy behind it (`?with=`), so "Read Together" sends straight to them.
+ * One line of circle activity — a buddy shelved, finished, or reviewed a book.
+ * It's a quiet way to keep in touch with what your people are reading, *not* a
+ * call to action: tapping opens the book, nothing more. No "read together" CTA
+ * lives here — that belongs on the book and a friend's profile, not stamped on
+ * every passing update.
  */
-function CircleCard({ pick }: { pick: CirclePick }) {
-  const lead = pick.owners[0]
+function CircleEventCard({ event }: { event: CircleEvent }) {
+  const { actor, book } = event
   return (
     <Link
-      to={`/book/${pick.book.id}?with=${lead.uid}`}
+      to={`/book/${book.id}`}
       state={{ from: '/home' }}
-      className="group flex items-center gap-4 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-accent/40"
+      className="group flex items-start gap-3.5 rounded-xl border border-border-soft bg-surface/40 px-3.5 py-3 transition-colors hover:border-accent/30 hover:bg-surface/70"
     >
       <BookCover
-        book={{ title: pick.book.title, coverUrl: pick.book.coverUrl, isbn13: null, isbn10: null }}
-        author={pick.book.authors[0]}
-        className="w-12 shrink-0"
+        book={{ title: book.title, coverUrl: book.coverUrl, isbn13: null, isbn10: null }}
+        author={book.authors[0]}
+        className="w-11 shrink-0"
         rounded="rounded-md"
       />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <Avatar src={lead.photoURL} name={lead.name} tone={lead.photoURL ? undefined : 'gold'} size="h-4 w-4" />
-          <Eyebrow>{creditLine(pick)}</Eyebrow>
+          <Avatar
+            src={actor.photoURL}
+            name={actor.name}
+            tone={actor.photoURL ? undefined : 'gold'}
+            size="h-4 w-4"
+          />
+          <Eyebrow className="truncate">
+            {firstName(actor.name)} {verbFor(event)}
+          </Eyebrow>
         </div>
-        <h3 className="mt-1 truncate font-display text-lg font-medium leading-tight text-text">
-          {pick.book.title}
+        <h3 className="mt-1 truncate font-display text-base font-medium leading-tight text-text-muted transition-colors group-hover:text-text">
+          {book.title}
         </h3>
-        <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.1em] text-accent">
-          Read it with {firstName(lead.name)} ›
-        </p>
+        {event.type === 'reviewed' && event.rating != null && (
+          <div className="mt-1">
+            <StarRating
+              value={event.rating}
+              size="text-[13px]"
+              fillColor="var(--gold)"
+              trackColor="var(--border)"
+            />
+          </div>
+        )}
+        {event.type === 'reviewed' && event.review && (
+          <p className="mt-1 line-clamp-2 text-pretty font-display text-sm italic leading-snug text-text-muted">
+            “{event.review}”
+          </p>
+        )}
       </div>
     </Link>
   )
 }
 
 /**
- * The signed-in home — a warm greeting, your active buddy reads, and a genuinely
- * relevant "what next": books your reading circle loves or has lined up (offered
- * to start *together*), falling back to your own to-read shelf, then to a quiet
- * literary line. No fabricated recommendations — only your people and your books.
+ * The signed-in home — a warm greeting, your active buddy reads, and a window
+ * onto your circle: what your buddies have lately shelved, finished, or reviewed
+ * (a feed to keep in touch, never a call to action). When the circle's quiet it
+ * falls back to your own to-read shelf, then to a literary line.
  */
 export function Home() {
   const { user, userDoc } = useAuth()
@@ -141,7 +183,7 @@ export function Home() {
 
   // null = the circle hasn't been read yet (don't decide the layout until it is).
   // With no friends there's nothing to fetch, so that case is derived, not set.
-  const [fetched, setFetched] = useState<CirclePick[] | null>(null)
+  const [fetched, setFetched] = useState<CircleEvent[] | null>(null)
   const [line] = useState(pickLine)
 
   // The nook lamp — its lit state persists, so the ambience you chose stays.
@@ -163,21 +205,20 @@ export function Home() {
   useEffect(() => {
     if (!uid || friends.length === 0) return
     let cancelled = false
-    const exclude = new Set(active.map((r) => r.book.id))
-    fetchCirclePicks(friends, uid, exclude)
-      .then((p) => !cancelled && setFetched(p))
+    fetchCircleFeed(friends, uid)
+      .then((f) => !cancelled && setFetched(f))
       .catch(() => !cancelled && setFetched([]))
     return () => {
       cancelled = true
     }
-  }, [friends, active, uid])
+  }, [friends, uid])
 
-  const picks: CirclePick[] | null = friends.length === 0 ? [] : fetched
+  const feed: CircleEvent[] | null = friends.length === 0 ? [] : fetched
 
   const firstNameOfUser = firstName(userDoc?.displayName ?? user?.displayName ?? 'reader')
 
   const myTbr: LibraryBook[] = booksOnShelf(myLibrary, 'tbr').map((i) => i.book)
-  const nextReady = picks !== null && !libLoading
+  const nextReady = feed !== null && !libLoading
 
   return (
     <AppShell>
@@ -216,9 +257,12 @@ export function Home() {
       {!loading && (
         <>
           {active.length > 0 ? (
-            <section className="mt-4">
-              <Eyebrow className="mb-3 block">Reading now</Eyebrow>
-              <ul className="space-y-3">
+            <section className="mt-5">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
+                <Eyebrow className="text-accent">Reading now</Eyebrow>
+              </div>
+              <ul className="space-y-4">
                 {active.map((r) => (
                   <li key={r.id}>
                     <ReadCard read={r} uid={uid} />
@@ -252,22 +296,22 @@ export function Home() {
             </Link>
           )}
 
-          {/* What next — your circle's shelves, then your own, then a line.
-              Held until resolved so it never flashes one tier then another. */}
+          {/* The circle's recent activity, then your own to-read shelf, then a
+              line. Held until resolved so it never flashes one tier then another. */}
           {nextReady &&
-            (picks.length > 0 ? (
-              <section className="mt-9">
+            (feed.length > 0 ? (
+              <section className="mt-10">
                 <Eyebrow className="mb-3 block">From your circle</Eyebrow>
-                <ul className="space-y-3">
-                  {picks.map((p) => (
-                    <li key={p.book.id}>
-                      <CircleCard pick={p} />
+                <ul className="space-y-2.5">
+                  {feed.map((e) => (
+                    <li key={e.id}>
+                      <CircleEventCard event={e} />
                     </li>
                   ))}
                 </ul>
               </section>
             ) : myTbr.length > 0 ? (
-              <section className="mt-9">
+              <section className="mt-10">
                 <div className="flex items-baseline justify-between">
                   <Eyebrow>On your list</Eyebrow>
                   <Link
