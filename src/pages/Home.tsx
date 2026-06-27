@@ -90,7 +90,7 @@ export function Home() {
         <p className="font-display text-xl italic text-text-muted">
           {greeting()}, {firstName}.
         </p>
-        <h1 className="mt-1 font-display text-4xl text-text">The nightstand</h1>
+        <h1 className="mt-1 font-display text-4xl text-text">Your nook</h1>
       </section>
 
       {/* Hold the dynamic sections until reads load, so the first paint never

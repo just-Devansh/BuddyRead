@@ -254,17 +254,56 @@ export function Profile() {
       {/* Reading circle — the home for friends, now that it's not a tab */}
       <Link
         to="/friends"
-        className="mt-7 flex items-center justify-between rounded-2xl border border-border bg-surface px-5 py-4 transition-colors hover:border-accent/40"
+        className="group mt-7 flex items-center gap-3.5 rounded-2xl border border-border bg-surface px-4 py-3 transition-colors hover:border-accent/40"
       >
-        <div className="min-w-0">
-          <h2 className="font-display text-xl text-text">Your reading circle</h2>
-          <p className="mt-0.5 text-pretty text-sm text-text-muted">
-            Add buddies by invite code, answer requests, manage who you read with.
+        {friends.length > 0 ? (
+          <div className="flex -space-x-2.5">
+            {friends.slice(0, 3).map((r) => {
+              const b = otherParty(r, user?.uid ?? '')
+              return (
+                <Avatar
+                  key={b.uid}
+                  src={b.photoURL}
+                  name={b.displayName}
+                  tone={b.photoURL ? undefined : 'gold'}
+                  size="h-9 w-9"
+                  className="ring-2 ring-surface"
+                />
+              )
+            })}
+          </div>
+        ) : (
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border text-accent">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </span>
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="font-display text-lg leading-tight text-text">Your reading circle</p>
+          <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text-faint">
+            {friends.length === 0
+              ? 'Add a buddy by invite code'
+              : `${friends.length} ${friends.length === 1 ? 'buddy' : 'buddies'}`}
           </p>
         </div>
-        <span className="ml-3 shrink-0 font-mono text-lg text-text-faint" aria-hidden="true">
-          ›
-        </span>
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          className="shrink-0 text-text-faint transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-accent"
+        >
+          <path d="m9 18 6-6-6-6" />
+        </svg>
       </Link>
 
       <EditProfileDialog
