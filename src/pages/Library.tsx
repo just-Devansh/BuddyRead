@@ -11,9 +11,20 @@ function SearchButton() {
     <Link
       to="/search"
       aria-label="Search for a book"
-      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-accent-contrast shadow-[0_8px_18px_-8px_rgba(138,69,54,0.85)] transition-opacity hover:opacity-90"
+      className="group flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-accent-contrast shadow-[0_8px_20px_-8px_rgba(138,69,54,0.8)] outline-none transition-[transform,box-shadow,filter] duration-300 ease-[cubic-bezier(0.22,0.61,0.18,1)] hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-8px_rgba(138,69,54,0.95)] hover:brightness-105 active:scale-90 active:brightness-90 active:duration-150 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
     >
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <svg
+        viewBox="0 0 24 24"
+        width="22"
+        height="22"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+        className="transition-transform duration-300 ease-[cubic-bezier(0.22,0.61,0.18,1)] group-hover:-rotate-6 group-active:scale-90"
+      >
         <circle cx="11" cy="11" r="7" />
         <path d="m20 20-3.2-3.2" />
       </svg>
