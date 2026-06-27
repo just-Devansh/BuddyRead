@@ -231,14 +231,18 @@ export function BookDetail() {
 
       {book && (
         <article className="mt-5">
-          <div className="flex gap-5">
+          <div className="flex items-start gap-5">
             <BookCover
               book={book}
               author={book.authors[0]}
-              className="w-28 shrink-0 ipad:w-36"
+              className="w-28 shrink-0 self-start ipad:w-36"
             />
             <div className="min-w-0 flex-1">
-              <h1 className="text-pretty font-display text-3xl leading-tight text-text ipad:text-4xl">
+              <h1
+                className={`text-pretty font-display leading-tight text-text ${
+                  book.title.length > 30 ? 'text-2xl ipad:text-3xl' : 'text-3xl ipad:text-4xl'
+                }`}
+              >
                 {book.title}
               </h1>
               {book.subtitle && (
