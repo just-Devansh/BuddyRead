@@ -70,11 +70,14 @@ function improveCover(url: string): string {
 /** Biggest cover Google offers, https-ified. */
 function bestGoogleCover(links?: ImageLinks): string | null {
   if (!links) return null
+  // Prefer `thumbnail`: it's the reliable colourful cover (and what search uses).
+  // Google's larger sizes are sometimes a different, plainer scan of the same
+  // book — a white page of black text — so we only fall back to them.
   const raw =
-    links.large ??
-    links.medium ??
-    links.small ??
     links.thumbnail ??
+    links.small ??
+    links.medium ??
+    links.large ??
     links.smallThumbnail
   return raw ? improveCover(raw) : null
 }
