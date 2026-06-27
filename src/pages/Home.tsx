@@ -58,45 +58,58 @@ function HeroRow({ label, frac, tone }: { label: string; frac: number | null; to
   )
 }
 
-const TILT_DEG = 8 // how far the hero card leans toward your finger, at most
+const SPARKLE_GAP = 14 // px the finger must travel before the next star drops
 
 /**
- * A whimsical 3D lean for the hero card: it tips toward wherever you touch (or
- * hover), lifts a touch, then springs back when you let go. Driven straight on
- * the DOM node so it stays buttery without re-rendering; sits out entirely under
+ * A lingering "shooting-star" trail: as a finger (or cursor) glides across the
+ * hero card, little gold stars drop in its wake and twinkle out. Stars are spun
+ * up as bare DOM nodes inside a non-interactive overlay so the card never
+ * re-renders and taps still pass through; the whole thing sits out under
  * `prefers-reduced-motion`.
  */
-function useTilt<T extends HTMLElement>() {
-  const ref = useRef<T>(null)
+function useSparkleTrail() {
+  const overlay = useRef<HTMLDivElement>(null)
+  const last = useRef<{ x: number; y: number } | null>(null)
   const reduce = useRef(false)
   useEffect(() => {
     reduce.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   }, [])
 
-  const lean = (e: ReactPointerEvent) => {
-    const el = ref.current
-    if (!el || reduce.current) return
-    const r = el.getBoundingClientRect()
-    const ry = ((e.clientX - r.left) / r.width - 0.5) * (TILT_DEG * 2) // left↔right
-    const rx = (0.5 - (e.clientY - r.top) / r.height) * (TILT_DEG * 2) // up↕down
-    el.style.transition = 'transform 110ms ease-out'
-    el.style.transform = `perspective(900px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) scale(1.03)`
+  const drop = (x: number, y: number) => {
+    const o = overlay.current
+    if (!o) return
+    const s = document.createElement('span')
+    s.className = 'sparkle'
+    s.style.left = `${x}px`
+    s.style.top = `${y}px`
+    s.style.setProperty('--s', `${6 + Math.random() * 7}px`) // size
+    s.style.setProperty('--r', `${Math.random() * 90 - 45}deg`) // start rotation
+    s.addEventListener('animationend', () => s.remove())
+    o.appendChild(s)
   }
-  const settle = () => {
-    const el = ref.current
-    if (!el) return
-    // A springy ease back, then hand transform control back to .read-hero's CSS.
-    el.style.transition = 'transform 600ms cubic-bezier(0.22,1.2,0.36,1)'
-    el.style.transform = ''
+
+  const trail = (e: ReactPointerEvent) => {
+    const o = overlay.current
+    if (!o || reduce.current) return
+    const r = o.getBoundingClientRect()
+    const x = e.clientX - r.left
+    const y = e.clientY - r.top
+    const l = last.current
+    if (l && Math.hypot(x - l.x, y - l.y) < SPARKLE_GAP) return
+    last.current = { x, y }
+    drop(x, y)
+  }
+  const end = () => {
+    last.current = null
   }
 
   return {
-    ref,
-    onPointerDown: lean,
-    onPointerMove: lean,
-    onPointerUp: settle,
-    onPointerLeave: settle,
-    onPointerCancel: settle,
+    overlay,
+    onPointerDown: trail,
+    onPointerMove: trail,
+    onPointerUp: end,
+    onPointerLeave: end,
+    onPointerCancel: end,
   }
 }
 
@@ -104,7 +117,8 @@ function useTilt<T extends HTMLElement>() {
  * An active read — the home screen's hero. A buddy read (two paces) or a solo read
  * (one), raised on a warm lit panel (`.read-hero`) so it clearly outranks the
  * quieter suggestions beneath it: a lifted cover, a large title, and each reader's
- * pace called out. Leans playfully in 3D toward your touch (see useTilt).
+ * pace called out. Glide a finger across it and gold stars trail your touch
+ * (see useSparkleTrail).
  */
 function ReadCard({ read, uid }: { read: Read; uid: string }) {
   const solo = read.solo === true
@@ -113,15 +127,19 @@ function ReadCard({ read, uid }: { read: Read; uid: string }) {
   // The progress rows are tight (a truncated label) — a last name only ever shows
   // half. First name only, on both phone and iPad.
   const buddyFirst = buddyName.trim().split(' ')[0]
-  const tilt = useTilt<HTMLAnchorElement>()
+  const { overlay, ...trail } = useSparkleTrail()
   return (
     <Link
       to={`/read/${read.id}`}
       state={{ from: '/home' }}
-      {...tilt}
-      style={{ willChange: 'transform' }}
-      className="read-hero block rounded-3xl p-5 ipad:p-6"
+      {...trail}
+      className="read-hero block touch-pan-y rounded-3xl p-5 ipad:p-6"
     >
+      <div
+        ref={overlay}
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-10 overflow-hidden rounded-3xl"
+      />
       <div className="flex items-start gap-5">
         <BookCover
           book={{
