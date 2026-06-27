@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { Avatar } from '../components/Avatar'
+import { Lamp } from '../components/Lamp'
 import { BookCover } from '../components/BookCover'
 import { Eyebrow } from '../components/Eyebrow'
 import { Ornament } from '../components/Ornament'
@@ -143,6 +144,22 @@ export function Home() {
   const [fetched, setFetched] = useState<CirclePick[] | null>(null)
   const [line] = useState(pickLine)
 
+  // The nook lamp — its lit state persists, so the ambience you chose stays.
+  const [lit, setLit] = useState(() => {
+    try {
+      return localStorage.getItem('buddyread:lamp') === 'on'
+    } catch {
+      return false
+    }
+  })
+  useEffect(() => {
+    try {
+      localStorage.setItem('buddyread:lamp', lit ? 'on' : 'off')
+    } catch {
+      // Storage blocked (private mode) — the lamp simply won't be remembered.
+    }
+  }, [lit])
+
   useEffect(() => {
     if (!uid || friends.length === 0) return
     let cancelled = false
@@ -164,25 +181,33 @@ export function Home() {
 
   return (
     <AppShell>
-      {/* Greeting */}
-      <section className="flex items-end justify-between gap-4">
-        <div className="min-w-0">
+     <div className="nook relative isolate">
+      {/* Ambient lamplight — a warm pool that settles over the cards when the
+          nook lamp is lit. Isolated to .nook so the screen-blend never bleeds. */}
+      <div aria-hidden="true" className={`lamp-wash ${lit ? 'is-lit' : ''}`} />
+
+      {/* Greeting (kept above the wash so the words stay crisp) */}
+      <section className="relative z-10 flex items-start justify-between gap-3">
+        <div className="min-w-0 pt-1">
           <p className="font-display text-xl italic text-text-muted">
             {greeting()}, {firstNameOfUser}.
           </p>
           <h1 className="mt-1 font-display text-4xl text-text">Your nook</h1>
         </div>
-        <Link
-          to="/search"
-          state={{ from: '/home' }}
-          aria-label="Add a book"
-          title="Add a book"
-          className="mb-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-accent shadow-[0_8px_20px_-12px_rgba(111,61,48,0.6)] transition-all hover:-translate-y-0.5 hover:border-accent/50 hover:bg-surface-alt active:translate-y-0"
-        >
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-        </Link>
+        <div className="flex shrink-0 items-start gap-2">
+          <Link
+            to="/search"
+            state={{ from: '/home' }}
+            aria-label="Add a book"
+            title="Add a book"
+            className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-accent shadow-[0_8px_20px_-12px_rgba(111,61,48,0.6)] transition-all hover:-translate-y-0.5 hover:border-accent/50 hover:bg-surface-alt active:translate-y-0"
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </Link>
+          <Lamp lit={lit} onToggle={() => setLit((v) => !v)} className="-mt-4 w-12 ipad:w-14" />
+        </div>
       </section>
 
       {/* Hold the dynamic sections until reads load, so the first paint never
@@ -282,6 +307,7 @@ export function Home() {
             ))}
         </>
       )}
+     </div>
     </AppShell>
   )
 }
