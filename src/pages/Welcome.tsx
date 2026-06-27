@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Ornament } from '../components/Ornament'
 import { Crowns } from '../components/Crowns'
+import { Splash } from '../components/Splash'
 import { ThemeToggle } from '../theme/ThemeToggle'
 import { useAuth } from '../auth/useAuth'
 
@@ -15,6 +16,9 @@ export function Welcome() {
   const { user, loading, error, signInWithGoogle } = useAuth()
   const [signingIn, setSigningIn] = useState(false)
 
+  // Until auth resolves, hold the splash — never flash the signin page at a
+  // reader who's actually signed in.
+  if (loading) return <Splash />
   if (user) return <Navigate to="/home" replace />
 
   const handleSignIn = async () => {
