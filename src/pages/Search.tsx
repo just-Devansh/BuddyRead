@@ -13,8 +13,21 @@ type Status = 'idle' | 'searching' | 'done' | 'error'
  * A `?q=` param prefills the query — used by the Shelf's curated starter picks.
  */
 export function Search() {
-  const [searchParams] = useSearchParams()
-  const [query, setQuery] = useState(() => searchParams.get('q') ?? '')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [query, setQueryState] = useState(() => searchParams.get('q') ?? '')
+  // Mirror the query into the URL (?q=) so navigating into a book and back
+  // restores the search bar instead of clearing it.
+  const setQuery = (v: string) => {
+    setQueryState(v)
+    setSearchParams(
+      (prev) => {
+        if (v) prev.set('q', v)
+        else prev.delete('q')
+        return prev
+      },
+      { replace: true },
+    )
+  }
   const [results, setResults] = useState<Book[]>([])
   const [status, setStatus] = useState<Status>('idle')
 
