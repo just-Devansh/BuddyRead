@@ -5,8 +5,8 @@ import { PullToRefresh } from './PullToRefresh'
 
 /**
  * The frame every signed-in screen sits inside: a hairline sticky header with
- * the wordmark, the screen body, and a touch-first bottom tab bar (Shelf ·
- * Friends · You). Width is capped by the surrounding DeviceFrame; this just
+ * the wordmark, the screen body, and a touch-first bottom tab bar (Home ·
+ * Library · Activity · You). Width is capped by the surrounding DeviceFrame; this just
  * fills it, nudging padding up a touch on iPad.
  */
 export function AppShell({ children }: { children: React.ReactNode }) {

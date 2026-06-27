@@ -23,7 +23,7 @@ const iconProps = {
 const TABS: Tab[] = [
   {
     to: '/home',
-    label: 'Shelf',
+    label: 'Home',
     icon: (
       <svg {...iconProps}>
         <path d="M4 5.5C4 4.7 4.7 4 5.5 4H10v16H5.5C4.7 20 4 19.3 4 18.5z" />

@@ -156,7 +156,7 @@ export function CoRead() {
           to="/home"
           className="font-mono text-[11px] uppercase tracking-[0.1em] text-text-muted transition-colors hover:text-text"
         >
-          ‹ Shelf
+          ‹ Home
         </Link>
         <p className="mt-10 text-center text-sm text-text-muted">
           {loading ? 'Finding your read…' : "This read isn't on your shelf."}
@@ -285,7 +285,7 @@ export function CoRead() {
           to="/home"
           className="font-mono text-[11px] uppercase tracking-[0.1em] text-text-muted transition-colors hover:text-text"
         >
-          ‹ Shelf
+          ‹ Home
         </Link>
         <Eyebrow>{solo ? 'Reading solo' : 'Reading together'}</Eyebrow>
         <button

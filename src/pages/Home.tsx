@@ -86,11 +86,24 @@ export function Home() {
   return (
     <AppShell>
       {/* Greeting */}
-      <section>
-        <p className="font-display text-xl italic text-text-muted">
-          {greeting()}, {firstName}.
-        </p>
-        <h1 className="mt-1 font-display text-4xl text-text">Your nook</h1>
+      <section className="flex items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="font-display text-xl italic text-text-muted">
+            {greeting()}, {firstName}.
+          </p>
+          <h1 className="mt-1 font-display text-4xl text-text">Your nook</h1>
+        </div>
+        <Link
+          to="/search"
+          state={{ from: '/home' }}
+          aria-label="Add a book"
+          title="Add a book"
+          className="mb-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-accent shadow-[0_8px_20px_-12px_rgba(111,61,48,0.6)] transition-all hover:-translate-y-0.5 hover:border-accent/50 hover:bg-surface-alt active:translate-y-0"
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </Link>
       </section>
 
       {/* Hold the dynamic sections until reads load, so the first paint never
@@ -98,7 +111,7 @@ export function Home() {
       {!loading && (
         <>
           {active.length > 0 ? (
-        <section className="mt-6">
+        <section className="mt-4">
           <Eyebrow className="mb-3 block">Reading now</Eyebrow>
           <ul className="space-y-3">
             {active.map((r) => (
@@ -111,7 +124,8 @@ export function Home() {
       ) : (
         <Link
           to="/search"
-          className="mt-6 flex items-center gap-4 rounded-2xl border border-dashed border-border bg-surface/50 p-5 transition-colors hover:border-accent/40"
+          state={{ from: '/home' }}
+          className="mt-4 flex items-center gap-4 rounded-2xl border border-dashed border-border bg-surface/50 p-5 transition-colors hover:border-accent/40"
         >
           <span
             className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border text-2xl text-accent"

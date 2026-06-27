@@ -228,20 +228,33 @@ export function Profile() {
             (friends.length === 0 ? (
               <EmptyNote>No buddies yet — add one with their invite code.</EmptyNote>
             ) : (
-              <ul className="space-y-2.5">
+              <ul className="divide-y divide-border-soft border-y border-border-soft">
                 {friends.map((r) => {
                   const o = otherParty(r, uid)
                   return (
                     <li key={r.id}>
                       <Link
                         to={`/u/${o.uid}`}
-                        className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:border-accent/40"
+                        className="group flex items-center gap-3 py-2.5 transition-colors hover:text-accent"
                       >
-                        <Avatar src={o.photoURL} name={o.displayName} size="h-10 w-10" />
-                        <p className="min-w-0 flex-1 truncate font-display text-lg text-text">
+                        <Avatar src={o.photoURL} name={o.displayName} size="h-8 w-8" />
+                        <p className="min-w-0 flex-1 truncate font-body text-base text-text">
                           {o.displayName ?? 'A reader'}
                         </p>
-                        <Eyebrow>Reading buddy</Eyebrow>
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="15"
+                          height="15"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.7"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                          className="shrink-0 text-text-faint transition-transform group-hover:translate-x-0.5 group-hover:text-accent"
+                        >
+                          <path d="m9 18 6-6-6-6" />
+                        </svg>
                       </Link>
                     </li>
                   )
