@@ -1,47 +1,84 @@
-/** Line icons for the curated moods (see lib/moods.ts), keyed by mood key. They
- *  inherit colour via `currentColor`, so the caller tints them. Quieter and more
- *  on-tone than emoji. */
-const PATHS: Record<string, string | string[]> = {
+/**
+ * Expressive duotone glyphs for the curated moods (see lib/moods.ts), keyed by
+ * mood key. Each is built in three optional layers — a `soft` filled silhouette
+ * (the body, at low opacity), a `solid` detail (the crisp core), and `line`
+ * strokes (steam, a flag, a sleepy "z") — all drawn in `currentColor`, so the
+ * caller tints the whole thing (muted by default, terracotta when chosen).
+ *
+ * The two-tone fill gives them an emoji-like, sticker-ish weight and personality
+ * without resorting to actual unicode emoji (which render differently on every
+ * platform) or a coloured set that would fight the parchment/espresso palette.
+ */
+interface Glyph {
+  soft?: string | string[]
+  solid?: string | string[]
+  line?: string | string[]
+}
+
+const GLYPHS: Record<string, Glyph> = {
   // flame — captivated
-  hooked:
-    'M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z',
+  hooked: {
+    soft: 'M12 2.4c.4 2.4 1.9 4.1 3.3 5.6C16.8 9.6 18 11.4 18 13.6A6 6 0 0 1 6 13.6c0-1.6.6-2.9 1.5-3.9.2 1.1.9 1.8 1.9 1.9-.6-1.4-.4-2.8.6-4.1C11 8 11.6 5.4 12 2.4Z',
+    solid:
+      'M12 12.3c1.4 1 2.1 2.1 2.1 3.4A2.2 2.2 0 0 1 12 17.9a2.1 2.1 0 0 1-2.1-2.2c0-.8.3-1.5.9-2 .1.6.4 1 1 1.1-.5-.7-.4-1.6.3-2.5Z',
+  },
   // coffee — cosy
-  cozy: [
-    'M10 2v2',
-    'M14 2v2',
-    'M6 2v2',
-    'M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1',
-  ],
+  cozy: {
+    soft: 'M5 8.5h9.5v4.2a3.3 3.3 0 0 1-3.3 3.3H8.3A3.3 3.3 0 0 1 5 12.7V8.5Z',
+    line: [
+      'M14.7 9.8h1.1a2.1 2.1 0 0 1 0 4.2h-1.1',
+      'M8 3.4c-.7.8-.7 1.7 0 2.5',
+      'M11.3 3.4c-.7.8-.7 1.7 0 2.5',
+    ],
+  },
   // teardrop — wrecked
-  wrecked:
-    'M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z',
-  // moon — drowsy
-  drowsy: 'M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z',
-  // mountain peak — a slog uphill
-  slog: 'M3 20 12 4l9 16Z',
+  wrecked: {
+    soft: 'M12 3.2C9 7.4 7 9.9 7 12.6A5 5 0 0 0 17 12.6C17 9.9 15 7.4 12 3.2Z',
+    line: 'M9.9 11.6a2.4 2.4 0 0 0 .7 3',
+  },
+  // crescent moon + a sleepy z — drowsy
+  drowsy: {
+    soft: 'M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 7.5 7.5 0 1 0 20.5 14.2Z',
+    line: 'M14 3.6h3l-3 3h3',
+  },
+  // mountain + summit flag — a slog uphill
+  slog: {
+    soft: 'M3.5 19 9 9l3.3 4.2L15.5 9l5 10Z',
+    line: ['M15.5 9V5', 'M15.5 5.2 18.3 6 15.5 6.8'],
+  },
   // sparkles — mind blown
-  moved: [
-    'M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z',
-    'M20 3v4',
-    'M22 5h-4',
-  ],
+  moved: {
+    soft: 'M12 3.2l1.9 5.4 5.4 1.9-5.4 1.9L12 17.8l-1.9-5.4L4.7 10.5l5.4-1.9Z',
+    solid: 'M18.8 3.6l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8Z',
+  },
+}
+
+function asArray(v: string | string[] | undefined): string[] {
+  return v == null ? [] : Array.isArray(v) ? v : [v]
 }
 
 export function MoodIcon({ mood, className = 'h-6 w-6' }: { mood: string; className?: string }) {
-  const d = PATHS[mood]
-  if (!d) return null
+  const g = GLYPHS[mood]
+  if (!g) return null
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.6}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      {Array.isArray(d) ? d.map((p, i) => <path key={i} d={p} />) : <path d={d} />}
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      {asArray(g.soft).map((d, i) => (
+        <path key={`s${i}`} d={d} fill="currentColor" fillOpacity={0.24} />
+      ))}
+      {asArray(g.solid).map((d, i) => (
+        <path key={`c${i}`} d={d} fill="currentColor" />
+      ))}
+      {asArray(g.line).map((d, i) => (
+        <path
+          key={`l${i}`}
+          d={d}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.7}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ))}
     </svg>
   )
 }
