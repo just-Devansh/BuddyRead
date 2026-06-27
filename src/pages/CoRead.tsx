@@ -226,6 +226,17 @@ export function CoRead() {
     }
   }
 
+  const openClose = async () => {
+    const ok = await confirm({
+      title: 'Close this read?',
+      message: solo
+        ? `You'll write your verdict on “${read.book.title}” and file it on your shelf.`
+        : `You'll write your verdict on “${read.book.title}”. It stays sealed until ${buddyName} closes the book too.`,
+      confirmLabel: 'Continue',
+    })
+    if (ok) setClosing(true)
+  }
+
   const reopen = async () => {
     const ok = await confirm({
       title: 'Reopen this read?',
@@ -423,7 +434,7 @@ export function CoRead() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setClosing(true)}
+                    onClick={() => void openClose()}
                     className="mx-auto mt-3 block font-mono text-[10px] uppercase tracking-[0.1em] text-text-faint transition-colors hover:text-accent"
                   >
                     Close this read ›

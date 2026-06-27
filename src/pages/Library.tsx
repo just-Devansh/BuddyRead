@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { Bookshelf } from '../components/Bookshelf'
-import { Eyebrow } from '../components/Eyebrow'
 import { useLibrary } from '../library/useLibrary'
 
 /** The search affordance — a big magnifier that opens the full search page
@@ -45,8 +44,7 @@ export function Library() {
     <AppShell>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <Eyebrow>Your shelves</Eyebrow>
-          <h1 className="mt-1 font-display text-4xl text-text">Your Library</h1>
+          <h1 className="font-display text-4xl text-text">Your Library</h1>
         </div>
         <SearchButton />
       </div>
