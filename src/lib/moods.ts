@@ -15,7 +15,7 @@ export const MOODS: Mood[] = [
   { key: 'wrecked', word: 'Wrecked' },
   { key: 'drowsy', word: 'Drowsy' },
   { key: 'slog', word: 'Slog' },
-  { key: 'moved', word: 'Moved' },
+  { key: 'moved', word: 'Mind Blown' },
 ]
 
 /** Look a stored mood key back up to its word, or null if unknown. */
