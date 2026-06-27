@@ -44,6 +44,25 @@ function useHoldRepeat(action: (delta: number) => void) {
   return { start, stop }
 }
 
+/** The ± glyph as a crisp, optically-centred SVG — the text "+"/"−" sat a hair
+ *  off-centre inside the round buttons because of font metrics. */
+function Stepper({ sign }: { sign: 'plus' | 'minus' }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.4}
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <path d="M5 12h14" />
+      {sign === 'plus' && <path d="M12 5v14" />}
+    </svg>
+  )
+}
+
 /**
  * A bottom-sheet for logging tonight's pages: a draggable page bar (with fine
  * ± nudges), a curated end-of-session mood, and an optional line worth keeping.
@@ -128,7 +147,6 @@ export function LogSessionSheet({
     else setDragY(0)
   }
 
-  const clamp = (v: number) => Math.max(0, Math.min(total, v))
   const pct = total ? Math.round((page / total) * 100) : 0
 
   const translateY = show ? `${dragY}px` : '100%'
@@ -149,14 +167,15 @@ export function LogSessionSheet({
           transform: `translateY(${translateY})`,
           transition: dragging ? 'none' : 'transform 320ms cubic-bezier(0.22,0.61,0.18,1)',
         }}
-        className="relative w-full max-w-app rounded-t-[28px] bg-surface px-6 pb-8 pt-3 shadow-[0_-20px_50px_-20px_rgba(0,0,0,0.5)]"
+        className="relative flex max-h-[88dvh] w-full max-w-app flex-col rounded-t-[28px] bg-surface px-6 pb-6 pt-3 shadow-[0_-20px_50px_-20px_rgba(0,0,0,0.5)]"
       >
-        {/* Grab handle — drag this down to dismiss */}
+        {/* Grab handle — drag this down to dismiss. Kept outside the scroll
+            area so the title + handle never clip off the top of the screen. */}
         <div
           onPointerDown={onHandleDown}
           onPointerMove={onHandleMove}
           onPointerUp={onHandleUp}
-          className="-mx-6 -mt-3 cursor-grab touch-none px-6 pb-1 pt-3 active:cursor-grabbing"
+          className="-mx-6 -mt-3 shrink-0 cursor-grab touch-none px-6 pb-1 pt-3 active:cursor-grabbing"
         >
           <div className="mx-auto h-1.5 w-10 rounded-full bg-border" />
           <h2 className="mt-3 font-display text-2xl text-text">Tonight's pages</h2>
@@ -165,10 +184,12 @@ export function LogSessionSheet({
           </Eyebrow>
         </div>
 
-        {/* Page count + slider, lifted onto a warm accent-lit stage. Holding the
-            ± buttons auto-repeats (and accelerates) — see useHoldRepeat. */}
-        <div className="log-stage mt-6 rounded-3xl px-5 pb-6 pt-5">
-          <div className="flex items-center justify-center gap-6">
+        {/* Everything below the handle scrolls if it ever has to, so the sheet
+            can never grow past the viewport and lose its drag-back handle. */}
+        <div className="-mx-6 min-h-0 flex-1 overflow-y-auto px-6">
+          {/* Page count, lifted onto a warm accent-lit stage. Tap a stepper to
+              nudge; hold to auto-repeat and accelerate — see useHoldRepeat. */}
+          <div className="log-stage mt-4 flex items-center justify-between rounded-3xl px-5 py-4">
             <button
               type="button"
               onPointerDown={hold.start(-1)}
@@ -176,16 +197,21 @@ export function LogSessionSheet({
               onPointerLeave={hold.stop}
               onPointerCancel={hold.stop}
               onContextMenu={(e) => e.preventDefault()}
-              className="flex h-12 w-12 select-none touch-none items-center justify-center rounded-full border border-border bg-surface-alt text-2xl text-accent transition-colors hover:bg-bg active:scale-95"
+              className="flex h-12 w-12 shrink-0 select-none touch-none items-center justify-center rounded-full border border-border bg-surface-alt text-accent transition-transform hover:bg-bg active:scale-90"
               aria-label="Page back (hold to rewind)"
             >
-              −
+              <Stepper sign="minus" />
             </button>
-            <div className="flex min-w-[4ch] flex-col items-center">
-              <span className="font-display text-6xl font-semibold leading-none text-text">
+
+            <div className="flex flex-col items-center leading-none">
+              <span className="font-display text-5xl font-semibold leading-none text-text">
                 {page}
               </span>
+              <span className="mt-2 font-mono text-[10px] text-text-faint">
+                <span className="text-accent">{pct}%</span> · of {total}
+              </span>
             </div>
+
             <button
               type="button"
               onPointerDown={hold.start(1)}
@@ -193,84 +219,67 @@ export function LogSessionSheet({
               onPointerLeave={hold.stop}
               onPointerCancel={hold.stop}
               onContextMenu={(e) => e.preventDefault()}
-              className="flex h-12 w-12 select-none touch-none items-center justify-center rounded-full bg-accent text-2xl text-accent-contrast shadow-[0_10px_22px_-10px_rgba(190,90,55,0.8)] transition-transform hover:opacity-95 active:scale-95"
+              className="flex h-12 w-12 shrink-0 select-none touch-none items-center justify-center rounded-full bg-accent text-accent-contrast shadow-[0_10px_22px_-10px_rgba(190,90,55,0.8)] transition-transform hover:opacity-95 active:scale-90"
               aria-label="Page forward (hold to fast-forward)"
             >
-              +
+              <Stepper sign="plus" />
             </button>
           </div>
-          <p className="mt-2.5 text-center font-mono text-[11px] text-text-faint">
-            <span className="text-accent">{pct}%</span> · of {total}
-          </p>
 
-          {/* Draggable page bar */}
-          <input
-            type="range"
-            min={0}
-            max={total}
-            value={page}
-            onChange={(e) => setPage(clamp(Number(e.target.value)))}
-            aria-label="Set current page"
-            style={{
-              background: `linear-gradient(to right, var(--accent) ${pct}%, var(--bar-track) ${pct}%)`,
-            }}
-            className="page-range mt-4 w-full"
-          />
-        </div>
-
-        {/* End-of-session mood */}
-        <Eyebrow className="mb-2 mt-6 block">Mood tonight</Eyebrow>
-        <div className="grid grid-cols-3 gap-2">
-          {MOODS.map((m) => {
-            const on = mood === m.key
-            return (
-              <button
-                key={m.key}
-                type="button"
-                aria-pressed={on}
-                onClick={() => setMood((cur) => (cur === m.key ? null : m.key))}
-                className={`flex flex-col items-center gap-1.5 rounded-xl border py-3 transition-all ${
-                  on
-                    ? 'border-accent bg-accent/10 shadow-[0_10px_24px_-14px_rgba(190,90,55,0.85)]'
-                    : 'border-border bg-surface-alt hover:border-accent/40 hover:bg-accent/[0.04]'
-                }`}
-              >
-                <MoodIcon
-                  mood={m.key}
-                  className={`h-7 w-7 transition-transform ${
-                    on ? 'scale-110 text-accent' : 'text-text-muted'
-                  }`}
-                />
-                <span
-                  className={`font-mono text-[9px] uppercase tracking-[0.08em] ${
-                    on ? 'text-accent' : 'text-text-faint'
+          {/* End-of-session mood */}
+          <Eyebrow className="mb-2 mt-5 block">Mood tonight</Eyebrow>
+          <div className="grid grid-cols-3 gap-2">
+            {MOODS.map((m) => {
+              const on = mood === m.key
+              return (
+                <button
+                  key={m.key}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setMood((cur) => (cur === m.key ? null : m.key))}
+                  className={`flex flex-col items-center gap-1 rounded-xl border py-2.5 transition-all ${
+                    on
+                      ? 'border-accent bg-accent/10 shadow-[0_10px_24px_-14px_rgba(190,90,55,0.85)]'
+                      : 'border-border bg-surface-alt hover:border-accent/40 hover:bg-accent/[0.04]'
                   }`}
                 >
-                  {m.word}
-                </span>
-              </button>
-            )
-          })}
+                  <MoodIcon
+                    mood={m.key}
+                    className={`h-7 w-7 transition-transform ${
+                      on ? 'scale-110 text-accent' : 'text-text-muted'
+                    }`}
+                  />
+                  <span
+                    className={`font-mono text-[9px] uppercase tracking-[0.08em] ${
+                      on ? 'text-accent' : 'text-text-faint'
+                    }`}
+                  >
+                    {m.word}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* A line worth remembering */}
+          <Eyebrow className="mb-2 mt-5 block">A line worth remembering</Eyebrow>
+          <textarea
+            rows={2}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Optional — a sentence that stayed with you…"
+            className="w-full resize-none rounded-xl border border-border bg-surface-alt px-4 py-3 italic text-text placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent"
+          />
+
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => onSave(page, note, mood)}
+            className="mt-5 w-full rounded-xl bg-accent py-3.5 font-medium text-accent-contrast shadow-[0_14px_30px_-14px_rgba(190,90,55,0.9)] transition-opacity hover:opacity-90 disabled:opacity-60"
+          >
+            {saving ? 'Saving…' : solo ? 'Save progress' : `Save & nudge ${buddyName}`}
+          </button>
         </div>
-
-        {/* A line worth remembering */}
-        <Eyebrow className="mb-2 mt-6 block">A line worth remembering</Eyebrow>
-        <textarea
-          rows={2}
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="Optional — a sentence that stayed with you…"
-          className="w-full resize-none rounded-xl border border-border bg-surface-alt px-4 py-3 italic text-text placeholder:text-text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent"
-        />
-
-        <button
-          type="button"
-          disabled={saving}
-          onClick={() => onSave(page, note, mood)}
-          className="mt-7 w-full rounded-xl bg-accent py-3.5 font-medium text-accent-contrast shadow-[0_14px_30px_-14px_rgba(190,90,55,0.9)] transition-opacity hover:opacity-90 disabled:opacity-60"
-        >
-          {saving ? 'Saving…' : solo ? 'Save progress' : `Save & nudge ${buddyName}`}
-        </button>
       </div>
     </div>
   )
