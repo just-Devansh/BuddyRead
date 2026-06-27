@@ -58,13 +58,15 @@ function HeroRow({ label, frac, tone }: { label: string; frac: number | null; to
   )
 }
 
-const SPARKLE_GAP = 14 // px the finger must travel before the next star drops
+const TRAIL_STEP = 7 // px between successive glow blobs — small, so it reads continuous
 
 /**
- * A lingering "shooting-star" trail: as a finger (or cursor) glides across the
- * hero card, little gold stars drop in its wake and twinkle out. Stars are spun
- * up as bare DOM nodes inside a non-interactive overlay so the card never
- * re-renders and taps still pass through; the whole thing sits out under
+ * A continuous, glassy sparkle trail: as a finger (or cursor) glides across the
+ * hero card, a soft luminous ribbon follows it with fine glitter twinkling on
+ * top — closer to an iOS "glass" shimmer than discrete stars. The path between
+ * pointer samples is interpolated so a fast swipe still draws an unbroken line.
+ * Everything is spun up as bare DOM nodes in a `pointer-events-none` overlay so
+ * the card never re-renders and taps still pass through; sits out under
  * `prefers-reduced-motion`.
  */
 function useSparkleTrail() {
@@ -75,17 +77,29 @@ function useSparkleTrail() {
     reduce.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   }, [])
 
-  const drop = (x: number, y: number) => {
+  const make = (cls: string, x: number, y: number, size: number, rot?: number) => {
     const o = overlay.current
     if (!o) return
     const s = document.createElement('span')
-    s.className = 'sparkle'
+    s.className = cls
     s.style.left = `${x}px`
     s.style.top = `${y}px`
-    s.style.setProperty('--s', `${6 + Math.random() * 7}px`) // size
-    s.style.setProperty('--r', `${Math.random() * 90 - 45}deg`) // start rotation
+    s.style.setProperty('--s', `${size}px`)
+    if (rot != null) s.style.setProperty('--r', `${rot}deg`)
     s.addEventListener('animationend', () => s.remove())
     o.appendChild(s)
+  }
+
+  // One puff of the ribbon: a soft glow body + a little crisp glitter, jittered
+  // slightly off the path so the trail has thickness, not a hairline.
+  const burst = (x: number, y: number) => {
+    make('trail-glow', x, y, 18 + Math.random() * 10)
+    const stars = 1 + (Math.random() < 0.6 ? 1 : 0)
+    for (let i = 0; i < stars; i++) {
+      const jx = x + (Math.random() - 0.5) * 14
+      const jy = y + (Math.random() - 0.5) * 14
+      make('sparkle', jx, jy, 4 + Math.random() * 6, Math.random() * 90 - 45)
+    }
   }
 
   const trail = (e: ReactPointerEvent) => {
@@ -95,9 +109,23 @@ function useSparkleTrail() {
     const x = e.clientX - r.left
     const y = e.clientY - r.top
     const l = last.current
-    if (l && Math.hypot(x - l.x, y - l.y) < SPARKLE_GAP) return
+    if (!l) {
+      last.current = { x, y }
+      burst(x, y)
+      return
+    }
+    const dx = x - l.x
+    const dy = y - l.y
+    const dist = Math.hypot(dx, dy)
+    if (dist < 2) return
+    // Walk the segment, dropping a puff every TRAIL_STEP px so the ribbon stays
+    // unbroken however fast the finger moves.
+    const steps = Math.max(1, Math.round(dist / TRAIL_STEP))
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps
+      burst(l.x + dx * t, l.y + dy * t)
+    }
     last.current = { x, y }
-    drop(x, y)
   }
   const end = () => {
     last.current = null

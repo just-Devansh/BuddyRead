@@ -278,15 +278,34 @@ h1, h2, h3, h4 {
 }
 
 /* ---- Sparkle trail on the hero card -----------------------------------
-   Tiny gold four-point stars dropped in the wake of a finger gliding across
-   the active-read card (see useSparkleTrail). Each twinkles in, drifts up a
-   touch, and fades — a lingering shooting-star tail, never gaudy. */
+   A continuous, glassy shimmer drawn in the wake of a finger gliding across
+   the active-read card (see useSparkleTrail). Two layers, blended additively
+   so overlaps glow like light through glass: a soft blurred `trail-glow`
+   ribbon for the luminous body, and crisp gold `sparkle` stars for glitter.
+   Both stay luminous overlapping, never gaudy, and fade fast so it lingers
+   only a beat. */
+.trail-glow,
 .sparkle {
   position: absolute;
   width: var(--s, 8px);
   height: var(--s, 8px);
   pointer-events: none;
-  background: radial-gradient(circle, #fff7e6 0%, var(--gold) 55%, transparent 72%);
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+}
+.trail-glow {
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 251, 240, 0.95) 0%,
+    color-mix(in srgb, var(--gold) 85%, #fff) 38%,
+    transparent 70%
+  );
+  filter: blur(3px);
+  animation: trail-glow-fade 600ms ease-out forwards;
+}
+.sparkle {
+  background: radial-gradient(circle, #fffaf0 0%, var(--gold) 55%, transparent 72%);
   clip-path: polygon(
     50% 0%,
     61% 39%,
@@ -297,8 +316,21 @@ h1, h2, h3, h4 {
     0% 50%,
     39% 39%
   );
-  animation: sparkle-twinkle 720ms ease-out forwards;
-  will-change: transform, opacity;
+  animation: sparkle-twinkle 700ms ease-out forwards;
+}
+@keyframes trail-glow-fade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.55);
+  }
+  20% {
+    opacity: 0.75;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
 }
 @keyframes sparkle-twinkle {
   0% {
@@ -311,11 +343,12 @@ h1, h2, h3, h4 {
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, calc(-50% - 16px)) scale(0.3)
+    transform: translate(-50%, calc(-50% - 14px)) scale(0.3)
       rotate(calc(var(--r, 0deg) + 45deg));
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .trail-glow,
   .sparkle {
     display: none;
   }
