@@ -194,21 +194,20 @@ export function Home() {
           </p>
           <h1 className="mt-1 font-display text-4xl text-text">Your nook</h1>
         </div>
-        {/* The lamp stands in the corner; the add-a-book button tucks beneath it,
-            right-aligned, so the two read as one tidy nightstand cluster. */}
-        <div className="flex shrink-0 flex-col items-center gap-2.5">
-          <Lamp lit={lit} onToggle={() => setLit((v) => !v)} className="-mt-3 w-12 ipad:w-14" />
+        {/* The add-a-book button sits to the left of the corner lamp. */}
+        <div className="flex shrink-0 items-start gap-2">
           <Link
             to="/search"
             state={{ from: '/home' }}
             aria-label="Add a book"
             title="Add a book"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-accent shadow-[0_8px_20px_-12px_rgba(111,61,48,0.6)] transition-all hover:-translate-y-0.5 hover:border-accent/50 hover:bg-surface-alt active:translate-y-0"
+            className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-accent shadow-[0_8px_20px_-12px_rgba(111,61,48,0.6)] transition-all hover:-translate-y-0.5 hover:border-accent/50 hover:bg-surface-alt active:translate-y-0"
           >
-            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M12 5v14M5 12h14" />
             </svg>
           </Link>
+          <Lamp lit={lit} onToggle={() => setLit((v) => !v)} className="-mt-4 w-12 ipad:w-14" />
         </div>
       </section>
 

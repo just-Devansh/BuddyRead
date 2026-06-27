@@ -333,7 +333,7 @@ h1, h2, h3, h4 {
 }
 .lamp--lit {
   color: #c89a58;
-  filter: drop-shadow(0 4px 15px rgba(233, 182, 96, 0.55));
+  filter: drop-shadow(0 4px 15px rgba(240, 162, 92, 0.55));
 }
 .lamp--lit .lamp-shade {
   fill: url(#lampShade);
@@ -367,9 +367,9 @@ h1, h2, h3, h4 {
   transition: opacity 900ms ease;
   background: radial-gradient(
     circle at center,
-    rgba(245, 206, 132, 0.44) 0%,
-    rgba(227, 163, 88, 0.24) 28%,
-    rgba(201, 131, 71, 0.09) 46%,
+    rgba(252, 188, 116, 0.46) 0%,
+    rgba(236, 146, 78, 0.26) 28%,
+    rgba(206, 112, 58, 0.10) 46%,
     transparent 62%
   );
   mix-blend-mode: screen;
