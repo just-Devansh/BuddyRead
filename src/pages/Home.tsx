@@ -181,7 +181,7 @@ export function Home() {
 
   return (
     <AppShell>
-     <div className="nook relative isolate">
+     <div className="nook relative isolate overflow-x-clip">
       {/* Ambient lamplight — a warm pool that settles over the cards when the
           nook lamp is lit. Isolated to .nook so the screen-blend never bleeds. */}
       <div aria-hidden="true" className={`lamp-wash ${lit ? 'is-lit' : ''}`} />
