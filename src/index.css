@@ -250,10 +250,21 @@ h1, h2, h3, h4 {
     inset 0 -1px 0 rgba(255, 224, 180, 0.05);
 }
 .shelf-book {
-  transition: transform 240ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition: transform 200ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
-.shelf-book:hover {
-  transform: translateY(-6px);
+/* Pointer (desktop/iPad) only — covers lift on hover. Guarded so a tap on a
+   touch screen doesn't leave a cover stuck in the lifted state. */
+@media (hover: hover) {
+  .shelf-book:hover {
+    transform: translateY(-6px);
+  }
+}
+/* The tap response: a quick press-in on touch (and on click), so a cover feels
+   pressed before its page opens. Defined last so it wins over :hover on a click.
+   Snappier than the lift — a press should feel immediate. */
+.shelf-book:active {
+  transform: scale(0.95);
+  transition-duration: 90ms;
 }
 
 /* The curated shelf unrolls: each book settles onto the shelf in turn, like a
