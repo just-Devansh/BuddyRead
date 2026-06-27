@@ -87,6 +87,37 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* ---- Installed-PWA feel ---------------------------------------------------
+   When launched standalone (`.standalone` is set on <html> in lib/standalone.ts)
+   we strip the web-page tells that break the app illusion: the long-press
+   callout on images/links (iOS via -webkit-touch-callout; Android is handled by
+   the contextmenu listener), image drag, the grey tap-flash, and stray text
+   selection on chrome. Inputs/textareas stay selectable. In a normal browser
+   tab none of this applies, so the website still behaves like a website. */
+.standalone {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.standalone * {
+  -webkit-tap-highlight-color: transparent;
+}
+.standalone img,
+.standalone a {
+  -webkit-touch-callout: none;
+}
+.standalone img {
+  -webkit-user-drag: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.standalone input,
+.standalone textarea,
+.standalone [contenteditable] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 /* Quiet, type-led defaults. Cormorant reads light, so headings sit at 600. */
 h1, h2, h3, h4 {
   font-family: var(--font-display);
