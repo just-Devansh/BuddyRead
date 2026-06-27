@@ -351,22 +351,26 @@ h1, h2, h3, h4 {
   80% { opacity: 0.88; }
 }
 .lamp-wash {
+  /* Centred on the lamp shade (top: shade height, right: half the lamp width)
+     so the light radiates evenly in every direction; the circle is large enough
+     to spill over the cards, and `<main>`'s overflow-x:clip trims it cleanly at
+     the screen edge — a natural cut-off, never a horizontal scrollbar. */
   position: absolute;
-  top: -2rem;
-  right: -2.5rem;
-  width: 24rem;
-  max-width: 132%;
-  height: 27rem;
+  top: 0.4rem;
+  right: 1.5rem;
+  width: 30rem;
+  height: 30rem;
+  transform: translate(50%, -50%);
   pointer-events: none;
   z-index: 5;
   opacity: 0;
   transition: opacity 900ms ease;
   background: radial-gradient(
-    58% 50% at 84% 13%,
-    rgba(245, 206, 132, 0.46) 0%,
-    rgba(227, 163, 88, 0.24) 36%,
-    rgba(201, 131, 71, 0.09) 56%,
-    transparent 72%
+    circle at center,
+    rgba(245, 206, 132, 0.44) 0%,
+    rgba(227, 163, 88, 0.24) 28%,
+    rgba(201, 131, 71, 0.09) 46%,
+    transparent 62%
   );
   mix-blend-mode: screen;
 }
