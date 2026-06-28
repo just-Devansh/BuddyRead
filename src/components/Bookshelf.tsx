@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { BookCover } from './BookCover'
 import { Eyebrow } from './Eyebrow'
+import { RatingBadge } from './RatingBadge'
 import { booksOnShelf, SHELVES, spineToneFor, type LibraryItem } from '../lib/library'
 
 /**
@@ -27,7 +28,7 @@ function ShelfBook({ item }: { item: LibraryItem }) {
         state={{ from: pathname }}
         aria-label={item.book.title}
         title={item.book.title}
-        className={`block ${COVER} rounded-[8px] outline-none focus-visible:ring-2 focus-visible:ring-accent`}
+        className={`relative block ${COVER} rounded-[8px] outline-none focus-visible:ring-2 focus-visible:ring-accent`}
       >
         <BookCover
           book={{
@@ -41,6 +42,10 @@ function ShelfBook({ item }: { item: LibraryItem }) {
           rounded="rounded-[7px]"
           className="w-full shadow-[0_10px_18px_-10px_rgba(20,12,4,0.7)]"
         />
+        {/* A rating, when there is one — perched at the foot of the cover, Fable-style. */}
+        {item.rating != null && (
+          <RatingBadge value={item.rating} className="absolute bottom-1 left-1" />
+        )}
       </Link>
     </li>
   )
