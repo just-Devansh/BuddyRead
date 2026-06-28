@@ -103,7 +103,7 @@ export function BottomNav() {
                       it stays gentle on both parchment and espresso. */}
                   <span
                     className={[
-                      'flex h-7 items-center justify-center rounded-full px-5 transition-all duration-300',
+                      'flex h-8 items-center justify-center rounded-xl px-4 transition-all duration-300',
                       isActive
                         ? 'bg-accent/12 ring-1 ring-inset ring-accent/15'
                         : 'bg-transparent group-active:bg-accent/5',
