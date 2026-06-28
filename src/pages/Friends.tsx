@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { Avatar } from '../components/Avatar'
 import { Eyebrow } from '../components/Eyebrow'
+import { useBackClose } from '../components/useBackClose'
 import { useConfirm } from '../components/useConfirm'
 import { useAuth } from '../auth/useAuth'
 import { useFriends } from '../friends/useFriends'
@@ -82,6 +83,8 @@ export function Friends() {
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set())
   // which friend's "⋮" options menu is open, if any
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  // Back button closes an open "⋮" menu instead of leaving the Friends screen.
+  useBackClose(openMenuId !== null, () => setOpenMenuId(null))
   const { confirm, dialog } = useConfirm()
 
   const setBusy = (id: string, on: boolean) =>

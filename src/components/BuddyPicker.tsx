@@ -1,5 +1,6 @@
 import { Avatar } from './Avatar'
 import { Eyebrow } from './Eyebrow'
+import { useBackClose } from './useBackClose'
 
 export type PickableBuddy = {
   uid: string
@@ -28,6 +29,9 @@ export function BuddyPicker({
   onPick: (buddy: PickableBuddy) => void
   onClose: () => void
 }) {
+  // Back button closes the picker instead of leaving the book screen.
+  useBackClose(open, onClose)
+
   if (!open) return null
 
   return (

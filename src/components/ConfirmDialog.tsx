@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useBackClose } from './useBackClose'
 
 type ConfirmDialogProps = {
   open: boolean
@@ -37,6 +38,10 @@ export function ConfirmDialog({
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [open, onCancel])
+
+  // The hardware/browser Back button cancels the dialog (same as the backdrop or
+  // Escape) rather than navigating away from the page beneath it.
+  useBackClose(open, onCancel)
 
   if (!open) return null
 

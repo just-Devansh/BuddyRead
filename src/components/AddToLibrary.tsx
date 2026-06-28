@@ -7,6 +7,7 @@ import {
   type Shelf,
 } from '../lib/library'
 import { useLibrary } from '../library/useLibrary'
+import { useBackClose } from './useBackClose'
 
 /**
  * The "Add to Library" control: a button that opens a small, centred menu to
@@ -22,6 +23,9 @@ export function AddToLibrary({ uid, book }: { uid: string; book: LibraryBook }) 
 
   const current = items.find((i) => i.id === book.id)?.shelf ?? null
   const currentLabel = SHELVES.find((s) => s.key === current)?.label ?? null
+
+  // Back button closes the shelf-picker menu instead of leaving the book screen.
+  useBackClose(open, () => setOpen(false))
 
   const choose = async (shelf: Shelf) => {
     setBusy(shelf)
