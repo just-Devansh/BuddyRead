@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BookCover } from './BookCover'
 import { Eyebrow } from './Eyebrow'
 import { StarRating } from './StarRating'
@@ -53,6 +53,18 @@ export function RateBookDialog({
   const [rating, setRating] = useState(initialRating)
   const [review, setReview] = useState(initialReview)
 
+  // Lock the page behind us. Two reasons: it stops the body scrolling under the
+  // dialog, and — because PullToRefresh stands down whenever body overflow is
+  // hidden — it stops a horizontal star-drag from being mistaken for a pull and
+  // flashing the refresh. Mounted-while-open, so this runs exactly on open/close.
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [])
+
   // Back/backdrop bails out without recording a rating; the parent stays put.
   useBackClose(true, () => onResolve({ action: 'dismiss', rating, review }))
 
@@ -93,10 +105,11 @@ export function RateBookDialog({
               </p>
             )}
           </div>
-          {/* Two-step progress, the faintest hint */}
-          <div className="mt-1 flex shrink-0 items-center gap-1" aria-hidden="true">
-            <span className={`h-1.5 w-1.5 rounded-full ${step === 1 ? 'bg-accent' : 'bg-border'}`} />
-            <span className={`h-1.5 w-1.5 rounded-full ${step === 2 ? 'bg-accent' : 'bg-border'}`} />
+          {/* A two-step progress meter — segments that *fill*, so it reads as
+              "step 1 of 2", not swipeable pagination dots. */}
+          <div className="mt-1.5 flex shrink-0 items-center gap-1" aria-hidden="true">
+            <span className="h-1 w-4 rounded-full bg-accent transition-colors" />
+            <span className={`h-1 w-4 rounded-full transition-colors ${step >= 2 ? 'bg-accent' : 'bg-border'}`} />
           </div>
         </div>
 
