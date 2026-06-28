@@ -71,11 +71,9 @@ interface Particle {
   spark: boolean // a bright glitter point vs. a soft glow blob
 }
 
-function hexToRgb(hex: string): [number, number, number] {
-  const h = hex.replace('#', '').trim()
-  if (h.length < 6) return [199, 162, 78] // sensible gold fallback
-  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]
-}
+// The nook lamp's own glow (the bulb bloom in Lamp.tsx): a warm, soft amber —
+// deliberately *not* the saturated/fiery gold of the --gold brass token.
+const LAMP: [number, number, number] = [255, 224, 156]
 
 /**
  * A continuous, glassy sparkle trail rendered on a single <canvas>: as a finger
@@ -94,10 +92,9 @@ function useSparkleCanvas() {
   const last = useRef<{ x: number; y: number } | null>(null)
   const dpr = useRef(1)
   const size = useRef({ w: 0, h: 0 })
-  const gold = useRef<[number, number, number]>([199, 162, 78])
   const reduce = useRef(false)
 
-  // Size the canvas backing store to the card (× dpr) and read the gold token.
+  // Size the canvas backing store to the card (× dpr).
   useEffect(() => {
     const cv = canvasRef.current
     if (!cv) return
@@ -108,10 +105,6 @@ function useSparkleCanvas() {
       size.current = { w: r.width, h: r.height }
       cv.width = Math.round(r.width * dpr.current)
       cv.height = Math.round(r.height * dpr.current)
-      // Take the gold token but pull it most of the way to white — a pale,
-      // champagne shimmer reads far better than the fiery, saturated gold.
-      const raw = hexToRgb(getComputedStyle(cv).getPropertyValue('--gold') || '#c7a24e')
-      gold.current = raw.map((c) => Math.round(c * 0.32 + 255 * 0.68)) as [number, number, number]
     }
     measure()
     const ro = new ResizeObserver(measure)
@@ -138,7 +131,7 @@ function useSparkleCanvas() {
       ctx.setTransform(dpr.current, 0, 0, dpr.current, 0, 0)
       ctx.clearRect(0, 0, w, h)
       ctx.globalCompositeOperation = 'lighter'
-      const [gr, gg, gb] = gold.current
+      const [gr, gg, gb] = LAMP
       const ps = particles.current
       for (let i = ps.length - 1; i >= 0; i--) {
         const p = ps[i]
@@ -152,10 +145,10 @@ function useSparkleCanvas() {
         const rad = p.size * (p.spark ? 0.4 + 0.6 * a : 0.7 + 0.3 * a)
         const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rad)
         if (p.spark) {
-          g.addColorStop(0, `rgba(255,253,250,${0.6 * a})`)
+          g.addColorStop(0, `rgba(255,245,224,${0.6 * a})`)
           g.addColorStop(0.5, `rgba(${gr},${gg},${gb},${0.32 * a})`)
         } else {
-          g.addColorStop(0, `rgba(255,252,246,${0.34 * a})`)
+          g.addColorStop(0, `rgba(255,242,216,${0.34 * a})`)
           g.addColorStop(0.45, `rgba(${gr},${gg},${gb},${0.2 * a})`)
         }
         g.addColorStop(1, `rgba(${gr},${gg},${gb},0)`)
