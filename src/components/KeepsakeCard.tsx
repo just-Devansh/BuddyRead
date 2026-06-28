@@ -29,6 +29,16 @@ interface Palette {
   borderSoft: string
   accent: string
   gold: string
+  /** Warm halo bloomed behind the cover (accent-tinted). */
+  glow: string
+  /** Softer gold ambient bloom near the top. */
+  glow2: string
+  /** Top glass light-catch, laid behind the content so text never washes. */
+  sheen: string
+  /** A faint floor-shadow to ground the card. */
+  vignette: string
+  /** The cover's drop shadow — deep and soft, so it floats. */
+  coverShadow: string
 }
 
 const PALETTE: Record<Mode, Palette> = {
@@ -43,6 +53,11 @@ const PALETTE: Record<Mode, Palette> = {
     borderSoft: '#ddd0b6',
     accent: '#8a4536',
     gold: '#a8822f',
+    glow: 'rgba(138,69,54,0.20)',
+    glow2: 'rgba(168,130,47,0.16)',
+    sheen: 'rgba(255,252,245,0.55)',
+    vignette: 'rgba(70,44,22,0.08)',
+    coverShadow: '0 26px 44px -18px rgba(70,38,18,0.55)',
   },
   dark: {
     bg: '#1c1813',
@@ -55,6 +70,11 @@ const PALETTE: Record<Mode, Palette> = {
     borderSoft: '#332b21',
     accent: '#c07458',
     gold: '#c7a24e',
+    glow: 'rgba(192,116,88,0.26)',
+    glow2: 'rgba(199,162,78,0.18)',
+    sheen: 'rgba(255,244,216,0.10)',
+    vignette: 'rgba(0,0,0,0.28)',
+    coverShadow: '0 26px 44px -18px rgba(0,0,0,0.75)',
   },
 }
 
@@ -158,11 +178,22 @@ export const KeepsakeCard = forwardRef<
       ref={ref}
       className="relative w-[400px] overflow-hidden rounded-[26px] font-body"
       style={{
-        background: `radial-gradient(125% 90% at 50% -10%, ${p.panel} 0%, ${p.bg} 78%)`,
+        background: `radial-gradient(130% 95% at 50% -12%, ${p.panelAlt} 0%, ${p.panel} 40%, ${p.bg} 84%)`,
         color: p.text,
         boxShadow: `inset 0 0 0 1px ${p.border}, inset 0 0 0 7px ${p.bg}, inset 0 0 0 8px ${p.borderSoft}`,
       }}
     >
+      {/* Ambient luminance — a top glass sheen, a warm halo around the cover, and
+          a faint floor-shadow — all laid *behind* the content so nothing washes
+          the text. Pure gradients, so it rasterizes cleanly into the PNG. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `linear-gradient(to bottom, ${p.sheen} 0%, transparent 22%), radial-gradient(56% 34% at 50% 30%, ${p.glow}, transparent 72%), radial-gradient(86% 52% at 50% 4%, ${p.glow2}, transparent 78%), radial-gradient(120% 70% at 50% 116%, ${p.vignette}, transparent 52%)`,
+        }}
+      />
+
       <div className="relative px-9 pb-8 pt-9">
         {/* Header */}
         <p
@@ -179,39 +210,63 @@ export const KeepsakeCard = forwardRef<
 
         {/* Book */}
         <div className="mt-7 flex justify-center">
-          <div
-            className="relative h-[186px] w-[124px] rounded-[5px]"
-            style={{ boxShadow: `0 20px 30px -16px rgba(0,0,0,0.55)` }}
-          >
-            {/* Typographic fallback, behind the cover */}
+          <div className="relative">
+            {/* Warm halo bloomed behind the cover, so it reads as lit, not pasted on. */}
             <div
-              className="absolute inset-0 flex items-center justify-center rounded-[5px] p-3 text-center"
-              style={{ background: p.panelAlt, border: `1px solid ${p.border}` }}
+              aria-hidden="true"
+              className="absolute -inset-7 rounded-full"
+              style={{ background: `radial-gradient(closest-side, ${p.glow}, transparent 78%)` }}
+            />
+            <div
+              className="relative h-[186px] w-[124px] rounded-[5px]"
+              style={{ boxShadow: p.coverShadow }}
             >
-              <span className="font-display text-[15px] font-semibold leading-tight" style={{ color: p.muted }}>
-                {book.title}
-              </span>
-            </div>
-            {book.coverUrl && (
-              <img
-                src={book.coverUrl}
-                alt={book.title}
-                referrerPolicy="no-referrer"
-                className="absolute inset-0 h-full w-full rounded-[5px] object-cover"
-                onError={(e) => {
-                  ;(e.currentTarget as HTMLImageElement).style.display = 'none'
+              {/* Typographic fallback, behind the cover */}
+              <div
+                className="absolute inset-0 flex items-center justify-center rounded-[5px] p-3 text-center"
+                style={{ background: p.panelAlt, border: `1px solid ${p.border}` }}
+              >
+                <span className="font-display text-[15px] font-semibold leading-tight" style={{ color: p.muted }}>
+                  {book.title}
+                </span>
+              </div>
+              {book.coverUrl && (
+                <img
+                  src={book.coverUrl}
+                  alt={book.title}
+                  referrerPolicy="no-referrer"
+                  className="absolute inset-0 h-full w-full rounded-[5px] object-cover"
+                  onError={(e) => {
+                    ;(e.currentTarget as HTMLImageElement).style.display = 'none'
+                  }}
+                />
+              )}
+              {/* Glassy gloss — a diagonal light sweeping the top-left corner, the
+                  single strongest "premium" cue and fully export-safe. */}
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 rounded-[5px]"
+                style={{
+                  background:
+                    'linear-gradient(127deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.07) 20%, transparent 44%)',
                 }}
               />
-            )}
-            {/* Thin page-block edge for thickness */}
-            <span
-              className="absolute -right-[3px] top-[3%] bottom-[3%] w-[3px] rounded-r-[2px]"
-              style={{
-                background:
-                  'repeating-linear-gradient(180deg,#efe4cf 0 1.2px,#cdbd9e 1.2px 2.4px)',
-              }}
-              aria-hidden="true"
-            />
+              {/* A hairline edge to crisp the cover against its glow. */}
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 rounded-[5px]"
+                style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.10)' }}
+              />
+              {/* Thin page-block edge for thickness */}
+              <span
+                className="absolute -right-[3px] top-[3%] bottom-[3%] w-[3px] rounded-r-[2px]"
+                style={{
+                  background:
+                    'repeating-linear-gradient(180deg,#efe4cf 0 1.2px,#cdbd9e 1.2px 2.4px)',
+                }}
+                aria-hidden="true"
+              />
+            </div>
           </div>
         </div>
 
