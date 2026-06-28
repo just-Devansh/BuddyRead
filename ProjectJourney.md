@@ -495,3 +495,42 @@ The interesting constraint was the review. Ratings live in `reads.finish[uid]`, 
 - **Why mirror the rating onto the library instead of making reads friend-readable?** Reads carry who-you-read-with, which is private by design. The library is already friend-readable and already written on finish, so mirroring the verdict there shares the one thing we want shared (the rating/review) without touching the one thing we don't (the relationship). It's additive, reversible, and needs no rules change.
 - **Why one event per book instead of a full history (shelved *then* reviewed)?** The library doc holds a book's latest state, not a log. One event per buddy+book — a review if there's a verdict, else a shelving — reads as "here's where this book stands for them," which is what a glanceable feed wants; a true event log would be a different (heavier) data model.
 - **Why does tapping a feed row go to the book, not the buddy's profile?** The feed is *about* books your circle is moving through; the book is the useful destination ("oh, what's that — let me look"). The buddy's profile is still one tap from plenty of other places. And crucially, the book page is where a *deliberate* "read together" decision belongs — not an inline button you brush by accident.
+
+## Chapter — Polishing the chrome: navigation, motion, and a second palette
+
+A "feel" pass once the rest of the app had earned one. The user's note was that the bottom nav was still the first-draft sketch — fine, but no longer in keeping with how polished everything around it had become — and that navigating between tabs "loads up instantly, almost jarringly," the opposite of the smooth/calm/pleasant the app is supposed to be. Four threads: the nav, the route motion, the circle rows, and a whole second colour palette.
+
+### A navigation bar that acts like one
+
+Three lifts. The placeholder glyphs became things you recognise: Home is an actual house (pitched roof, doorway); Library is a cosy stack of three books on a shelf line. The active tab kept its accent colour-shift but gained a soft accent-tinted highlight cradling the icon, so the current screen is obvious at a glance rather than only legible if you look. And each tap now fires a whisper of haptic feedback (`navigator.vibrate(8)`, best-effort — a no-op on iOS/desktop, a faint buzz on Android), so switching screens has a little physical confirmation to go with the new view arriving.
+
+The highlight took two passes. First attempt was a fully-rounded stadium pill (`rounded-full`) — and the user immediately flagged it as "wildly different" from the rounded-rectangle card language everywhere else. Correct: a stadium pill is its own shape vocabulary. It became a `rounded-xl` chip, the same radius family as the cards. The lesson is a small one but it recurs: a new affordance should borrow the existing shape language, not invent its own.
+
+### One route transition, tuned for calm
+
+The app already had a single global enter animation (`view-enter` on `<main>`, keyed by route). The complaint wasn't that it was missing — it was that it read as instant. So it was retuned rather than replaced: a soft fade up with a hair of scale that *settles* into place, at 440ms on a gentle ease-out — "smooth, a touch slow on the tail." Present enough not to feel abrupt, quick enough never to drag. The one invariant preserved through the change: `animation-fill-mode: backwards`, never `forwards`/`both`, so `<main>` retains no transform once the animation ends — a lingering transform would turn it into the containing block for `position: fixed` and anchor every modal to the scrolled page instead of the viewport.
+
+### Authors on the circle rows
+
+The "From your circle" rows had an oddly empty lower half — an action and a title, then nothing. They now carry the book's author (up to two), sharing one baseline row with the buddy's rating when there is one. No data-model work was actually needed: `CircleEvent` already carried `rating`/`review` (mirrored off the friend-readable library doc — see the previous chapter). The rating simply hadn't had a settled place to sit; now it does, beside the author.
+
+### A second palette, orthogonal to light/dark
+
+The biggest piece: a **Lavender** palette alongside the original **Warm** one — warm plum accent and a soft lilac lamplight in place of terracotta and amber. The design question was whether a palette is a *replacement* for light/dark or a *second axis*; it's a second axis. A reader picks Warm-or-Lavender **and** Light-or-Dark independently, so there are four faces, each defined as a complete token set: `:root` (warm light), `.dark` (warm dark), `.palette-lavender` (lavender light), `.palette-lavender.dark` (lavender dark). The lavender-dark block out-specifies `.dark` (two classes vs one), so it wins at night regardless of source order — no `!important`, no ordering fragility.
+
+Gold was deliberately *kept* in the lavender palette: plum + gold is a classic, regal, dark-academia pairing, and gold is load-bearing (it's a buddy's pace and ratings — it must stay distinct from the plum that's now "your" colour).
+
+The nook lamp was the interesting refactor. Its glow was hard-coded amber in five places — the `.lamp-wash` pool, the lit line-art colour, its drop-shadow, and the two SVG radial gradients (shade + bulb). All five became tokens (`--lamp-rgb`, `--lamp-rgb-2`, `--lamp-lit`, `--lamp-lit-shadow`, `--lamp-shade-*`, `--lamp-bulb-*`), so the lamp recolours with the palette from one place. The SVG gradient stops needed `style={{ stopColor: 'var(--…)' }}` rather than the `stop-color` *attribute*, because `var()` doesn't resolve in SVG presentation attributes — only in the CSS property. The hero's sparkle-trail canvas, which had its own amber constant, now reads `--lamp-rgb` off the computed style at the start of each gesture, so it follows the palette too without a second source of truth.
+
+Persistence mirrors the existing theme machinery exactly: `localStorage` for the device, `users/{uid}.palette` for the account, bridged by `ThemeSync` (account wins once on sign-in, local changes write back up). No `firestore.rules` change — `palette` is just another field on the owner's own user doc.
+
+### Settings gets its own room
+
+All of this needed a home. The **You** tab's top row swapped its "Sign out" text for a quiet gear that opens a new `/settings` page; sign-out moved into it (behind the same confirm), and the palette picker lives there too — each option previewed by a swatch trio so the choice is visible before it's made. The light/dark toggle stayed on the profile for now (the user's call: "might move it later, but for now, no"). Settings is built to be the app's catch-all for preferences as they accrue.
+
+### Q&A
+
+- **Why is palette a second axis instead of just more theme options (warm-light, warm-dark, lavender-light, lavender-dark in one list)?** Because the two choices are genuinely independent and people change them for different reasons — light/dark is about ambient lighting and time of day; palette is about taste. Folding them into one four-item list couples decisions that aren't coupled, and a reader who flips to dark at night shouldn't have to re-pick their palette. Two axes, four faces, each a complete token set.
+- **Why mirror the lamp colour into a CSS token instead of computing it in JS?** The lamp is almost entirely CSS/SVG already; keeping the colour in a token means one swap (`.palette-lavender` on `<html>`) recolours every part of it — wash, line-art, shadow, gradients — with zero JS. The one place that *is* JS (the sparkle canvas) reads the same token, so there's still a single source of truth.
+- **Why `style={{ stopColor }}` on the SVG stops rather than the attribute?** `var()` resolves in CSS properties, not in SVG presentation attributes. The `stop-color` *property* (set via `style`) honours the variable; the `stop-color` *attribute* would treat `var(--x)` as a literal and fall back to black.
+- **Why retune the route animation instead of adding an exit transition / crossfade?** Each page renders its own `AppShell`, so the outgoing view unmounts the moment the route changes — a true crossfade would mean holding both in the DOM, a real architectural change. An enter-only fade-up, tuned unhurried, delivers the "calm arrival" the user wanted at a fraction of the cost and risk.
