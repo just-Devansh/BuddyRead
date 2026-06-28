@@ -23,50 +23,51 @@ function backLabel(from?: string): string {
   return 'Back'
 }
 
-/** One of the two equal-sized ways to start a read — an icon-led tile with a
- *  premium press. Solo and Together are peers (same footprint) but colour-
- *  distinct: Together is filled terracotta, Solo is terracotta-on-surface; each
- *  fills on press. */
+/** One of the two equal ways to start a read — a slim, single-line button. Solo
+ *  and Together are peers: same footprint *and* same colour now (the theme's
+ *  high-contrast — espresso on parchment by day, parchment on espresso by night),
+ *  set apart only by icon and label. A glassy top sheen and a soft lift give them
+ *  weight without the old chunky height. */
 function ReadAction({
   onClick,
   busy,
   label,
   icon,
-  variant,
 }: {
   onClick: () => void
   busy: boolean
   label: string
   icon: React.ReactNode
-  variant: 'solid' | 'outline'
 }) {
-  const solid = variant === 'solid'
   return (
     <button
       type="button"
       disabled={busy}
       onClick={onClick}
-      className={`group flex flex-col items-center justify-center gap-1.5 rounded-2xl px-3 py-3.5 outline-none transition-[transform,box-shadow,background-color,color,border-color] duration-300 ease-[cubic-bezier(0.22,0.61,0.18,1)] hover:-translate-y-0.5 active:scale-[0.94] active:duration-150 disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg ${
-        solid
-          ? 'bg-accent text-accent-contrast shadow-[0_10px_24px_-12px_rgba(138,69,54,0.7)] hover:shadow-[0_16px_30px_-12px_rgba(138,69,54,0.92)] hover:brightness-105 active:bg-gold active:shadow-[0_6px_22px_-4px_rgba(168,130,47,0.9)]'
-          : 'border border-border bg-surface text-accent hover:border-accent/50 active:border-transparent active:bg-accent active:text-accent-contrast active:shadow-[0_6px_22px_-4px_rgba(138,69,54,0.7)]'
-      }`}
+      className="group relative flex items-center justify-center gap-2.5 overflow-hidden rounded-xl bg-text px-4 py-3 text-bg shadow-[0_10px_22px_-14px_rgba(20,12,4,0.85)] outline-none transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,0.61,0.18,1)] hover:-translate-y-0.5 hover:shadow-[0_16px_28px_-14px_rgba(20,12,4,0.95)] active:translate-y-0 active:scale-[0.97] active:duration-150 disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
     >
+      {/* Glassy light-catch along the top edge — convex, premium. */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent"
+      />
       <svg
         viewBox="0 0 24 24"
-        width="23"
-        height="23"
+        width="18"
+        height="18"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.7"
         strokeLinecap="round"
         strokeLinejoin="round"
         aria-hidden="true"
-        className="transition-transform duration-300 ease-[cubic-bezier(0.22,0.61,0.18,1)] group-active:scale-90"
+        className="relative transition-transform duration-300 ease-[cubic-bezier(0.22,0.61,0.18,1)] group-active:scale-90"
       >
         {icon}
       </svg>
-      <span className="font-medium">{busy ? 'One moment…' : label}</span>
+      <span className="relative font-medium tracking-[0.01em]">
+        {busy ? 'One moment…' : label}
+      </span>
     </button>
   )
 }
@@ -286,7 +287,6 @@ export function BookDetail() {
           ) : (
             <div className="mt-6 grid grid-cols-2 gap-3">
               <ReadAction
-                variant="outline"
                 onClick={() => void startSolo()}
                 busy={soloBusy}
                 label={existingSolo ? 'Continue Solo' : 'Read Solo'}
@@ -298,7 +298,6 @@ export function BookDetail() {
                 }
               />
               <ReadAction
-                variant="solid"
                 onClick={together}
                 busy={busyUid !== null}
                 label="Read Together"
