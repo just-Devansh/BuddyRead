@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { AddToLibrary } from '../components/AddToLibrary'
+import { BookRating } from '../components/BookRating'
 import { BookCover } from '../components/BookCover'
 import { BuddyPicker } from '../components/BuddyPicker'
 import { Eyebrow } from '../components/Eyebrow'
@@ -232,11 +233,22 @@ export function BookDetail() {
       {book && (
         <article className="mt-5">
           <div className="flex items-start gap-5">
-            <BookCover
-              book={book}
-              author={book.authors[0]}
-              className="w-28 shrink-0 self-start ipad:w-36"
-            />
+            <div className="w-28 shrink-0 self-start ipad:w-36">
+              <BookCover book={book} author={book.authors[0]} className="w-full" />
+              {/* The slim Rate control fills the natural space under the cover. */}
+              {user && (
+                <BookRating
+                  uid={user.uid}
+                  book={{
+                    id: book.id,
+                    title: book.title,
+                    authors: book.authors,
+                    coverUrl: book.coverUrl,
+                    pageCount: book.pageCount,
+                  }}
+                />
+              )}
+            </div>
             <div className="min-w-0 flex-1">
               <h1
                 className={`text-pretty font-display leading-tight text-text ${

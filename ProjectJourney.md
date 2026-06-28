@@ -534,3 +534,36 @@ All of this needed a home. The **You** tab's top row swapped its "Sign out" text
 - **Why mirror the lamp colour into a CSS token instead of computing it in JS?** The lamp is almost entirely CSS/SVG already; keeping the colour in a token means one swap (`.palette-lavender` on `<html>`) recolours every part of it — wash, line-art, shadow, gradients — with zero JS. The one place that *is* JS (the sparkle canvas) reads the same token, so there's still a single source of truth.
 - **Why `style={{ stopColor }}` on the SVG stops rather than the attribute?** `var()` resolves in CSS properties, not in SVG presentation attributes. The `stop-color` *property* (set via `style`) honours the variable; the `stop-color` *attribute* would treat `var(--x)` as a literal and fall back to black.
 - **Why retune the route animation instead of adding an exit transition / crossfade?** Each page renders its own `AppShell`, so the outgoing view unmounts the moment the route changes — a true crossfade would mean holding both in the DOM, a real architectural change. An enter-only fade-up, tuned unhurried, delivers the "calm arrival" the user wanted at a fraction of the cost and risk.
+
+## Chapter — Stars on the shelf: rating and reviewing books
+
+Until now a rating only existed at the *end* of a read — you closed the book, the closing ceremony asked for stars, and that verdict got mirrored onto the library doc (so the circle feed could show it). But most of a reader's life with books happens *before* they ever start a read in the app: the shelf of things they finished years ago. The user wanted those to carry ratings too — the way Fable stamps a little "★ 4.25" on each cover — and a frictionless way to add them while shelving.
+
+### The data model was already there
+
+The pleasing part: almost no new data. Library docs had carried `rating/review/reviewedAt` since the circle-feed chapter — fields written *only* on a read's close. The whole feature is really just **a second writer** for those same fields, reached from shelving and from a book's page. No new collection, no schema change, and — because a library doc is an owner write and the fields are already friend-readable — **no `firestore.rules` change**. The circle feed, which reads `rating/review` straight off the library doc, lit up with standalone ratings for free; a friend who rates an old favourite now shows up in your feed exactly like a shelving does. (And, per the user's rule, the *activity* log stays untouched — rating a book is not a buddy-relevant event, so it writes no `activity` doc.)
+
+The one new helper, `rateBook`, encodes the product rule that **a rating implies "read"**: rating an unshelved or to-read book quietly files it on the Read shelf, while a Favorite stays a Favorite. It takes a `review === undefined` sentinel meaning "leave any existing review alone" (the stars changed, the words didn't), and stamps `addedAt` only for a genuinely new shelving so re-rating an old book doesn't bump it to the front of its shelf.
+
+### Two doors into one ceremony
+
+`RateBookDialog` is a small two-step centred dialog — stars to the quarter (the existing `StarRating`, à la Letterboxd), then an optional review. It's reached two ways. From **Add to Library**: tapping *To Read* shelves instantly and stays put; tapping *Read* or *Favorites* opens the dialog and, on a deliberate finish, carries you to your library where the shelf is now updated. From a book's page: a slim **Rate** control tucked into the natural gap under the cover, which never navigates — you rate in place, and once rated it shows the stars and re-opens to edit.
+
+The step buttons encode intent precisely. Step one offers *Do this later* (shelve, no rating) and *Next* (enabled once you've actually touched the stars). Step two offers *Cancel* (keep the stars, drop the words) and *Submit* (keep both). The principle: once you've rated and stepped forward, the rating is committed — so even a *Cancel* on the review step keeps your stars. Only a step-one *Do this later*, or a Back/backdrop bail-out, records nothing.
+
+### The back-button knot, again
+
+The recurring hazard in this app is mixing `useBackClose`'s history bookkeeping with programmatic navigation — close an overlay and `navigate()` in the same tick and the overlay's cleanup fires a stray `history.back()` that undoes the navigation. The fix mirrors the proven `leave()` pattern on the co-read screen: **close first, let an `await` separate the close from the navigate.** The dialog's resolve handler unmounts the dialog, awaits the Firestore write (a real async gap, long enough for the placeholder-pop to settle), *then* routes to the library. A deliberate finish routes; a Back press only dismisses the dialog and leaves you on the book — which is the rule the user asked for, made structural rather than hoped-for.
+
+A smaller decision fell out of the same rule: the dialog mounts only while it's shown (the parent gates it with `{open && …}`) rather than living always-mounted behind an `open` prop. That means its `useState` initialises fresh on every open — picking up the book's current verdict when editing — with no reset effect, which also sidesteps the lint rule against `setState` inside an effect.
+
+### Where the stars sit
+
+On the shelf, a rating rides at the foot of its cover as a dark translucent `★ 4¼` pill (`RatingBadge`) — legible over any cover art, in either theme, gold star and all. It's deliberately the same chip on a buddy's shelves (the library is friend-readable) and needs the cover wrapper to be `relative` to anchor it. The badge only appears when there's a rating; an unrated or DNF'd book just shows its cover.
+
+### Q&A
+
+- **Rate-button on every book page, or only on shelved ones?** Every page. Gating it behind library membership makes rating a two-step chore (shelve, *then* find the rating control); putting it under every cover and letting a rating imply the Read shelf is the shorter path and the more discoverable one. The cost — that rating auto-shelves — is exactly the behaviour we want anyway.
+- **Why does *Cancel* on the review step still save the stars?** Because by then you've rated *and* tapped *Next* — the stars are a committed decision, and the review is the optional part you're declining. Discarding the rating there would be surprising. The only "record nothing" exits are the ones taken *before* committing: *Do this later*, Back, or the backdrop.
+- **A centred dialog, when the closing ceremony is a bottom sheet?** They're different moments. The closing ceremony is the end of a long shared read — a sheet you reach for, weighty. This is a quick, contained "stars and maybe a line" that flows out of the Add-to-library menu; a centred dialog keeps it light and of a piece with the menu it springs from.
+- **Why no `firestore.rules` change for a whole rating feature?** Because the storage seam was already cut. The verdict fields live on the (owner-written, friend-readable) library doc and were already written on a read's close; rating-while-shelving is just a second writer for the same fields from the same owner. The privacy property — book activity shared, co-reading relationship never — was already paid for.

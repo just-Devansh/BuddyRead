@@ -91,6 +91,40 @@ export async function setShelf(
   )
 }
 
+/**
+ * Record a rating and/or review on a library book. A rating **implies read**, so
+ * the book is placed on the given read-type shelf (`read` or `favorite`) — the
+ * caller resolves which (a Favorite stays a Favorite; everything else lands on
+ * Read). The verdict is mirrored onto this (friend-readable) doc so the circle
+ * feed can surface it, exactly like a finished read's verdict.
+ *
+ * `review === undefined` leaves any existing review untouched (used when only the
+ * stars change, e.g. tapping "Cancel" on the review step); `null`/'' clears it.
+ * `isNew` stamps `addedAt` only for a book not yet shelved, so re-rating an old
+ * book doesn't bump it to the front of its shelf.
+ */
+export async function rateBook(
+  uid: string,
+  book: LibraryBook,
+  shelf: Extract<Shelf, 'read' | 'favorite'>,
+  verdict: { rating: number | null; review?: string | null },
+  isNew = false,
+): Promise<void> {
+  await setDoc(
+    doc(db, 'users', uid, 'library', book.id),
+    {
+      book,
+      shelf,
+      rating: verdict.rating,
+      ...(verdict.review !== undefined ? { review: verdict.review?.trim() || null } : {}),
+      reviewedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      ...(isNew ? { addedAt: serverTimestamp() } : {}),
+    },
+    { merge: true },
+  )
+}
+
 /** Take a book off the shelves entirely. */
 export async function removeFromLibrary(uid: string, bookId: string): Promise<void> {
   await deleteDoc(doc(db, 'users', uid, 'library', bookId))

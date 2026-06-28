@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
+  rateBook,
   removeFromLibrary,
   setShelf,
   SHELVES,
@@ -7,27 +9,45 @@ import {
   type Shelf,
 } from '../lib/library'
 import { useLibrary } from '../library/useLibrary'
+import { RateBookDialog, type RateResult } from './RateBookDialog'
 import { useBackClose } from './useBackClose'
+
+/** The two read-type shelves go through the rating ceremony; To Read is a plain,
+ *  instant shelving. */
+type RateShelf = Extract<Shelf, 'read' | 'favorite'>
 
 /**
  * The "Add to Library" control: a button that opens a small, centred menu to
- * pick a shelf (To Read · Read · Favorites). Favorite implies Read. If the book
- * is already shelved, the button shows where, and the menu can move or remove
- * it. Writes go to `users/{uid}/library` via the live provider.
+ * pick a shelf (To Read · Read · Favorites). **To Read** shelves instantly and
+ * stays put. **Read / Favorites** open the {@link RateBookDialog} — a quick two
+ * step "stars, then a few words" — and then carry you to your library, where the
+ * shelf is now updated (with or without a rating, as you chose). Favorite implies
+ * Read. If the book is already shelved, the button shows where, and the menu can
+ * move or remove it. Writes go to `users/{uid}/library` via the live provider.
  */
 export function AddToLibrary({ uid, book }: { uid: string; book: LibraryBook }) {
   const { items } = useLibrary()
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
+  const [rating, setRating] = useState<RateShelf | null>(null)
   const [busy, setBusy] = useState<Shelf | 'remove' | null>(null)
   const [error, setError] = useState(false)
 
-  const current = items.find((i) => i.id === book.id)?.shelf ?? null
+  const item = items.find((i) => i.id === book.id) ?? null
+  const current = item?.shelf ?? null
   const currentLabel = SHELVES.find((s) => s.key === current)?.label ?? null
 
   // Back button closes the shelf-picker menu instead of leaving the book screen.
   useBackClose(open, () => setOpen(false))
 
   const choose = async (shelf: Shelf) => {
+    // Read/Favorites capture a rating first (and route to the library after); To
+    // Read is a quiet, instant shelving that leaves you on the book.
+    if (shelf === 'read' || shelf === 'favorite') {
+      setOpen(false)
+      setRating(shelf)
+      return
+    }
     setBusy(shelf)
     setError(false)
     try {
@@ -38,6 +58,30 @@ export function AddToLibrary({ uid, book }: { uid: string; book: LibraryBook }) 
     } finally {
       setBusy(null)
     }
+  }
+
+  // The rating dialog's outcome. We always file the chosen shelf (the reader
+  // picked it), then layer the verdict on top. Closing the dialog *before* the
+  // write lets its Back-history entry settle, so the subsequent navigate lands
+  // cleanly on the library (mirrors the close-then-navigate pattern elsewhere).
+  const resolveRating = async (shelf: RateShelf, r: RateResult) => {
+    const isNew = !item
+    setRating(null)
+    try {
+      if (r.action === 'submit') {
+        await rateBook(uid, book, shelf, { rating: r.rating, review: r.review }, isNew)
+      } else if (r.action === 'cancel') {
+        await rateBook(uid, book, shelf, { rating: r.rating }, isNew)
+      } else {
+        // "Do this later" or a Back/backdrop bail-out — shelve it, no rating.
+        await setShelf(uid, book, shelf)
+      }
+    } catch {
+      // The write failed; nothing more we can surface from here.
+    }
+    // A deliberate completion routes to the library; a Back/backdrop dismissal
+    // keeps you on the book page (Rule: Back only pops the dialog).
+    if (r.action !== 'dismiss') navigate('/library')
   }
 
   const remove = async () => {
@@ -135,6 +179,16 @@ export function AddToLibrary({ uid, book }: { uid: string; book: LibraryBook }) 
             )}
           </div>
         </div>
+      )}
+
+      {rating !== null && (
+        <RateBookDialog
+          book={book}
+          shelfLabel={rating === 'favorite' ? 'Favorites' : 'Read'}
+          initialRating={item?.rating ?? 0}
+          initialReview={item?.review ?? ''}
+          onResolve={(r) => void resolveRating(rating, r)}
+        />
       )}
     </>
   )
