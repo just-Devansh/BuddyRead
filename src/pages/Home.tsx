@@ -72,8 +72,24 @@ interface Particle {
 }
 
 // The nook lamp's own glow (the bulb bloom in Lamp.tsx): a warm, soft amber —
-// deliberately *not* the saturated/fiery gold of the --gold brass token.
-const LAMP: [number, number, number] = [255, 224, 156]
+// deliberately *not* the saturated/fiery gold of the --gold brass token. This is
+// the fallback; the live colour is read from the `--lamp-rgb` token so the trail
+// follows the chosen palette (amber → lavender) without a second source of truth.
+const LAMP_FALLBACK: [number, number, number] = [255, 224, 156]
+
+/** Read the lamp glow's rgb from the CSS token, e.g. "252 188 116". */
+function readLampGlow(): [number, number, number] {
+  try {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue('--lamp-rgb')
+    const parts = raw.trim().split(/[\s,]+/).map(Number)
+    if (parts.length === 3 && parts.every((n) => Number.isFinite(n))) {
+      return [parts[0], parts[1], parts[2]]
+    }
+  } catch {
+    // Fall through to the default amber.
+  }
+  return LAMP_FALLBACK
+}
 
 /**
  * A continuous, glassy sparkle trail rendered on a single <canvas>: as a finger
@@ -93,6 +109,7 @@ function useSparkleCanvas() {
   const dpr = useRef(1)
   const size = useRef({ w: 0, h: 0 })
   const reduce = useRef(false)
+  const glow = useRef<[number, number, number]>(LAMP_FALLBACK)
 
   // Size the canvas backing store to the card (× dpr).
   useEffect(() => {
@@ -123,6 +140,9 @@ function useSparkleCanvas() {
       raf.current = null
       return
     }
+    // Re-read the lamp colour when a gesture begins, so a palette change between
+    // swipes is reflected without re-measuring the canvas.
+    glow.current = readLampGlow()
     let prev = performance.now()
     const tick = (now: number) => {
       const dt = Math.min(48, now - prev)
@@ -131,7 +151,7 @@ function useSparkleCanvas() {
       ctx.setTransform(dpr.current, 0, 0, dpr.current, 0, 0)
       ctx.clearRect(0, 0, w, h)
       ctx.globalCompositeOperation = 'lighter'
-      const [gr, gg, gb] = LAMP
+      const [gr, gg, gb] = glow.current
       const ps = particles.current
       for (let i = ps.length - 1; i >= 0; i--) {
         const p = ps[i]
@@ -303,6 +323,8 @@ function verbFor(e: CircleEvent): string {
  */
 function CircleEventCard({ event }: { event: CircleEvent }) {
   const { actor, book } = event
+  // Up to two authors so the line stays a line; the rest is implied by "et al."
+  const authorLine = book.authors?.slice(0, 2).join(', ')
   return (
     <Link
       to={`/book/${book.id}`}
@@ -330,16 +352,28 @@ function CircleEventCard({ event }: { event: CircleEvent }) {
         <h3 className="mt-1 truncate font-display text-base font-medium leading-tight text-text-muted transition-colors group-hover:text-text">
           {book.title}
         </h3>
-        {event.type === 'reviewed' && event.rating != null && (
-          <div className="mt-1">
-            <StarRating
-              value={event.rating}
-              size="text-[13px]"
-              fillColor="var(--gold)"
-              trackColor="var(--border)"
-            />
-          </div>
-        )}
+        {/* The book's author + (when present) the buddy's rating share one line,
+            so the lower half of every row carries something — and the rating has
+            a settled home for when shelvings start to carry one too. */}
+        <div className="mt-0.5 flex items-center justify-between gap-2">
+          {authorLine ? (
+            <p className="min-w-0 truncate font-body text-[13px] italic leading-snug text-text-faint">
+              {authorLine}
+            </p>
+          ) : (
+            <span />
+          )}
+          {event.rating != null && (
+            <span className="shrink-0">
+              <StarRating
+                value={event.rating}
+                size="text-[13px]"
+                fillColor="var(--gold)"
+                trackColor="var(--border)"
+              />
+            </span>
+          )}
+        </div>
         {event.type === 'reviewed' && event.review && (
           <p className="mt-1 line-clamp-2 text-pretty font-display text-sm italic leading-snug text-text-muted">
             “{event.review}”
