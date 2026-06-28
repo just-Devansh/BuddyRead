@@ -337,9 +337,13 @@ export function Friends() {
                         onClick={() => setOpenMenuId(null)}
                         className="fixed inset-0 z-10 cursor-default"
                       />
-                      <div className="absolute right-0 top-full z-20 mt-1 w-32 overflow-hidden rounded-xl border border-border bg-surface py-1 shadow-[0_12px_28px_-12px_rgba(40,28,16,0.6)]">
+                      <div
+                        role="menu"
+                        className="pop-enter absolute right-0 top-full z-20 mt-1 w-max overflow-hidden rounded-xl border border-border bg-surface shadow-[0_12px_28px_-12px_rgba(40,28,16,0.6)]"
+                      >
                         <button
                           type="button"
+                          role="menuitem"
                           disabled={busyIds.has(r.id)}
                           onClick={async () => {
                             setOpenMenuId(null)
@@ -353,7 +357,7 @@ export function Friends() {
                             )
                               void act(r.id, () => removeRelationship(r.id))
                           }}
-                          className="block w-full px-4 py-2 text-left text-sm text-text-muted transition-colors hover:bg-surface-alt hover:text-text disabled:opacity-50"
+                          className="block px-4 py-2 text-sm text-accent transition-colors hover:bg-surface-alt disabled:opacity-50"
                         >
                           Remove
                         </button>
