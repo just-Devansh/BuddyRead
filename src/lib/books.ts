@@ -67,6 +67,70 @@ function improveCover(url: string): string {
   return url.replace(/^http:/, 'https:').replace(/&edge=curl/, '')
 }
 
+/**
+ * Bump a Google Books cover to a higher resolution. The stored `coverUrl` is the
+ * ~128px `thumbnail` (zoom=1) — fine in a list, but soft when shown large and
+ * blown up (the keepsake renders the cover big and exports it at 3×). Google
+ * serves the *same* frontcover at larger sizes via the `zoom` param on its
+ * content URL (1 ≈ 128px, 2 ≈ 300px, 3 ≈ 575px), so we just rewrite it.
+ * Non-Google URLs (Open Library, data:, placeholders) pass through untouched.
+ */
+export function hiResCover(url: string | null, zoom = 3): string | null {
+  if (!url || !url.includes('/books/content')) return url
+  return /[?&]zoom=\d+/.test(url)
+    ? url.replace(/([?&]zoom=)\d+/, `$1${zoom}`)
+    : `${url}${url.includes('?') ? '&' : '?'}zoom=${zoom}`
+}
+
+/**
+ * Google's "image not available" placeholder is near-square (~1.30 tall:wide); a
+ * real book cover is ~1.5. We use this to tell the two apart after loading.
+ */
+const MIN_COVER_ASPECT = 1.4
+
+/** Does this URL load as a real, large-enough portrait cover (not Google's
+ *  near-square placeholder, not a 404)? Loaded for measurement only — never
+ *  drawn to a canvas — so no CORS taint. */
+function isRealCover(url: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () =>
+      resolve(
+        img.naturalWidth >= 200 &&
+          img.naturalHeight / img.naturalWidth >= MIN_COVER_ASPECT,
+      )
+    img.onerror = () => resolve(false)
+    img.src = url
+  })
+}
+
+/**
+ * Resolve the sharpest cover we can *actually* show, for a large render (the
+ * keepsake). {@link hiResCover} asks Google for a 575px scan, but **no-preview
+ * catalog editions** answer that with a "cover not available" placeholder
+ * instead of a bigger image — and Open Library may have the real thing by ISBN.
+ * So we try the big candidates in order and keep the first that loads as a real,
+ * portrait cover; failing all, we fall back to the original thumbnail (still the
+ * real cover, just small). Non-Google and already-inlined (`data:`) URLs pass
+ * straight through.
+ *
+ * Browser-only (uses `Image`); callers are React effects, never SSR.
+ */
+export async function resolveHiResCover(
+  coverUrl: string | null,
+  isbn?: string | null,
+): Promise<string | null> {
+  if (!coverUrl || coverUrl.startsWith('data:')) return coverUrl
+  const candidates = [
+    hiResCover(coverUrl), // Google's 575px scan (a placeholder for stubs)
+    isbn ? openLibraryCover({ isbn13: isbn, isbn10: null }) : null, // OL large
+  ].filter((u): u is string => Boolean(u) && u !== coverUrl)
+  for (const url of candidates) {
+    if (await isRealCover(url)) return url
+  }
+  return coverUrl
+}
+
 /** Biggest cover Google offers, https-ified. */
 function bestGoogleCover(links?: ImageLinks): string | null {
   if (!links) return null
@@ -164,13 +228,23 @@ export function openLibraryCover(
     : null
 }
 
-/** Ordered cover URLs to try, best first; BookCover walks these on error. */
+/**
+ * Ordered cover URLs to try, best first; BookCover walks these on error.
+ *
+ * With `hiRes` (large displays like Book detail) we lead with Google's 575px
+ * scan and Open Library's large cover, keeping the 128px thumbnail only as a
+ * last resort. BookCover's onLoad aspect guard discards Google's placeholder so
+ * a no-preview edition still falls through to Open Library / the typographic
+ * cover rather than showing "image not available".
+ */
 export function coverCandidates(
   book: Pick<Book, 'coverUrl' | 'isbn13' | 'isbn10'>,
+  { hiRes = false }: { hiRes?: boolean } = {},
 ): string[] {
-  return [book.coverUrl, openLibraryCover(book)].filter(
-    (url): url is string => Boolean(url),
-  )
+  const list = hiRes
+    ? [hiResCover(book.coverUrl), openLibraryCover(book), book.coverUrl]
+    : [book.coverUrl, openLibraryCover(book)]
+  return [...new Set(list.filter((url): url is string => Boolean(url)))]
 }
 
 /** "Donna Tartt", "Neil Gaiman & Terry Pratchett", or a quiet fallback. */

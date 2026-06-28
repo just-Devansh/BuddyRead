@@ -20,6 +20,7 @@ export function BookCover({
   tone = 'olive',
   className = '',
   rounded = 'rounded-sm',
+  hiRes = false,
 }: {
   book: CoverBook
   author?: string
@@ -27,8 +28,11 @@ export function BookCover({
   className?: string
   /** Corner-radius utility — overridable so e.g. the Library can curve covers. */
   rounded?: string
+  /** Lead with Google's 575px scan + Open Library's large cover, for big
+   *  displays (Book detail). Lists keep the lighter 128px thumbnail. */
+  hiRes?: boolean
 }) {
-  const sources = coverCandidates(book)
+  const sources = coverCandidates(book, { hiRes })
   const [idx, setIdx] = useState(0)
   const exhausted = idx >= sources.length
   const spine = SPINES[tone]
@@ -51,7 +55,11 @@ export function BookCover({
             // to Open Library, then the typographic cover, instead of showing it.
             const img = e.currentTarget
             const { naturalWidth: w, naturalHeight: h } = img
-            if (w && h && (w < 90 || h / w < 1.25)) setIdx((i) => i + 1)
+            // hiRes leads with Google's 575px scan, which for a no-preview
+            // edition is the near-square (~1.30) "cover unavailable" placeholder
+            // — reject squarer than 1.35 so we fall through to Open Library.
+            const minAspect = hiRes ? 1.35 : 1.25
+            if (w && h && (w < 90 || h / w < minAspect)) setIdx((i) => i + 1)
           }}
           className="h-full w-full object-cover"
         />

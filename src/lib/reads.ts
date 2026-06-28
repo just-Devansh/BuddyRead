@@ -30,6 +30,9 @@ export interface ReadBook {
   authors: string[]
   coverUrl: string | null
   pageCount: number | null
+  /** Best ISBN (13 over 10), for an Open Library cover when Google's scan is
+   *  low-res. Optional: absent on reads snapshotted before this field existed. */
+  isbn?: string | null
 }
 
 /** One reader's side of a read: their edition, length, and progress. */
