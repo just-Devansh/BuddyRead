@@ -25,15 +25,18 @@ export function Lamp({
     >
       <svg viewBox="0 0 100 172" className="block h-auto w-full" fill="none" aria-hidden="true">
         <defs>
+          {/* Stops read from CSS tokens (style, not the attribute, so var()
+              resolves) — this is what lets the lamp glow lavender under the
+              lavender palette while staying warm amber by default. */}
           <radialGradient id="lampShade" cx="50%" cy="34%" r="68%">
-            <stop offset="0%" stopColor="rgb(255 230 168)" />
-            <stop offset="55%" stopColor="rgb(235 184 100)" />
-            <stop offset="100%" stopColor="rgb(201 140 76)" />
+            <stop offset="0%" style={{ stopColor: 'var(--lamp-shade-0)' }} />
+            <stop offset="55%" style={{ stopColor: 'var(--lamp-shade-1)' }} />
+            <stop offset="100%" style={{ stopColor: 'var(--lamp-shade-2)' }} />
           </radialGradient>
           <radialGradient id="lampBulb" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgb(255 236 184)" stopOpacity="0.95" />
-            <stop offset="60%" stopColor="rgb(255 212 128)" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="rgb(255 200 110)" stopOpacity="0" />
+            <stop offset="0%" style={{ stopColor: 'var(--lamp-bulb-0)' }} />
+            <stop offset="60%" style={{ stopColor: 'var(--lamp-bulb-1)' }} />
+            <stop offset="100%" style={{ stopColor: 'var(--lamp-bulb-2)' }} />
           </radialGradient>
         </defs>
 

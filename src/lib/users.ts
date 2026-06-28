@@ -10,7 +10,7 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 import { generateInviteCode } from './inviteCode'
-import type { ThemePreference } from '../theme/theme-context'
+import type { Palette, ThemePreference } from '../theme/theme-context'
 
 /** Shape of a `users/{uid}` document. */
 export interface UserDoc {
@@ -21,6 +21,7 @@ export interface UserDoc {
   usernameUpdatedAt?: Timestamp | null // last change — gates the 30-day cooldown
   inviteCode: string // short, unique, human-typeable
   theme: ThemePreference
+  palette?: Palette // colour palette (warm | lavender); absent on older docs = warm
   createdAt: Timestamp | null
 }
 
@@ -93,6 +94,7 @@ export async function ensureUserDoc(user: User): Promise<void> {
     username: defaultUsername(user),
     inviteCode,
     theme: 'system' as const,
+    palette: 'warm' as const,
     createdAt: serverTimestamp(),
   })
 }
@@ -103,4 +105,12 @@ export async function updateUserTheme(
   theme: ThemePreference,
 ): Promise<void> {
   await updateDoc(doc(db, 'users', uid), { theme })
+}
+
+/** Persist the palette choice to the account so it follows the reader too. */
+export async function updateUserPalette(
+  uid: string,
+  palette: Palette,
+): Promise<void> {
+  await updateDoc(doc(db, 'users', uid), { palette })
 }
