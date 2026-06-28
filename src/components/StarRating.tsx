@@ -61,9 +61,11 @@ export function StarRating({
         interactive ? 'cursor-pointer touch-none' : ''
       }`}
     >
-      {/* Outline layer */}
+      {/* Outline layer. pointer-events-none so the touch always lands on the root
+          (which carries touch-action:none), never a child glyph — that's what
+          keeps a horizontal drag from leaking into a page scroll/pull. */}
       <div
-        className={`flex ${trackColor ? '' : 'text-border'}`}
+        className={`pointer-events-none flex ${trackColor ? '' : 'text-border'}`}
         style={trackColor ? { color: trackColor } : undefined}
         aria-hidden="true"
       >
@@ -75,7 +77,7 @@ export function StarRating({
       </div>
       {/* Filled layer, clipped from the right to the value */}
       <div
-        className={`absolute inset-0 flex ${fillColor ? '' : 'text-accent'}`}
+        className={`pointer-events-none absolute inset-0 flex ${fillColor ? '' : 'text-accent'}`}
         style={{
           clipPath: `inset(0 ${100 - pct}% 0 0)`,
           ...(fillColor ? { color: fillColor } : {}),
