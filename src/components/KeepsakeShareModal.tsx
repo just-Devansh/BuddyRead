@@ -3,6 +3,7 @@ import { toPng } from 'html-to-image'
 import { Eyebrow } from './Eyebrow'
 import { FitToWidth } from './FitToWidth'
 import { KeepsakeCard, KEEPSAKE_WIDTH, type KeepsakeSide } from './KeepsakeCard'
+import { useBackClose } from './useBackClose'
 import type { ReadBook } from '../lib/reads'
 
 function blobToDataUrl(blob: Blob): Promise<string> {
@@ -79,6 +80,9 @@ export function KeepsakeShareModal({
   const [mode, setMode] = useState<'light' | 'dark'>(defaultMode)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Back button closes the modal instead of leaving the co-read screen.
+  useBackClose(true, onClose)
 
   // The card's three remote images (cover + both avatars) inlined to data: URLs
   // so the export canvas stays CORS-clean. Seeded with the originals so the

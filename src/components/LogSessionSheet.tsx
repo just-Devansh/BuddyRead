@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { Eyebrow } from './Eyebrow'
 import { MoodIcon } from './MoodIcon'
+import { useBackClose } from './useBackClose'
 import { MOODS } from '../lib/moods'
 
 const DISMISS_PX = 120 // drag past this and the sheet lets go
@@ -126,13 +127,17 @@ export function LogSessionSheet({
     setPage((p) => Math.max(0, Math.min(total, p + d))),
   )
 
-  if (!open) return null
-
   // Slide the sheet out, then let the parent unmount it.
-  const requestClose = () => {
+  const requestClose = useCallback(() => {
     setShow(false)
     setTimeout(onClose, 300)
-  }
+  }, [onClose])
+
+  // The hardware/browser Back button dismisses the sheet, rather than leaving
+  // the co-read screen underneath it.
+  useBackClose(open, requestClose)
+
+  if (!open) return null
 
   const onHandleDown = (e: ReactPointerEvent) => {
     startYRef.current = e.clientY

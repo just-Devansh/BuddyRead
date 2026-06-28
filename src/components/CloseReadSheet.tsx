@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { Eyebrow } from './Eyebrow'
 import { StarRating } from './StarRating'
+import { useBackClose } from './useBackClose'
 import { formatRating } from '../lib/rating'
 import type { Verdict } from '../lib/reads'
 
@@ -52,12 +53,15 @@ export function CloseReadSheet({
     }
   }, [])
 
-  if (!open) return null
-
-  const requestClose = () => {
+  const requestClose = useCallback(() => {
     setShow(false)
     setTimeout(onClose, 300)
-  }
+  }, [onClose])
+
+  // Back button dismisses the sheet instead of leaving the co-read screen.
+  useBackClose(open, requestClose)
+
+  if (!open) return null
 
   const onHandleDown = (e: ReactPointerEvent) => {
     startYRef.current = e.clientY
