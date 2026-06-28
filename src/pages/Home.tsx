@@ -58,81 +58,176 @@ function HeroRow({ label, frac, tone }: { label: string; frac: number | null; to
   )
 }
 
-const TRAIL_STEP = 7 // px between successive glow blobs — small, so it reads continuous
+const TRAIL_STEP = 6 // px between particles when filling in a fast swipe
+const MAX_PARTICLES = 360 // hard cap so a frantic swipe can't pile up forever
+
+interface Particle {
+  x: number
+  y: number
+  vy: number // gentle upward drift, px per frame
+  size: number
+  life: number // 1 → 0
+  decay: number // life lost per ms
+  spark: boolean // a bright glitter point vs. a soft glow blob
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace('#', '').trim()
+  if (h.length < 6) return [199, 162, 78] // sensible gold fallback
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]
+}
 
 /**
- * A continuous, glassy sparkle trail: as a finger (or cursor) glides across the
- * hero card, a soft luminous ribbon follows it with fine glitter twinkling on
- * top — closer to an iOS "glass" shimmer than discrete stars. The path between
- * pointer samples is interpolated so a fast swipe still draws an unbroken line.
- * Everything is spun up as bare DOM nodes in a `pointer-events-none` overlay so
- * the card never re-renders and taps still pass through; sits out under
- * `prefers-reduced-motion`.
+ * A continuous, glassy sparkle trail rendered on a single <canvas>: as a finger
+ * (or cursor) glides across the hero card, a luminous gold ribbon follows it
+ * with brighter glints riding on top — an iOS-ish "glass" shimmer. Drawing all
+ * particles additively (`globalCompositeOperation = 'lighter'`) on one canvas in
+ * a rAF loop is what keeps it glued to a fast finger; the old per-particle DOM +
+ * blur + blend approach couldn't composite fast enough and lagged. The path
+ * between pointer samples is interpolated so a quick swipe is still unbroken.
+ * Sits out entirely under `prefers-reduced-motion`.
  */
-function useSparkleTrail() {
-  const overlay = useRef<HTMLDivElement>(null)
+function useSparkleCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const particles = useRef<Particle[]>([])
+  const raf = useRef<number | null>(null)
   const last = useRef<{ x: number; y: number } | null>(null)
+  const dpr = useRef(1)
+  const size = useRef({ w: 0, h: 0 })
+  const gold = useRef<[number, number, number]>([199, 162, 78])
   const reduce = useRef(false)
+
+  // Size the canvas backing store to the card (× dpr) and read the gold token.
   useEffect(() => {
+    const cv = canvasRef.current
+    if (!cv) return
     reduce.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const measure = () => {
+      const r = cv.getBoundingClientRect()
+      dpr.current = Math.min(window.devicePixelRatio || 1, 2)
+      size.current = { w: r.width, h: r.height }
+      cv.width = Math.round(r.width * dpr.current)
+      cv.height = Math.round(r.height * dpr.current)
+      gold.current = hexToRgb(getComputedStyle(cv).getPropertyValue('--gold') || '#c7a24e')
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(cv)
+    return () => {
+      ro.disconnect()
+      if (raf.current != null) cancelAnimationFrame(raf.current)
+      raf.current = null
+    }
   }, [])
 
-  const make = (cls: string, x: number, y: number, size: number, rot?: number) => {
-    const o = overlay.current
-    if (!o) return
-    const s = document.createElement('span')
-    s.className = cls
-    s.style.left = `${x}px`
-    s.style.top = `${y}px`
-    s.style.setProperty('--s', `${size}px`)
-    if (rot != null) s.style.setProperty('--r', `${rot}deg`)
-    s.addEventListener('animationend', () => s.remove())
-    o.appendChild(s)
+  const loop = () => {
+    const cv = canvasRef.current
+    const ctx = cv?.getContext('2d')
+    if (!cv || !ctx) {
+      raf.current = null
+      return
+    }
+    let prev = performance.now()
+    const tick = (now: number) => {
+      const dt = Math.min(48, now - prev)
+      prev = now
+      const { w, h } = size.current
+      ctx.setTransform(dpr.current, 0, 0, dpr.current, 0, 0)
+      ctx.clearRect(0, 0, w, h)
+      ctx.globalCompositeOperation = 'lighter'
+      const [gr, gg, gb] = gold.current
+      const ps = particles.current
+      for (let i = ps.length - 1; i >= 0; i--) {
+        const p = ps[i]
+        p.life -= p.decay * dt
+        if (p.life <= 0) {
+          ps.splice(i, 1)
+          continue
+        }
+        p.y -= p.vy * (dt / 16)
+        const a = p.life
+        const rad = p.size * (p.spark ? 0.4 + 0.6 * a : 0.7 + 0.3 * a)
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rad)
+        if (p.spark) {
+          g.addColorStop(0, `rgba(255,252,244,${0.95 * a})`)
+          g.addColorStop(0.5, `rgba(${gr},${gg},${gb},${0.5 * a})`)
+        } else {
+          g.addColorStop(0, `rgba(255,249,235,${0.55 * a})`)
+          g.addColorStop(0.45, `rgba(${gr},${gg},${gb},${0.32 * a})`)
+        }
+        g.addColorStop(1, `rgba(${gr},${gg},${gb},0)`)
+        ctx.fillStyle = g
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, rad, 0, Math.PI * 2)
+        ctx.fill()
+      }
+      if (ps.length > 0) {
+        raf.current = requestAnimationFrame(tick)
+      } else {
+        ctx.clearRect(0, 0, w, h)
+        raf.current = null
+      }
+    }
+    raf.current = requestAnimationFrame(tick)
   }
 
-  // One puff of the ribbon: a soft glow body + a little crisp glitter, jittered
-  // slightly off the path so the trail has thickness, not a hairline.
-  const burst = (x: number, y: number) => {
-    make('trail-glow', x, y, 18 + Math.random() * 10)
-    const stars = 1 + (Math.random() < 0.6 ? 1 : 0)
-    for (let i = 0; i < stars; i++) {
-      const jx = x + (Math.random() - 0.5) * 14
-      const jy = y + (Math.random() - 0.5) * 14
-      make('sparkle', jx, jy, 4 + Math.random() * 6, Math.random() * 90 - 45)
+  const emit = (x: number, y: number) => {
+    const ps = particles.current
+    // soft glow body
+    ps.push({
+      x,
+      y,
+      vy: 0.15 + Math.random() * 0.25,
+      size: 16 + Math.random() * 10,
+      life: 1,
+      decay: 1 / (520 + Math.random() * 160),
+      spark: false,
+    })
+    // a glint roughly every other step, jittered off the path for thickness
+    if (Math.random() < 0.55) {
+      ps.push({
+        x: x + (Math.random() - 0.5) * 12,
+        y: y + (Math.random() - 0.5) * 12,
+        vy: 0.4 + Math.random() * 0.5,
+        size: 3 + Math.random() * 4,
+        life: 1,
+        decay: 1 / (420 + Math.random() * 140),
+        spark: true,
+      })
     }
+    if (ps.length > MAX_PARTICLES) ps.splice(0, ps.length - MAX_PARTICLES)
   }
 
   const trail = (e: ReactPointerEvent) => {
-    const o = overlay.current
-    if (!o || reduce.current) return
-    const r = o.getBoundingClientRect()
+    const cv = canvasRef.current
+    if (!cv || reduce.current) return
+    const r = cv.getBoundingClientRect()
     const x = e.clientX - r.left
     const y = e.clientY - r.top
     const l = last.current
     if (!l) {
       last.current = { x, y }
-      burst(x, y)
-      return
+      emit(x, y)
+    } else {
+      const dx = x - l.x
+      const dy = y - l.y
+      const dist = Math.hypot(dx, dy)
+      if (dist < 1.5) return
+      const steps = Math.min(24, Math.max(1, Math.round(dist / TRAIL_STEP)))
+      for (let i = 1; i <= steps; i++) {
+        const t = i / steps
+        emit(l.x + dx * t, l.y + dy * t)
+      }
+      last.current = { x, y }
     }
-    const dx = x - l.x
-    const dy = y - l.y
-    const dist = Math.hypot(dx, dy)
-    if (dist < 2) return
-    // Walk the segment, dropping a puff every TRAIL_STEP px so the ribbon stays
-    // unbroken however fast the finger moves.
-    const steps = Math.max(1, Math.round(dist / TRAIL_STEP))
-    for (let i = 1; i <= steps; i++) {
-      const t = i / steps
-      burst(l.x + dx * t, l.y + dy * t)
-    }
-    last.current = { x, y }
+    if (raf.current == null) loop()
   }
   const end = () => {
     last.current = null
   }
 
   return {
-    overlay,
+    canvasRef,
     onPointerDown: trail,
     onPointerMove: trail,
     onPointerUp: end,
@@ -145,8 +240,8 @@ function useSparkleTrail() {
  * An active read — the home screen's hero. A buddy read (two paces) or a solo read
  * (one), raised on a warm lit panel (`.read-hero`) so it clearly outranks the
  * quieter suggestions beneath it: a lifted cover, a large title, and each reader's
- * pace called out. Glide a finger across it and gold stars trail your touch
- * (see useSparkleTrail).
+ * pace called out. Glide a finger across it and a gold glassy shimmer trails
+ * your touch (see useSparkleCanvas).
  */
 function ReadCard({ read, uid }: { read: Read; uid: string }) {
   const solo = read.solo === true
@@ -155,7 +250,7 @@ function ReadCard({ read, uid }: { read: Read; uid: string }) {
   // The progress rows are tight (a truncated label) — a last name only ever shows
   // half. First name only, on both phone and iPad.
   const buddyFirst = buddyName.trim().split(' ')[0]
-  const { overlay, ...trail } = useSparkleTrail()
+  const { canvasRef, ...trail } = useSparkleCanvas()
   return (
     <Link
       to={`/read/${read.id}`}
@@ -163,10 +258,10 @@ function ReadCard({ read, uid }: { read: Read; uid: string }) {
       {...trail}
       className="read-hero block touch-pan-y rounded-3xl p-5 ipad:p-6"
     >
-      <div
-        ref={overlay}
+      <canvas
+        ref={canvasRef}
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 z-10 overflow-hidden rounded-3xl"
+        className="pointer-events-none absolute inset-0 z-10 h-full w-full rounded-3xl"
       />
       <div className="flex items-start gap-5">
         <BookCover
