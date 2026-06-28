@@ -4,6 +4,7 @@ import { Eyebrow } from './Eyebrow'
 import { FitToWidth } from './FitToWidth'
 import { KeepsakeCard, KEEPSAKE_WIDTH, type KeepsakeSide } from './KeepsakeCard'
 import { useBackClose } from './useBackClose'
+import { resolveHiResCover } from '../lib/books'
 import type { ReadBook } from '../lib/reads'
 
 function blobToDataUrl(blob: Blob): Promise<string> {
@@ -98,8 +99,12 @@ export function KeepsakeShareModal({
   const ensureAssets = () => {
     if (!assetsReady.current) {
       assetsReady.current = (async () => {
+        // Export the higher-res scan when it resolves to a real cover; a
+        // no-preview edition falls back to the stored thumbnail (see
+        // resolveHiResCover). Then inline it so the canvas stays CORS-clean.
+        const hiCover = await resolveHiResCover(book.coverUrl, book.isbn)
         const [cover, youSrc, buddySrc] = await Promise.all([
-          book.coverUrl ? inlineImage(book.coverUrl) : null,
+          hiCover ? inlineImage(hiCover) : null,
           you.src ? inlineImage(you.src) : null,
           buddy?.src ? inlineImage(buddy.src) : null,
         ])

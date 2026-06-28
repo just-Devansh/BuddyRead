@@ -158,6 +158,7 @@ export function BookDetail() {
         authors: book.authors,
         coverUrl: book.coverUrl,
         pageCount: book.pageCount,
+        isbn: book.isbn13 ?? book.isbn10,
       }
       await sendReadRequest(user, buddy, snapshot)
       setSentTo(buddy.displayName ?? 'your buddy')
@@ -181,6 +182,7 @@ export function BookDetail() {
         authors: book.authors,
         coverUrl: book.coverUrl,
         pageCount: book.pageCount,
+        isbn: book.isbn13 ?? book.isbn10,
       }
       const newId = await startSoloRead(user, snapshot)
       await logActivity(user.uid, user, 'read_started', {
@@ -235,7 +237,7 @@ export function BookDetail() {
         <article className="mt-5">
           <div className="flex items-start gap-5">
             <div className="w-28 shrink-0 self-start ipad:w-36">
-              <BookCover book={book} author={book.authors[0]} className="w-full" />
+              <BookCover book={book} author={book.authors[0]} className="w-full" hiRes />
               {/* The slim Rate control fills the natural space under the cover. */}
               {user && (
                 <BookRating

@@ -1,6 +1,7 @@
-import { forwardRef } from 'react'
+import { forwardRef, useEffect, useState } from 'react'
 import { Avatar, type AvatarTone } from './Avatar'
 import { StarRating } from './StarRating'
+import { resolveHiResCover } from '../lib/books'
 import { formatRating } from '../lib/rating'
 import type { FinishEntry, ProgressEntry, ReadBook } from '../lib/reads'
 
@@ -164,6 +165,21 @@ export const KeepsakeCard = forwardRef<
   }
 >(function KeepsakeCard({ book, you, buddy, startedAt, mode }, ref) {
   const p = PALETTE[mode]
+  // The cover is shown large and exported at 3×, so pull a higher-res scan than
+  // the stored ~128px thumbnail — but only if it resolves to a real cover (a
+  // no-preview edition answers hi-res with a placeholder, so we keep the
+  // thumbnail). Starts on the thumbnail, upgrades once resolved; the share
+  // modal hands down an already-inlined data: URL, which passes straight through.
+  const [cover, setCover] = useState(book.coverUrl)
+  useEffect(() => {
+    let live = true
+    void resolveHiResCover(book.coverUrl, book.isbn).then(
+      (u) => live && setCover(u),
+    )
+    return () => {
+      live = false
+    }
+  }, [book.coverUrl, book.isbn])
   const finishedAt = Math.max(
     you.finish.finishedAt?.toMillis() ?? 0,
     buddy?.finish.finishedAt?.toMillis() ?? 0,
@@ -230,9 +246,9 @@ export const KeepsakeCard = forwardRef<
                   {book.title}
                 </span>
               </div>
-              {book.coverUrl && (
+              {cover && (
                 <img
-                  src={book.coverUrl}
+                  src={cover}
                   alt={book.title}
                   referrerPolicy="no-referrer"
                   className="absolute inset-0 h-full w-full rounded-[5px] object-cover"
