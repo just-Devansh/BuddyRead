@@ -5,7 +5,6 @@ import { Avatar } from '../components/Avatar'
 import { BookCover } from '../components/BookCover'
 import { Eyebrow } from '../components/Eyebrow'
 import { EditProfileDialog } from '../components/EditProfileDialog'
-import { useConfirm } from '../components/useConfirm'
 import { ThemeToggle } from '../theme/ThemeToggle'
 import { useAuth } from '../auth/useAuth'
 import { useFriends } from '../friends/useFriends'
@@ -60,10 +59,9 @@ function EmptyNote({ children }: { children: React.ReactNode }) {
 }
 
 export function Profile() {
-  const { user, userDoc, error, signOut } = useAuth()
+  const { user, userDoc, error } = useAuth()
   const { friends } = useFriends()
   const { active } = useReads()
-  const { confirm, dialog } = useConfirm()
   const [copied, setCopied] = useState(false)
   const [tab, setTab] = useState<Tab | null>(null)
   const [editing, setEditing] = useState(false)
@@ -85,31 +83,22 @@ export function Profile() {
     }
   }
 
-  const signOutConfirmed = async () => {
-    if (
-      await confirm({
-        title: 'Sign out?',
-        message: "You'll need to sign in with Google again to get back to your reads.",
-        confirmLabel: 'Sign out',
-        cancelLabel: 'Stay',
-        destructive: false,
-      })
-    )
-      void signOut()
-  }
-
   return (
     <AppShell>
-      {/* Theme + sign out, kept quiet at the top */}
+      {/* Theme + settings, kept quiet at the top. Sign out now lives in Settings. */}
       <div className="flex items-center justify-between">
         <ThemeToggle />
-        <button
-          type="button"
-          onClick={() => void signOutConfirmed()}
-          className="font-mono text-[10px] uppercase tracking-[0.12em] text-text-muted transition-colors hover:text-accent"
+        <Link
+          to="/settings"
+          aria-label="Settings"
+          title="Settings"
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface text-text-muted transition-colors hover:border-accent/40 hover:text-accent"
         >
-          Sign out
-        </button>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        </Link>
       </div>
 
       {/* Identity */}
@@ -326,8 +315,6 @@ export function Profile() {
         usernameUpdatedAt={userDoc?.usernameUpdatedAt}
         onClose={() => setEditing(false)}
       />
-
-      {dialog}
     </AppShell>
   )
 }

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ThemeContext, type ThemePreference } from './theme-context'
+import { ThemeContext, type Palette, type ThemePreference } from './theme-context'
 
 const STORAGE_KEY = 'buddyread:theme'
+const PALETTE_KEY = 'buddyread:palette'
 
 function readStoredPreference(): ThemePreference {
   if (typeof localStorage === 'undefined') return 'system'
@@ -9,6 +10,11 @@ function readStoredPreference(): ThemePreference {
   return stored === 'light' || stored === 'dark' || stored === 'system'
     ? stored
     : 'system'
+}
+
+function readStoredPalette(): Palette {
+  if (typeof localStorage === 'undefined') return 'warm'
+  return localStorage.getItem(PALETTE_KEY) === 'lavender' ? 'lavender' : 'warm'
 }
 
 function systemPrefersDark(): boolean {
@@ -26,6 +32,7 @@ function systemPrefersDark(): boolean {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [preference, setPreferenceState] =
     useState<ThemePreference>(readStoredPreference)
+  const [palette, setPaletteState] = useState<Palette>(readStoredPalette)
   const [systemDark, setSystemDark] = useState(systemPrefersDark)
 
   // Track the OS setting so 'system' stays honest without a reload.
@@ -47,6 +54,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.style.colorScheme = resolved
   }, [resolved])
 
+  // Paint the palette — a single class on <html> swaps every accent/lamp token.
+  useEffect(() => {
+    document.documentElement.classList.toggle('palette-lavender', palette === 'lavender')
+  }, [palette])
+
   const setPreference = useCallback((next: ThemePreference) => {
     setPreferenceState(next)
     try {
@@ -56,9 +68,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  const setPalette = useCallback((next: Palette) => {
+    setPaletteState(next)
+    try {
+      localStorage.setItem(PALETTE_KEY, next)
+    } catch {
+      // Private mode / storage disabled — palette just won't persist.
+    }
+  }, [])
+
   const value = useMemo(
-    () => ({ preference, resolved, setPreference }),
-    [preference, resolved, setPreference],
+    () => ({ preference, resolved, setPreference, palette, setPalette }),
+    [preference, resolved, setPreference, palette, setPalette],
   )
 
   return <ThemeContext value={value}>{children}</ThemeContext>
