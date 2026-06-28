@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Timestamp } from 'firebase/firestore'
 import { Eyebrow } from './Eyebrow'
+import { useBackClose } from './useBackClose'
 import {
   changeUsername,
   cooldownRemaining,
@@ -67,6 +68,9 @@ export function EditProfileDialog({
       clearTimeout(t)
     }
   }, [next, changed, uid])
+
+  // Back button closes the dialog instead of leaving the profile screen.
+  useBackClose(open, onClose)
 
   if (!open) return null
 

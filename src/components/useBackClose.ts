@@ -5,47 +5,69 @@ import { useEffect, useRef } from 'react'
  * an open overlay instead of navigating away from the page underneath it.
  *
  * While `active`, a throwaway history entry is pushed; pressing Back pops it and
- * runs `close()`, so an open sheet/modal *eats* the Back press. Closing from the
- * UI instead (backdrop, drag-to-dismiss, save) consumes that entry on cleanup,
- * so Back never has to be pressed twice and no stray entry is left in the stack.
+ * closes the topmost overlay. Closing from the UI (backdrop, drag, save) instead
+ * consumes the entry, so Back is never needed twice and the stack stays
+ * balanced.
  *
- * Robust under React StrictMode's mount→unmount→remount double-invoke: the
- * `ignoreNextPop` ref swallows the single popstate that the dev-only remount's
- * cleanup `history.back()` produces, so the overlay isn't closed the instant it
- * opens.
+ * Why a single module-level stack + one persistent listener (rather than a
+ * per-instance listener)? Because overlays nest and hand off: a menu opens a
+ * confirm dialog in the *same* tick, or a confirm opens a sheet. With per-hook
+ * listeners, the programmatic `history.back()` one overlay fires while tearing
+ * down would land on *another* overlay's listener and dismiss the wrong thing.
+ * Here, every instance shares one listener and an `expectedProgrammatic` counter,
+ * so a pop we caused ourselves is swallowed globally and only a genuine user Back
+ * closes the topmost overlay. The placeholder entries are interchangeable (same
+ * URL), so it only matters that their *count* tracks the number of open overlays
+ * — which this keeps true through nesting and React StrictMode's double-invoke.
  */
+type Overlay = { close: () => void; closedByBack: boolean }
+
+const stack: Overlay[] = []
+let expectedProgrammatic = 0
+let listening = false
+
+function onPopState() {
+  // A pop we triggered ourselves (consuming an entry on teardown) — swallow it.
+  if (expectedProgrammatic > 0) {
+    expectedProgrammatic--
+    return
+  }
+  // A genuine Back press → close the topmost overlay. Its entry is already gone
+  // from history; mark it so the unmount cleanup doesn't pop a second time.
+  const top = stack.pop()
+  if (top) {
+    top.closedByBack = true
+    top.close()
+  }
+}
+
+function ensureListening() {
+  if (listening) return
+  window.addEventListener('popstate', onPopState)
+  listening = true
+}
+
 export function useBackClose(active: boolean, close: () => void) {
   const closeRef = useRef(close)
   useEffect(() => {
     closeRef.current = close
   })
-  // Survives the StrictMode cleanup→effect boundary (same component instance).
-  const ignoreNextPop = useRef(false)
 
   useEffect(() => {
     if (!active) return
+    ensureListening()
 
+    const overlay: Overlay = { close: () => closeRef.current(), closedByBack: false }
     window.history.pushState({ overlay: true }, '')
-    let poppedByBack = false
-
-    const onPop = () => {
-      // The pop our own cleanup-time back() produced (StrictMode) — ignore once.
-      if (ignoreNextPop.current) {
-        ignoreNextPop.current = false
-        return
-      }
-      poppedByBack = true
-      closeRef.current()
-    }
-    window.addEventListener('popstate', onPop)
+    stack.push(overlay)
 
     return () => {
-      window.removeEventListener('popstate', onPop)
-      // Closed from the UI (not by Back) → Back never popped our entry, so remove
-      // it now to keep the stack balanced. Flag the resulting popstate as ours so
-      // a still-mounted listener (StrictMode's second effect) doesn't act on it.
-      if (!poppedByBack) {
-        ignoreNextPop.current = true
+      const idx = stack.lastIndexOf(overlay)
+      if (idx !== -1) stack.splice(idx, 1)
+      // Closed from the UI (Back never popped our entry) → consume it now to keep
+      // the stack balanced. The persistent listener swallows the resulting pop.
+      if (!overlay.closedByBack) {
+        expectedProgrammatic++
         window.history.back()
       }
     }

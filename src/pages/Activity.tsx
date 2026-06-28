@@ -13,6 +13,7 @@ import { AppShell } from '../components/AppShell'
 import { Avatar } from '../components/Avatar'
 import { Eyebrow } from '../components/Eyebrow'
 import { MoodIcon } from '../components/MoodIcon'
+import { useBackClose } from '../components/useBackClose'
 import { useConfirm } from '../components/useConfirm'
 import { db } from '../lib/firebase'
 import { useAuth } from '../auth/useAuth'
@@ -46,6 +47,8 @@ const em = (s: string) => <em className="font-display italic">{s}</em>
  *  full-screen button below the menu closes it on an outside tap. */
 function RowMenu({ onDelete }: { onDelete: () => void }) {
   const [open, setOpen] = useState(false)
+  // Back button closes the options menu instead of leaving Activity.
+  useBackClose(open, () => setOpen(false))
   return (
     <div className="relative shrink-0">
       <button
