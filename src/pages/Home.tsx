@@ -108,7 +108,10 @@ function useSparkleCanvas() {
       size.current = { w: r.width, h: r.height }
       cv.width = Math.round(r.width * dpr.current)
       cv.height = Math.round(r.height * dpr.current)
-      gold.current = hexToRgb(getComputedStyle(cv).getPropertyValue('--gold') || '#c7a24e')
+      // Take the gold token but pull it most of the way to white — a pale,
+      // champagne shimmer reads far better than the fiery, saturated gold.
+      const raw = hexToRgb(getComputedStyle(cv).getPropertyValue('--gold') || '#c7a24e')
+      gold.current = raw.map((c) => Math.round(c * 0.32 + 255 * 0.68)) as [number, number, number]
     }
     measure()
     const ro = new ResizeObserver(measure)
@@ -149,11 +152,11 @@ function useSparkleCanvas() {
         const rad = p.size * (p.spark ? 0.4 + 0.6 * a : 0.7 + 0.3 * a)
         const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rad)
         if (p.spark) {
-          g.addColorStop(0, `rgba(255,252,244,${0.95 * a})`)
-          g.addColorStop(0.5, `rgba(${gr},${gg},${gb},${0.5 * a})`)
+          g.addColorStop(0, `rgba(255,253,250,${0.6 * a})`)
+          g.addColorStop(0.5, `rgba(${gr},${gg},${gb},${0.32 * a})`)
         } else {
-          g.addColorStop(0, `rgba(255,249,235,${0.55 * a})`)
-          g.addColorStop(0.45, `rgba(${gr},${gg},${gb},${0.32 * a})`)
+          g.addColorStop(0, `rgba(255,252,246,${0.34 * a})`)
+          g.addColorStop(0.45, `rgba(${gr},${gg},${gb},${0.2 * a})`)
         }
         g.addColorStop(1, `rgba(${gr},${gg},${gb},0)`)
         ctx.fillStyle = g
