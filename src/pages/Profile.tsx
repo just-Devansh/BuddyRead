@@ -35,7 +35,7 @@ function StatButton({
       className={`flex-1 py-1 text-center transition-colors ${divide ? 'border-r border-border' : ''}`}
     >
       <div
-        className={`font-display text-3xl font-semibold ${active ? 'text-accent' : 'text-text'}`}
+        className={`numeral text-3xl font-semibold ${active ? 'text-accent' : 'text-text'}`}
       >
         {value}
       </div>

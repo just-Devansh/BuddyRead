@@ -4,7 +4,7 @@ import { Eyebrow } from '../components/Eyebrow'
 import { useConfirm } from '../components/useConfirm'
 import { useAuth } from '../auth/useAuth'
 import { useTheme } from '../theme/useTheme'
-import type { Palette } from '../theme/theme-context'
+import type { Numerals, Palette } from '../theme/theme-context'
 import { tapHaptic } from '../lib/haptics'
 
 /** A representative trio of swatches for each palette, so the choice is visible
@@ -30,6 +30,26 @@ const PALETTES: {
   },
 ]
 
+/** The numeral fonts on offer, each previewed live in its own face (the
+ *  `num-*` class sets the family that the `numeral` sample then renders in). */
+const NUMERAL_FONTS: { value: Numerals; name: string; blurb: string }[] = [
+  {
+    value: 'spectral',
+    name: 'Spectral',
+    blurb: 'A serif made for screens — calm, modern-classic.',
+  },
+  {
+    value: 'garamond',
+    name: 'Garamond',
+    blurb: 'Oldstyle figures that nestle into the prose.',
+  },
+  {
+    value: 'cormorant',
+    name: 'Cormorant',
+    blurb: 'High-contrast and elegant, a touch display.',
+  },
+]
+
 function Swatches({ colors }: { colors: [string, string, string] }) {
   return (
     <span className="flex -space-x-1.5" aria-hidden="true">
@@ -52,13 +72,19 @@ function Swatches({ colors }: { colors: [string, string, string] }) {
  */
 export function Settings() {
   const { signOut } = useAuth()
-  const { palette, setPalette } = useTheme()
+  const { palette, setPalette, numerals, setNumerals } = useTheme()
   const { confirm, dialog } = useConfirm()
 
   const choose = (p: Palette) => {
     if (p === palette) return
     tapHaptic()
     setPalette(p)
+  }
+
+  const chooseNumerals = (n: Numerals) => {
+    if (n === numerals) return
+    tapHaptic()
+    setNumerals(n)
   }
 
   const signOutConfirmed = async () => {
@@ -119,6 +145,64 @@ export function Settings() {
                   </span>
                   <span className="block text-pretty text-sm leading-snug text-text-muted">
                     {p.blurb}
+                  </span>
+                </span>
+                <span
+                  className={[
+                    'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-colors',
+                    active ? 'border-accent bg-accent text-accent-contrast' : 'border-border',
+                  ].join(' ')}
+                  aria-hidden="true"
+                >
+                  {active && (
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m5 12 5 5L20 6" />
+                    </svg>
+                  )}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* Numerals */}
+      <section className="mt-10">
+        <Eyebrow className="block">Numerals</Eyebrow>
+        <p className="mt-1 text-sm text-text-muted">
+          The font for value numbers — ratings, reading pace, counts. Each row
+          shows its own figures.
+        </p>
+        <div role="radiogroup" aria-label="Numerals" className="mt-4 space-y-2.5">
+          {NUMERAL_FONTS.map((f) => {
+            const active = numerals === f.value
+            return (
+              <button
+                key={f.value}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => chooseNumerals(f.value)}
+                className={[
+                  'flex w-full items-center gap-4 rounded-2xl border px-4 py-3.5 text-left transition-colors',
+                  active
+                    ? 'border-accent/50 bg-accent/8 ring-1 ring-inset ring-accent/20'
+                    : 'border-border bg-surface hover:border-accent/30',
+                ].join(' ')}
+              >
+                {/* Live sample, rendered in this option's own face */}
+                <span
+                  className={`numeral num-${f.value} grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-border-soft bg-surface-alt text-lg leading-none text-text`}
+                  aria-hidden="true"
+                >
+                  4.25
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display text-xl leading-tight text-text">
+                    {f.name}
+                  </span>
+                  <span className="block text-pretty text-sm leading-snug text-text-muted">
+                    {f.blurb}
                   </span>
                 </span>
                 <span

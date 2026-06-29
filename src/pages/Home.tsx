@@ -47,7 +47,7 @@ function HeroRow({ label, frac, tone }: { label: string; frac: number | null; to
         <>
           <ProgressBar value={frac ?? 0} tone={tone} className="flex-1" />
           <span
-            className={`w-12 shrink-0 text-right font-display text-2xl font-semibold leading-none ${tone === 'gold' ? 'text-gold' : 'text-accent'}`}
+            className={`numeral w-12 shrink-0 text-right text-2xl font-semibold leading-none ${tone === 'gold' ? 'text-gold' : 'text-accent'}`}
           >
             {pct}
             <span className="text-xs text-text-faint">%</span>

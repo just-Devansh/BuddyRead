@@ -211,7 +211,7 @@ export function LogSessionSheet({
             </button>
 
             <div className="flex flex-col items-center leading-none">
-              <span className="font-display text-5xl font-semibold leading-none text-text">
+              <span className="numeral text-5xl font-semibold leading-none text-text">
                 {page}
               </span>
               <span className="mt-2 font-mono text-[10px] text-text-faint">

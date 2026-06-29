@@ -117,7 +117,7 @@ export function RateBookDialog({
           <div key="rate" style={stepAnim}>
             <div className="mt-7 flex flex-col items-center">
               <StarRating value={rating} onChange={setRating} size="text-[2.75rem]" />
-              <span className="mt-3 min-w-[3ch] text-center font-display text-2xl text-text-muted">
+              <span className="numeral mt-3 min-w-[3ch] text-center text-2xl text-text-muted">
                 {rating > 0 ? formatRating(rating) : '—'}
               </span>
               <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.12em] text-text-faint">

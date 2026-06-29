@@ -10,7 +10,7 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 import { generateInviteCode } from './inviteCode'
-import type { Palette, ThemePreference } from '../theme/theme-context'
+import type { Numerals, Palette, ThemePreference } from '../theme/theme-context'
 
 /** Shape of a `users/{uid}` document. */
 export interface UserDoc {
@@ -22,6 +22,7 @@ export interface UserDoc {
   inviteCode: string // short, unique, human-typeable
   theme: ThemePreference
   palette?: Palette // colour palette (warm | lavender); absent on older docs = warm
+  numerals?: Numerals // numeral font; absent on older docs = spectral
   createdAt: Timestamp | null
 }
 
@@ -95,6 +96,7 @@ export async function ensureUserDoc(user: User): Promise<void> {
     inviteCode,
     theme: 'system' as const,
     palette: 'warm' as const,
+    numerals: 'spectral' as const,
     createdAt: serverTimestamp(),
   })
 }
@@ -113,4 +115,12 @@ export async function updateUserPalette(
   palette: Palette,
 ): Promise<void> {
   await updateDoc(doc(db, 'users', uid), { palette })
+}
+
+/** Persist the numeral-font choice to the account so it follows the reader too. */
+export async function updateUserNumerals(
+  uid: string,
+  numerals: Numerals,
+): Promise<void> {
+  await updateDoc(doc(db, 'users', uid), { numerals })
 }
