@@ -196,6 +196,28 @@ h1, h2, h3, h4 {
   letter-spacing: -0.005em;
 }
 
+/* ---- Numerals -------------------------------------------------------------
+   A reader-chosen font for *value* numbers — ratings, reading pace, page
+   counts, profile counts. ThemeProvider sets one `.num-*` class on <html>
+   (picking the family + figure style); `.numeral` spans consume it. The mono
+   date/eyebrow micro-labels are deliberately left out of this. */
+.numeral {
+  font-family: var(--num-font, var(--font-body));
+  font-feature-settings: var(--num-feat, normal);
+}
+.num-spectral {
+  --num-font: 'Spectral', ui-serif, Georgia, serif;
+  --num-feat: normal; /* clean lining figures */
+}
+.num-garamond {
+  --num-font: var(--font-body);
+  --num-feat: 'onum' 1; /* oldstyle figures — nestle into prose */
+}
+.num-cormorant {
+  --num-font: var(--font-display);
+  --num-feat: normal;
+}
+
 /* Hide the native horizontal scrollbar — the curated row fades at its edges and
    snaps instead, so the browser's grey bar would only cheapen it. */
 .no-scrollbar {

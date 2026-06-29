@@ -118,7 +118,7 @@ export function CloseReadSheet({
         <div className="mt-7 flex flex-col items-center">
           <StarRating value={rating} onChange={setRating} size="text-[2.75rem]" />
           <div className="mt-2 flex items-center gap-3">
-            <span className="min-w-[3ch] text-center font-display text-xl text-text-muted">
+            <span className="numeral min-w-[3ch] text-center text-xl text-text-muted">
               {rating > 0 ? formatRating(rating) : '—'}
             </span>
             <button

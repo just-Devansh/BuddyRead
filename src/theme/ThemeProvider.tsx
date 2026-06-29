@@ -1,8 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ThemeContext, type Palette, type ThemePreference } from './theme-context'
+import {
+  ThemeContext,
+  type Numerals,
+  type Palette,
+  type ThemePreference,
+} from './theme-context'
 
 const STORAGE_KEY = 'buddyread:theme'
 const PALETTE_KEY = 'buddyread:palette'
+const NUMERALS_KEY = 'buddyread:numerals'
+const NUMERAL_OPTIONS: Numerals[] = ['spectral', 'garamond', 'cormorant']
 
 function readStoredPreference(): ThemePreference {
   if (typeof localStorage === 'undefined') return 'system'
@@ -15,6 +22,14 @@ function readStoredPreference(): ThemePreference {
 function readStoredPalette(): Palette {
   if (typeof localStorage === 'undefined') return 'warm'
   return localStorage.getItem(PALETTE_KEY) === 'lavender' ? 'lavender' : 'warm'
+}
+
+function readStoredNumerals(): Numerals {
+  if (typeof localStorage === 'undefined') return 'spectral'
+  const stored = localStorage.getItem(NUMERALS_KEY)
+  return NUMERAL_OPTIONS.includes(stored as Numerals)
+    ? (stored as Numerals)
+    : 'spectral'
 }
 
 function systemPrefersDark(): boolean {
@@ -33,6 +48,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [preference, setPreferenceState] =
     useState<ThemePreference>(readStoredPreference)
   const [palette, setPaletteState] = useState<Palette>(readStoredPalette)
+  const [numerals, setNumeralsState] = useState<Numerals>(readStoredNumerals)
   const [systemDark, setSystemDark] = useState(systemPrefersDark)
 
   // Track the OS setting so 'system' stays honest without a reload.
@@ -59,6 +75,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.classList.toggle('palette-lavender', palette === 'lavender')
   }, [palette])
 
+  // Paint the numeral font — one `.num-*` class on <html> picks the family +
+  // figure style every `.numeral` span consumes.
+  useEffect(() => {
+    const root = document.documentElement
+    NUMERAL_OPTIONS.forEach((n) => root.classList.toggle(`num-${n}`, n === numerals))
+  }, [numerals])
+
   const setPreference = useCallback((next: ThemePreference) => {
     setPreferenceState(next)
     try {
@@ -77,9 +100,34 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  const setNumerals = useCallback((next: Numerals) => {
+    setNumeralsState(next)
+    try {
+      localStorage.setItem(NUMERALS_KEY, next)
+    } catch {
+      // Private mode / storage disabled — choice just won't persist.
+    }
+  }, [])
+
   const value = useMemo(
-    () => ({ preference, resolved, setPreference, palette, setPalette }),
-    [preference, resolved, setPreference, palette, setPalette],
+    () => ({
+      preference,
+      resolved,
+      setPreference,
+      palette,
+      setPalette,
+      numerals,
+      setNumerals,
+    }),
+    [
+      preference,
+      resolved,
+      setPreference,
+      palette,
+      setPalette,
+      numerals,
+      setNumerals,
+    ],
   )
 
   return <ThemeContext value={value}>{children}</ThemeContext>

@@ -35,7 +35,7 @@ function StatButton({
       className={`flex-1 py-1 text-center transition-colors ${divide ? 'border-r border-border' : ''}`}
     >
       <div
-        className={`font-display text-3xl font-semibold ${active ? 'text-accent' : 'text-text'}`}
+        className={`numeral text-3xl font-semibold ${active ? 'text-accent' : 'text-text'}`}
       >
         {value}
       </div>
@@ -287,9 +287,14 @@ export function Profile() {
         <div className="min-w-0 flex-1">
           <p className="font-display text-lg leading-tight text-text">Your reading circle</p>
           <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text-faint">
-            {friends.length === 0
-              ? 'Add a buddy by invite code'
-              : `${friends.length} ${friends.length === 1 ? 'buddy' : 'buddies'}`}
+            {friends.length === 0 ? (
+              'Add a buddy by invite code'
+            ) : (
+              <>
+                <span className="numeral">{friends.length}</span>{' '}
+                {friends.length === 1 ? 'buddy' : 'buddies'}
+              </>
+            )}
           </p>
         </div>
         <svg

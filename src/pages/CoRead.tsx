@@ -406,7 +406,7 @@ export function CoRead() {
                   {!myFinish.dnf && myFinish.rating != null && (
                     <div className="mt-3 flex flex-col items-center gap-1.5">
                       <StarRating value={myFinish.rating} size="text-2xl" />
-                      <span className="font-display text-lg text-text-muted">
+                      <span className="numeral text-lg text-text-muted">
                         {formatRating(myFinish.rating)}
                         {myFinish.favorite && <span className="ml-1.5 text-accent">♥</span>}
                       </span>

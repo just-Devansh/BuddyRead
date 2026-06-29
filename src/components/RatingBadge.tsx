@@ -1,7 +1,7 @@
 import { formatRating } from '../lib/rating'
 
 /**
- * A tiny "★ 4¼" pill, à la Fable, for stamping a reader's rating onto a book
+ * A tiny "★ 4.25" pill, à la Fable, for stamping a reader's rating onto a book
  * cover in the library. Always a dark, translucent chip with a gold star, so it
  * reads cleanly over any cover art in either theme. Decorative — the cover it
  * sits on already carries the title for screen readers.
@@ -15,7 +15,7 @@ export function RatingBadge({ value, className = '' }: { value: number; classNam
       <span className="text-gold" aria-hidden="true">
         ★
       </span>
-      <span>{formatRating(value)}</span>
+      <span className="numeral">{formatRating(value)}</span>
     </span>
   )
 }

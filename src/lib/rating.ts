@@ -1,8 +1,6 @@
-/** Format a 0–5 quarter-step rating with a fraction glyph, e.g. "4¼", "½". */
+/** Format a 0–5 quarter-step rating as a plain decimal, e.g. "4", "4.25",
+ *  "4.5", "4.75". Whole numbers stay whole (no trailing ".0"); the quarter
+ *  steps read as decimals rather than tiny fraction glyphs. */
 export function formatRating(v: number): string {
-  const whole = Math.floor(v)
-  const frac = v - whole
-  const glyph = frac >= 0.75 ? '¾' : frac >= 0.5 ? '½' : frac >= 0.25 ? '¼' : ''
-  if (whole === 0 && glyph) return glyph
-  return `${whole}${glyph}`
+  return Number.isInteger(v) ? String(v) : Number(v.toFixed(2)).toString()
 }

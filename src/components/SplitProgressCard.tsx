@@ -47,11 +47,11 @@ function Half({ side, tone }: { side: Side; tone: 'accent' | 'gold' }) {
           <span className="mt-1.5 rounded-full border border-border bg-bg px-2 py-1 font-mono text-[8.5px] uppercase tracking-[0.1em] text-text-muted">
             {p.edition}
           </span>
-          <div className="mt-3 font-display text-5xl font-semibold leading-none text-text">
+          <div className="numeral mt-3 text-5xl font-semibold leading-none text-text">
             {pct}
             <span className="text-xl text-text-muted">%</span>
           </div>
-          <p className="mt-1 font-mono text-[11px] text-text-muted">
+          <p className="numeral mt-1 text-[11px] text-text-muted">
             {p.currentPage} / {p.totalPages}
           </p>
           <ProgressBar

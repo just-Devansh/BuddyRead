@@ -110,8 +110,9 @@ export function BuddyProfile() {
         )}
         {!libLoading && lib.length > 0 && (
           <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-text-faint">
-            {readCount} read · {booksOnShelf(lib, 'tbr').length} to read ·{' '}
-            {booksOnShelf(lib, 'favorite').length} favorites
+            <span className="numeral">{readCount}</span> read ·{' '}
+            <span className="numeral">{booksOnShelf(lib, 'tbr').length}</span> to read ·{' '}
+            <span className="numeral">{booksOnShelf(lib, 'favorite').length}</span> favorites
           </p>
         )}
       </section>

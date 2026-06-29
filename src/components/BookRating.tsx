@@ -49,7 +49,7 @@ export function BookRating({ uid, book }: { uid: string; book: LibraryBook }) {
         {value != null ? (
           <>
             <StarRating value={value} size="text-sm" fillColor="var(--gold)" trackColor="var(--border)" />
-            <span className="font-mono text-[11px] text-text-muted">{formatRating(value)}</span>
+            <span className="numeral text-[13px] text-text-muted">{formatRating(value)}</span>
           </>
         ) : (
           <>
