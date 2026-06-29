@@ -51,7 +51,7 @@ function Half({ side, tone }: { side: Side; tone: 'accent' | 'gold' }) {
             {pct}
             <span className="text-xl text-text-muted">%</span>
           </div>
-          <p className="numeral mt-1 text-[11px] text-text-muted">
+          <p className="mt-1 font-mono text-[11px] text-text-muted">
             {p.currentPage} / {p.totalPages}
           </p>
           <ProgressBar

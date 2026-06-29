@@ -287,14 +287,9 @@ export function Profile() {
         <div className="min-w-0 flex-1">
           <p className="font-display text-lg leading-tight text-text">Your reading circle</p>
           <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text-faint">
-            {friends.length === 0 ? (
-              'Add a buddy by invite code'
-            ) : (
-              <>
-                <span className="numeral">{friends.length}</span>{' '}
-                {friends.length === 1 ? 'buddy' : 'buddies'}
-              </>
-            )}
+            {friends.length === 0
+              ? 'Add a buddy by invite code'
+              : `${friends.length} ${friends.length === 1 ? 'buddy' : 'buddies'}`}
           </p>
         </div>
         <svg

@@ -15,7 +15,7 @@ export function RatingBadge({ value, className = '' }: { value: number; classNam
       <span className="text-gold" aria-hidden="true">
         ★
       </span>
-      <span className="numeral">{formatRating(value)}</span>
+      <span>{formatRating(value)}</span>
     </span>
   )
 }
