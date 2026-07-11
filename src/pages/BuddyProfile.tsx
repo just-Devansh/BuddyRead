@@ -123,12 +123,8 @@ export function BuddyProfile() {
           <p className="py-10 text-center text-sm text-text-muted">
             Opening their bookcase…
           </p>
-        ) : lib.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border bg-surface/50 px-4 py-5 text-center text-pretty text-sm leading-relaxed text-text-muted">
-            No books shelved yet.
-          </p>
         ) : (
-          <Bookshelf items={lib} />
+          <Bookshelf items={lib} owner={false} name={firstName} />
         )}
       </section>
 
