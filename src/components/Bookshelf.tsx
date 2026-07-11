@@ -51,15 +51,17 @@ function ShelfBook({ item }: { item: LibraryItem }) {
   )
 }
 
-/** An empty shelf — two dashed cover-slots and a one-line hint. */
-function EmptyShelf({ hint }: { hint: string }) {
+/** An empty shelf — two dashed cover-slots and a one-line hint. The leading `+`
+ *  glyph is an "add a book" cue, so it only shows on your own bookcase; a buddy's
+ *  empty shelf gets a plain placeholder (you can't shelve for them). */
+function EmptyShelf({ hint, owner }: { hint: string; owner: boolean }) {
   return (
     <div className="flex items-stretch gap-3">
       <div
         className={`flex ${COVER} aspect-[2/3] shrink-0 items-center justify-center rounded-[7px] border border-dashed border-text-faint/45 text-2xl font-light text-text-faint/70`}
         aria-hidden="true"
       >
-        +
+        {owner ? '+' : ''}
       </div>
       <div
         className={`${COVER} aspect-[2/3] shrink-0 rounded-[7px] border border-dashed border-text-faint/30`}
@@ -76,10 +78,12 @@ function EmptyShelf({ hint }: { hint: string }) {
 function Shelf({
   label,
   hint,
+  owner,
   items,
 }: {
   label: string
   hint: string
+  owner: boolean
   items: LibraryItem[]
 }) {
   return (
@@ -89,7 +93,7 @@ function Shelf({
         <span className="font-mono text-[10px] text-text-faint">{items.length}</span>
       </div>
       {items.length === 0 ? (
-        <EmptyShelf hint={hint} />
+        <EmptyShelf hint={hint} owner={owner} />
       ) : (
         <ul className="no-scrollbar flex gap-3 overflow-x-auto pb-1 pt-1">
           {items.map((it) => (
@@ -101,14 +105,28 @@ function Shelf({
   )
 }
 
-export function Bookshelf({ items }: { items: LibraryItem[] }) {
+/**
+ * The wooden cabinet of three shelves. Renders your own library by default; pass
+ * `owner={false}` with the shelf-holder's `name` on a buddy's profile, so empty
+ * shelves lose the "add" cue and speak about them in the third person.
+ */
+export function Bookshelf({
+  items,
+  owner = true,
+  name,
+}: {
+  items: LibraryItem[]
+  owner?: boolean
+  name?: string
+}) {
   return (
     <div className="shelf-cabinet">
       {SHELVES.map((s) => (
         <Shelf
           key={s.key}
           label={s.label}
-          hint={s.empty}
+          hint={owner ? s.empty : s.emptyOther(name ?? 'They')}
+          owner={owner}
           items={booksOnShelf(items, s.key)}
         />
       ))}

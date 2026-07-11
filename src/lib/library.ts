@@ -49,17 +49,38 @@ export interface LibraryItem extends LibraryDoc {
   id: string // === book.id
 }
 
-/** The three shelves, in display order, with their labels and an empty-shelf
- *  hint (shown beside the dashed placeholder slots when a shelf has no books). */
+/** The three shelves, in display order, with their labels and empty-shelf hints
+ *  (shown beside the dashed placeholder slots when a shelf has no books). `empty`
+ *  is your own bookcase; `emptyOther` is a buddy's, in the third person — a little
+ *  personality where a bare shelf would otherwise just look broken. */
 export const SHELVES: {
   key: Shelf
   label: string
   eyebrow: string
   empty: string
+  emptyOther: (name: string) => string
 }[] = [
-  { key: 'tbr', label: 'To Read', eyebrow: 'TBR', empty: 'Your next reads will live here.' },
-  { key: 'read', label: 'Read', eyebrow: 'Read', empty: 'Books you finish will gather here.' },
-  { key: 'favorite', label: 'Favorites', eyebrow: 'Favorites', empty: 'The ones you loved most.' },
+  {
+    key: 'tbr',
+    label: 'To Read',
+    eyebrow: 'TBR',
+    empty: 'An empty TBR? Blasphemy.',
+    emptyOther: (n) => `${n}'s TBR is empty. Suspicious.`,
+  },
+  {
+    key: 'read',
+    label: 'Read',
+    eyebrow: 'Read',
+    empty: 'Nothing finished yet — the night is young.',
+    emptyOther: (n) => `${n} hasn't finished a book here yet.`,
+  },
+  {
+    key: 'favorite',
+    label: 'Favorites',
+    eyebrow: 'Favorites',
+    empty: 'No favorites yet. Hard to please — respect.',
+    emptyOther: (n) => `${n} hasn't crowned a favorite yet.`,
+  },
 ]
 
 /** Place (or move) a book onto a shelf. Favorite is stored as-is and also reads
