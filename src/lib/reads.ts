@@ -279,3 +279,16 @@ export function fractionFor(read: Read, uid: string): number | null {
   if (!p || !p.totalPages) return null
   return Math.max(0, Math.min(1, p.currentPage / p.totalPages))
 }
+
+/**
+ * When this read last saw a page logged — the freshest `progress.updatedAt`
+ * across *either* reader (a buddy's log counts as much as yours). Falls back to
+ * `createdAt` so a read with no logs yet still sorts by when it began. Used to
+ * order the active cards so the most recently touched read floats to the top.
+ */
+export function lastLoggedAt(read: Read): number {
+  const logs = Object.values(read.progress ?? {}).map(
+    (p) => p.updatedAt?.toMillis() ?? 0,
+  )
+  return Math.max(read.createdAt?.toMillis() ?? 0, ...logs)
+}

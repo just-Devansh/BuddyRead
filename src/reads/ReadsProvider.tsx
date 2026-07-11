@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { collection, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { useAuth } from '../auth/useAuth'
-import type { Read, ReadDoc } from '../lib/reads'
+import { lastLoggedAt, type Read, type ReadDoc } from '../lib/reads'
 import { ReadsContext } from './reads-context'
 
 /**
@@ -48,8 +48,11 @@ export function ReadsProvider({ children }: { children: React.ReactNode }) {
     )
     const byNewest = (a: Read, b: Read) =>
       (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0)
+    // Active cards order by the most recent page-log (either reader's), so the
+    // read someone just touched floats to the top; pending lists stay by start.
+    const byLastLogged = (a: Read, b: Read) => lastLoggedAt(b) - lastLoggedAt(a)
     return {
-      active: active.sort(byNewest),
+      active: active.sort(byLastLogged),
       incoming: incoming.sort(byNewest),
       outgoing: outgoing.sort(byNewest),
       loading,
