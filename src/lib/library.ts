@@ -5,6 +5,7 @@ import {
   getDocs,
   serverTimestamp,
   setDoc,
+  writeBatch,
   type Timestamp,
 } from 'firebase/firestore'
 import { db } from './firebase'
@@ -43,6 +44,11 @@ export interface LibraryDoc {
   rating?: number | null
   review?: string | null
   reviewedAt?: Timestamp | null
+  /** A manual sort key **per shelf** (smaller = further left), written when the
+   *  reader drags to reorder. Per-shelf because a favorite shows on both Read and
+   *  Favorites and can sit differently on each. Absent until reordered — then the
+   *  book falls back to newest-added-leftmost (see {@link booksOnShelf}). */
+  order?: Partial<Record<Shelf, number>>
 }
 
 export interface LibraryItem extends LibraryDoc {
@@ -157,13 +163,42 @@ export async function fetchLibrary(uid: string): Promise<LibraryItem[]> {
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as LibraryDoc) }))
 }
 
+/** Effective left-to-right sort key for a book on a shelf: its manual order if
+ *  the reader has dragged it, else `-addedAt` so an untouched book stays
+ *  newest-leftmost. Manual keys are assigned as small integers (0,1,2…), which
+ *  always sort left of an untouched book's large-negative `-addedAt` — so a
+ *  freshly added book still lands leftmost even amongst reordered ones. */
+function shelfOrderKey(i: LibraryItem, shelf: Shelf): number {
+  const o = i.order?.[shelf]
+  return typeof o === 'number' ? o : -(i.addedAt?.toMillis() ?? 0)
+}
+
 /** The books that belong on a given shelf — Read also gathers Favorites. */
 export function booksOnShelf(items: LibraryItem[], shelf: Shelf): LibraryItem[] {
   const on =
     shelf === 'read'
       ? items.filter((i) => i.shelf === 'read' || i.shelf === 'favorite')
       : items.filter((i) => i.shelf === shelf)
-  return on.sort((a, b) => (b.addedAt?.toMillis() ?? 0) - (a.addedAt?.toMillis() ?? 0))
+  return on.sort((a, b) => shelfOrderKey(a, shelf) - shelfOrderKey(b, shelf))
+}
+
+/**
+ * Persist a hand-arranged shelf order. `orderedIds` is the shelf's books in their
+ * new left-to-right sequence; each gets `order.{shelf} = index` in one batch. Only
+ * this shelf's key is touched, so reordering Read never disturbs how a favorite
+ * sits on Favorites (or vice-versa). `updatedAt` is deliberately left alone — a
+ * reorder isn't a shelving event and shouldn't resurface in the circle feed.
+ */
+export async function reorderShelf(
+  uid: string,
+  shelf: Shelf,
+  orderedIds: string[],
+): Promise<void> {
+  const batch = writeBatch(db)
+  orderedIds.forEach((id, index) => {
+    batch.update(doc(db, 'users', uid, 'library', id), { [`order.${shelf}`]: index })
+  })
+  await batch.commit()
 }
 
 const SPINE_TONES: SpineTone[] = ['olive', 'wine', 'sand', 'blue', 'brown', 'plum']

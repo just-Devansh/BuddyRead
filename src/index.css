@@ -478,6 +478,25 @@ h1, h2, h3, h4 {
   transition-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
+/* Hand-arranging your own shelf: covers invite a grab, and the one you lift
+   scales up with a deeper shadow. The dnd library drives the li's transform to
+   follow the finger, so the lift lives on the inner cover to compose with it. */
+.shelf-editable .shelf-book {
+  cursor: grab;
+}
+.shelf-editable .shelf-book > a {
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease;
+}
+.shelf-book.is-dragging {
+  cursor: grabbing;
+}
+.shelf-book.is-dragging > a {
+  transform: scale(1.05);
+  box-shadow: 0 18px 30px -12px rgba(20, 12, 4, 0.65);
+}
+
 /* The curated shelf unrolls: each book settles onto the shelf in turn, like a
    scroll being unfurled left to right. Staggered via inline animation-delay. */
 @keyframes unfurl-in {
