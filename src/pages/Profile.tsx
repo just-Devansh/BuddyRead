@@ -9,8 +9,11 @@ import { ThemeToggle } from '../theme/ThemeToggle'
 import { useAuth } from '../auth/useAuth'
 import { useFriends } from '../friends/useFriends'
 import { useReads } from '../reads/useReads'
+import { useLibrary } from '../library/useLibrary'
 import { otherParty } from '../lib/friends'
 import { fractionFor, otherReader } from '../lib/reads'
+import { booksOnShelf } from '../lib/library'
+import { formatRating } from '../lib/rating'
 
 type Tab = 'read' | 'reading' | 'buddies'
 
@@ -62,6 +65,10 @@ export function Profile() {
   const { user, userDoc, error } = useAuth()
   const { friends } = useFriends()
   const { active } = useReads()
+  const { items } = useLibrary()
+  // "Read" mirrors the bookshelf's Read shelf (read + favorite), so a book you
+  // shelve as read — even one finished before the app — counts here too.
+  const readBooks = booksOnShelf(items, 'read')
   const [copied, setCopied] = useState(false)
   const [tab, setTab] = useState<Tab | null>(null)
   const [editing, setEditing] = useState(false)
@@ -153,7 +160,7 @@ export function Profile() {
 
       {/* Stats — tap to open the list below */}
       <section className="mt-7 flex">
-        <StatButton value="0" label="read" active={tab === 'read'} onClick={() => toggle('read')} divide />
+        <StatButton value={String(readBooks.length)} label="read" active={tab === 'read'} onClick={() => toggle('read')} divide />
         <StatButton
           value={String(active.length)}
           label="reading"
@@ -171,12 +178,37 @@ export function Profile() {
 
       {tab && (
         <div className="mt-4">
-          {tab === 'read' && (
-            <EmptyNote>
-              No finished reads yet. When you close the back cover on one, it'll
-              rest here — with the dates you read it, who with, and your rating.
-            </EmptyNote>
-          )}
+          {tab === 'read' &&
+            (readBooks.length === 0 ? (
+              <EmptyNote>No finished reads yet.</EmptyNote>
+            ) : (
+              <ul className="space-y-2.5">
+                {readBooks.map((it) => (
+                  <li key={it.id}>
+                    <Link
+                      to={`/book/${it.book.id}`}
+                      state={{ from: '/profile' }}
+                      className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:border-accent/40"
+                    >
+                      <BookCover
+                        book={{ title: it.book.title, coverUrl: it.book.coverUrl, isbn13: null, isbn10: null }}
+                        author={it.book.authors[0]}
+                        className="w-11 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-display text-lg leading-tight text-text">
+                          {it.book.title}
+                        </p>
+                        <Eyebrow className="mt-0.5 block">
+                          {it.book.authors[0] ?? 'Unknown'}
+                          {it.rating != null ? ` · ${formatRating(it.rating)}★` : ''}
+                        </Eyebrow>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ))}
 
           {tab === 'reading' &&
             (active.length === 0 ? (

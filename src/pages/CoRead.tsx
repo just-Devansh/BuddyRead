@@ -237,7 +237,7 @@ export function CoRead() {
       message: solo
         ? `You'll write your verdict on “${read.book.title}” and file it on your shelf.`
         : `You'll write your verdict on “${read.book.title}”. It stays sealed until ${buddyName} closes the book too.`,
-      confirmLabel: 'Continue',
+      confirmLabel: 'Close',
     })
     if (ok) setClosing(true)
   }
