@@ -44,13 +44,15 @@ function ReadAction({
       type="button"
       disabled={busy}
       onClick={onClick}
-      className="group relative flex items-center justify-center gap-2.5 overflow-hidden rounded-xl bg-text px-4 py-3 text-bg shadow-[0_10px_22px_-14px_rgba(20,12,4,0.85)] outline-none transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,0.61,0.18,1)] hover:-translate-y-0.5 hover:shadow-[0_16px_28px_-14px_rgba(20,12,4,0.95)] active:translate-y-0 active:scale-[0.97] active:duration-150 disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+      /* The glow: a crisp accent ring hugging the border, an outward bloom, and a
+         faint inward wash — so the edge reads lit rather than merely coloured.
+         Inline because the layered accent-tinted shadow doesn't fit a utility. */
+      style={{
+        boxShadow:
+          '0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 20px -4px color-mix(in srgb, var(--accent) 65%, transparent), inset 0 0 16px -10px color-mix(in srgb, var(--accent) 80%, transparent)',
+      }}
+      className="group relative flex items-center justify-center gap-2.5 overflow-hidden rounded-xl border-2 border-accent/70 bg-surface px-4 py-3 text-text outline-none transition-[transform] duration-300 ease-[cubic-bezier(0.22,0.61,0.18,1)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] active:duration-150 disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
     >
-      {/* Glassy light-catch along the top edge — convex, premium. */}
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent"
-      />
       <svg
         viewBox="0 0 24 24"
         width="18"
