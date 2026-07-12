@@ -25,6 +25,15 @@
   --bar-track: #e1d5ba;
   --bar-fill: #8a4536; /* progress bar (your pace) */
 
+  /* The Library cabinet's wood + recessed back panel. Tokenised so each palette
+     dresses the shelf in its own timber (warm oak here; plum-rosewood in
+     lavender). `--shelf-motif` tints the faint pressed-fern watermark. */
+  --shelf-wood: linear-gradient(180deg, #d7b27e 0%, #c49a5f 46%, #a87c45 100%);
+  --shelf-panel: #e7dbc2;
+  --shelf-edge-hi: rgba(255, 244, 222, 0.6);
+  --shelf-panel-hi: rgba(255, 248, 230, 0.5);
+  --shelf-motif: rgba(74, 50, 22, 0.13);
+
   /* The nook lamp's light. Tokenised so a palette can recolour the glow (warm
      amber here; lavender in .palette-lavender) without touching the markup.
      `--lamp-rgb`/`--lamp-rgb-2` are space-separated triples for rgb(… / α). */
@@ -55,6 +64,13 @@
   --gold: #c7a24e;
   --bar-track: #332b21;
   --bar-fill: #c07458;
+
+  /* Walnut, by candlelight. */
+  --shelf-wood: linear-gradient(180deg, #7c5731 0%, #5d3f22 46%, #412b15 100%);
+  --shelf-panel: #14100a;
+  --shelf-edge-hi: rgba(255, 224, 180, 0.18);
+  --shelf-panel-hi: rgba(255, 224, 180, 0.05);
+  --shelf-motif: rgba(232, 214, 176, 0.1);
 }
 
 /* ---- Palette: Lavender -----------------------------------------------------
@@ -78,6 +94,13 @@
   --gold: #a8822f; /* kept warm — buddy's pace & ratings */
   --bar-track: #e2d8ec;
   --bar-fill: #7c4f86;
+
+  /* Plum-rosewood cabinet on a lilac back panel — the wood echoes the palette. */
+  --shelf-wood: linear-gradient(180deg, #c6acb4 0%, #ac8fa2 46%, #8a6980 100%);
+  --shelf-panel: #e4d9ee;
+  --shelf-edge-hi: rgba(250, 244, 255, 0.55);
+  --shelf-panel-hi: rgba(252, 247, 255, 0.5);
+  --shelf-motif: rgba(92, 74, 102, 0.14);
 
   /* Lavender lamplight */
   --lamp-rgb: 198 162 240;
@@ -106,6 +129,13 @@
   --gold: #c7a24e;
   --bar-track: #2f283b;
   --bar-fill: #b487cc;
+
+  /* Aubergine walnut, by night. */
+  --shelf-wood: linear-gradient(180deg, #574255 0%, #40304a 46%, #2b2035 100%);
+  --shelf-panel: #130f1a;
+  --shelf-edge-hi: rgba(226, 210, 246, 0.16);
+  --shelf-panel-hi: rgba(226, 210, 246, 0.05);
+  --shelf-motif: rgba(217, 200, 234, 0.11);
 }
 
 @theme inline {
@@ -381,37 +411,69 @@ h1, h2, h3, h4 {
    and the gap between compartments. Each shelf scrolls sideways; a book lifts
    gently on hover. */
 .shelf-cabinet {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 9px; /* the wood crossbar between shelves */
-  padding: 9px; /* the wood frame around everything */
+  gap: 11px; /* the wood crossbar between shelves */
+  padding: 11px; /* the wood frame around everything */
   border-radius: 20px;
-  background: linear-gradient(180deg, #d7b27e 0%, #c49a5f 46%, #a87c45 100%);
+  background: var(--shelf-wood);
   box-shadow:
-    0 24px 44px -24px rgba(70, 40, 15, 0.55),
-    inset 0 1px 0 rgba(255, 244, 222, 0.6),
-    inset 0 -2px 3px rgba(70, 40, 15, 0.35);
+    0 24px 44px -24px rgba(40, 24, 10, 0.55),
+    inset 0 1px 0 var(--shelf-edge-hi),
+    inset 0 -2px 3px rgba(40, 24, 10, 0.35);
+}
+/* Wood grain: fine horizontal fibre streaked over the timber, so the flat
+   gradient reads as a real board. Painted under the compartments (they're opaque
+   children), so the grain only shows on the exposed frame + crossbars. */
+.shelf-cabinet::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.018 0.7' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
+  background-size: 240px 240px;
+  opacity: 0.5;
+  mix-blend-mode: soft-light;
+  pointer-events: none;
 }
 .dark .shelf-cabinet {
-  background: linear-gradient(180deg, #7c5731 0%, #5d3f22 46%, #412b15 100%);
   box-shadow:
     0 24px 44px -24px rgba(0, 0, 0, 0.7),
-    inset 0 1px 0 rgba(255, 224, 180, 0.18),
+    inset 0 1px 0 var(--shelf-edge-hi),
     inset 0 -2px 3px rgba(0, 0, 0, 0.5);
 }
+.dark .shelf-cabinet::before {
+  opacity: 0.6;
+}
 .shelf-compartment {
+  position: relative;
   border-radius: 10px;
   padding: 13px 13px 14px;
-  background: #e7dbc2; /* recessed parchment back panel */
+  background: var(--shelf-panel); /* recessed back panel */
   box-shadow:
-    inset 0 2px 6px rgba(70, 45, 18, 0.16),
-    inset 0 -1px 0 rgba(255, 248, 230, 0.5);
+    inset 0 2px 6px rgba(40, 26, 10, 0.16),
+    inset 0 -1px 0 var(--shelf-panel-hi);
 }
 .dark .shelf-compartment {
-  background: #14100a;
   box-shadow:
     inset 0 2px 7px rgba(0, 0, 0, 0.6),
-    inset 0 -1px 0 rgba(255, 224, 180, 0.05);
+    inset 0 -1px 0 var(--shelf-panel-hi);
+}
+/* A pressed fern in the corner of each shelf — a quiet botanical, the kind you'd
+   find flattened in an old book. Masked so `--shelf-motif` tints it per palette;
+   sits behind the books (children paint above this pseudo-element). */
+.shelf-compartment::before {
+  content: '';
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  width: 54px;
+  height: 54px;
+  background-color: var(--shelf-motif);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M12 58 Q30 40 52 10'/%3E%3Cpath d='M19 47 q-8 -1 -12 -9'/%3E%3Cpath d='M26 38 q-8 -1 -12 -9'/%3E%3Cpath d='M33 29 q-8 -1 -12 -9'/%3E%3Cpath d='M40 20 q-8 -1 -12 -9'/%3E%3Cpath d='M20 46 q7 -8 15 -9'/%3E%3Cpath d='M27 37 q7 -8 15 -9'/%3E%3Cpath d='M34 28 q7 -8 15 -9'/%3E%3Cpath d='M41 19 q7 -8 15 -9'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M12 58 Q30 40 52 10'/%3E%3Cpath d='M19 47 q-8 -1 -12 -9'/%3E%3Cpath d='M26 38 q-8 -1 -12 -9'/%3E%3Cpath d='M33 29 q-8 -1 -12 -9'/%3E%3Cpath d='M40 20 q-8 -1 -12 -9'/%3E%3Cpath d='M20 46 q7 -8 15 -9'/%3E%3Cpath d='M27 37 q7 -8 15 -9'/%3E%3Cpath d='M34 28 q7 -8 15 -9'/%3E%3Cpath d='M41 19 q7 -8 15 -9'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+  pointer-events: none;
 }
 .shelf-book {
   transition: transform 200ms cubic-bezier(0.2, 0.7, 0.2, 1);
