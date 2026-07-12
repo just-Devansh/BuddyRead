@@ -1,4 +1,10 @@
-import { useMemo, useRef, useState, type CSSProperties } from 'react'
+import {
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   closestCenter,
@@ -210,6 +216,73 @@ function EditableShelf({
   )
 }
 
+/**
+ * The library ladder — the old rolling kind, leaning against the cabinet's right
+ * side. Drawn as brass (or white enamel, on lavender) tubing: each rail is laid
+ * down three times — a dark underline for depth, the metal itself, then a thin
+ * highlight along its lit edge — which is what gives the tube its roundness. It
+ * hooks over the shelf rail at the top and rides little wheels at the foot.
+ *
+ * Its length is set by the caller: the top rests on whichever shelf most recently
+ * took a book, so the ladder always points at what you last shelved.
+ */
+function Ladder({ top, height }: { top: number; height: number }) {
+  const W = 56
+  const H = Math.max(60, height)
+  const lean = 7 // the top leans in toward the shelf
+  const gap = 34 // rail spacing
+  const x0 = 9
+  const topY = 7
+  const botY = H - 7
+  const span = Math.max(1, botY - topY)
+  /** A rail's x at a given y — the lean tapers out to nothing at the foot. */
+  const xAt = (baseX: number, y: number) =>
+    baseX + lean * (1 - (y - topY) / span)
+  const rail = (baseX: number, dx = 0) =>
+    `M ${xAt(baseX, topY) + dx} ${topY} L ${xAt(baseX, botY) + dx} ${botY}`
+
+  const rungs: number[] = []
+  for (let y = topY + 16; y <= botY - 12; y += 26) rungs.push(y)
+
+  return (
+    <svg
+      className="library-ladder"
+      style={{ top }}
+      width={W}
+      height={H}
+      viewBox={`0 0 ${W} ${H}`}
+      aria-hidden="true"
+    >
+      {/* Depth beneath each rail */}
+      <path d={rail(x0, 1.2)} stroke="var(--ladder-lo)" strokeWidth="4" strokeLinecap="round" fill="none" />
+      <path d={rail(x0 + gap, 1.2)} stroke="var(--ladder-lo)" strokeWidth="4" strokeLinecap="round" fill="none" />
+
+      {/* Rungs, laid behind the rails so the rails read as the near edge */}
+      {rungs.map((y) => (
+        <g key={y}>
+          <line x1={xAt(x0, y)} y1={y + 1} x2={xAt(x0 + gap, y)} y2={y + 1} stroke="var(--ladder-lo)" strokeWidth="3" strokeLinecap="round" />
+          <line x1={xAt(x0, y)} y1={y} x2={xAt(x0 + gap, y)} y2={y} stroke="var(--ladder-metal)" strokeWidth="2.6" strokeLinecap="round" />
+          <line x1={xAt(x0, y) + 2} y1={y - 0.8} x2={xAt(x0 + gap, y) - 2} y2={y - 0.8} stroke="var(--ladder-hi)" strokeWidth="0.9" strokeLinecap="round" opacity="0.75" />
+        </g>
+      ))}
+
+      {/* The rails, then their lit edge */}
+      <path d={rail(x0)} stroke="var(--ladder-metal)" strokeWidth="3.6" strokeLinecap="round" fill="none" />
+      <path d={rail(x0 + gap)} stroke="var(--ladder-metal)" strokeWidth="3.6" strokeLinecap="round" fill="none" />
+      <path d={rail(x0, -1)} stroke="var(--ladder-hi)" strokeWidth="1.1" strokeLinecap="round" fill="none" opacity="0.8" />
+      <path d={rail(x0 + gap, -1)} stroke="var(--ladder-hi)" strokeWidth="1.1" strokeLinecap="round" fill="none" opacity="0.8" />
+
+      {/* Hooks — the ladder rests on the shelf rail */}
+      <path d={`M ${xAt(x0, topY)} ${topY} q 0 -6 7 -5.5`} stroke="var(--ladder-metal)" strokeWidth="3" strokeLinecap="round" fill="none" />
+      <path d={`M ${xAt(x0 + gap, topY)} ${topY} q 0 -6 7 -5.5`} stroke="var(--ladder-metal)" strokeWidth="3" strokeLinecap="round" fill="none" />
+
+      {/* Wheels at the foot */}
+      <circle cx={xAt(x0, botY)} cy={botY} r="3.2" fill="var(--ladder-metal)" stroke="var(--ladder-lo)" strokeWidth="0.8" />
+      <circle cx={xAt(x0 + gap, botY)} cy={botY} r="3.2" fill="var(--ladder-metal)" stroke="var(--ladder-lo)" strokeWidth="0.8" />
+    </svg>
+  )
+}
+
 /** An empty shelf — two dashed cover-slots and a one-line hint. The leading `+`
  *  glyph is an "add a book" cue, so it only shows on your own bookcase; a buddy's
  *  empty shelf gets a plain placeholder (you can't shelve for them). */
@@ -242,6 +315,7 @@ function Shelf({
   owner,
   uid,
   items,
+  sectionRef,
 }: {
   shelf: ShelfKey
   label: string
@@ -249,9 +323,10 @@ function Shelf({
   owner: boolean
   uid?: string
   items: LibraryItem[]
+  sectionRef?: (el: HTMLElement | null) => void
 }) {
   return (
-    <section className="shelf-compartment">
+    <section ref={sectionRef} className="shelf-compartment">
       <div className="mb-3 flex items-baseline justify-between">
         <Eyebrow>{label}</Eyebrow>
         <span className="font-mono text-[10px] text-text-faint">{items.length}</span>
@@ -288,9 +363,47 @@ export function Bookshelf({
 }) {
   const { user } = useAuth()
   const uid = owner ? user?.uid : undefined
+
+  const cabinetRef = useRef<HTMLDivElement>(null)
+  const shelfEls = useRef<Array<HTMLElement | null>>([])
+  const [ladder, setLadder] = useState<{ top: number; height: number } | null>(null)
+
+  // The shelf the ladder leans against: the one holding the most recently added
+  // book. A favorite is filed under `favorite`, so it points at Favorites — the
+  // shelf you actually put it on.
+  const targetIndex = useMemo(() => {
+    const newest = items.reduce<LibraryItem | null>((best, i) => {
+      const t = i.addedAt?.toMillis() ?? 0
+      return !best || t > (best.addedAt?.toMillis() ?? 0) ? i : best
+    }, null)
+    return newest ? SHELVES.findIndex((s) => s.key === newest.shelf) : -1
+  }, [items])
+
+  // Measure where that shelf sits inside the cabinet, so the ladder's top can rest
+  // on it and its foot reach the cabinet floor. Re-measured on any resize.
+  useLayoutEffect(() => {
+    const cab = cabinetRef.current
+    const el = targetIndex >= 0 ? shelfEls.current[targetIndex] : null
+    const measure = () => {
+      if (!cab || !el) {
+        setLadder(null)
+        return
+      }
+      const top = Math.max(0, el.offsetTop - 5) // hooks overhang onto the wood rail
+      const floor = cab.clientHeight - 11 // inside the cabinet's frame padding
+      setLadder({ top, height: Math.max(56, floor - top) })
+    }
+    measure()
+    if (!cab || !el) return
+    const ro = new ResizeObserver(measure)
+    ro.observe(cab)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [targetIndex, items])
+
   return (
-    <div className="shelf-cabinet">
-      {SHELVES.map((s) => (
+    <div ref={cabinetRef} className="shelf-cabinet">
+      {SHELVES.map((s, idx) => (
         <Shelf
           key={s.key}
           shelf={s.key}
@@ -299,8 +412,12 @@ export function Bookshelf({
           owner={owner}
           uid={uid}
           items={booksOnShelf(items, s.key)}
+          sectionRef={(el) => {
+            shelfEls.current[idx] = el
+          }}
         />
       ))}
+      {ladder && <Ladder top={ladder.top} height={ladder.height} />}
     </div>
   )
 }
