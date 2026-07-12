@@ -317,26 +317,30 @@ function verbFor(e: CircleEvent): string {
 /**
  * One line of circle activity — a buddy shelved, finished, or reviewed a book.
  * It's a quiet way to keep in touch with what your people are reading, *not* a
- * call to action: tapping opens the book, nothing more. No "read together" CTA
- * lives here — that belongs on the book and a friend's profile, not stamped on
- * every passing update.
+ * call to action. Only the **cover** is tappable (→ the book); the news text
+ * itself does nothing, so a passing glance never risks an accidental navigation.
+ * No "read together" CTA lives here — that belongs on the book and a friend's
+ * profile, not stamped on every passing update.
  */
 function CircleEventCard({ event }: { event: CircleEvent }) {
   const { actor, book } = event
   // Up to two authors so the line stays a line; the rest is implied by "et al."
   const authorLine = book.authors?.slice(0, 2).join(', ')
   return (
-    <Link
-      to={`/book/${book.id}`}
-      state={{ from: '/home' }}
-      className="group flex items-start gap-3.5 rounded-xl border border-border-soft bg-surface/40 px-3.5 py-3 transition-colors hover:border-accent/30 hover:bg-surface/70"
-    >
-      <BookCover
-        book={{ title: book.title, coverUrl: book.coverUrl, isbn13: null, isbn10: null }}
-        author={book.authors[0]}
-        className="w-11 shrink-0"
-        rounded="rounded-md"
-      />
+    <div className="flex items-start gap-3.5 rounded-xl border border-border-soft bg-surface/40 px-3.5 py-3">
+      <Link
+        to={`/book/${book.id}`}
+        state={{ from: '/home' }}
+        aria-label={`Open ${book.title}`}
+        className="group shrink-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      >
+        <BookCover
+          book={{ title: book.title, coverUrl: book.coverUrl, isbn13: null, isbn10: null }}
+          author={book.authors[0]}
+          className="w-11 transition-transform group-hover:-translate-y-0.5"
+          rounded="rounded-md"
+        />
+      </Link>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <Avatar
@@ -349,7 +353,7 @@ function CircleEventCard({ event }: { event: CircleEvent }) {
             {firstName(actor.name)} {verbFor(event)}
           </Eyebrow>
         </div>
-        <h3 className="mt-1 truncate font-display text-base font-medium leading-tight text-text-muted transition-colors group-hover:text-text">
+        <h3 className="mt-1 truncate font-display text-base font-medium leading-tight text-text-muted">
           {book.title}
         </h3>
         {/* The book's author + (when present) the buddy's rating share one line,
@@ -380,7 +384,7 @@ function CircleEventCard({ event }: { event: CircleEvent }) {
           </p>
         )}
       </div>
-    </Link>
+    </div>
   )
 }
 
