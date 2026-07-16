@@ -18,6 +18,7 @@ import { fractionFor, otherReader, type Read } from '../lib/reads'
 import { booksOnShelf, type LibraryBook } from '../lib/library'
 import { fetchCircleFeed, type CircleEvent } from '../lib/circle'
 import { pickLine } from '../lib/lines'
+import { setMoonlight, useMoonlight } from '../lib/moonlight'
 
 /** Time-of-day greeting — always an actual greeting, never a goodbye. */
 function greeting(): string {
@@ -417,21 +418,10 @@ export function Home() {
   const [fetched, setFetched] = useState<CircleEvent[] | null>(null)
   const [line] = useState(pickLine)
 
-  // The nook lamp — its lit state persists, so the ambience you chose stays.
-  const [lit, setLit] = useState(() => {
-    try {
-      return localStorage.getItem('buddyread:lamp') === 'on'
-    } catch {
-      return false
-    }
-  })
-  useEffect(() => {
-    try {
-      localStorage.setItem('buddyread:lamp', lit ? 'on' : 'off')
-    } catch {
-      // Storage blocked (private mode) — the lamp simply won't be remembered.
-    }
-  }, [lit])
+  // The nook lamp / moon — its lit state is shared (and persisted) via the
+  // moonlight store, so the starry sky can thin its stars when the moon is lit.
+  const lit = useMoonlight()
+  const toggleLit = () => setMoonlight(!lit)
 
   useEffect(() => {
     if (!uid || friends.length === 0) return
@@ -480,7 +470,7 @@ export function Home() {
             crowds the moon. */}
         <div className="flex shrink-0 items-start gap-2">
           {starry ? (
-            <Moon lit={lit} onToggle={() => setLit((v) => !v)} className="-mr-1 -mt-3 w-28 ipad:w-32" />
+            <Moon lit={lit} onToggle={toggleLit} className="-mr-1 -mt-3 w-28 ipad:w-32" />
           ) : (
             <>
               <Link
@@ -494,7 +484,7 @@ export function Home() {
                   <path d="M12 5v14M5 12h14" />
                 </svg>
               </Link>
-              <Lamp lit={lit} onToggle={() => setLit((v) => !v)} className="-mt-4 w-12 ipad:w-14" />
+              <Lamp lit={lit} onToggle={toggleLit} className="-mt-4 w-12 ipad:w-14" />
             </>
           )}
         </div>

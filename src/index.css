@@ -175,23 +175,23 @@
    periwinkle star for your buddy, gold retired to the sky. */
 .palette-starry,
 .palette-starry.dark {
-  --bg: #05060f; /* pitch-black night — the base the sky gradient sits over */
-  --surface: #0e1430; /* a card cut from deep starry blue */
-  --surface-alt: #090c1e; /* nested inputs / wells */
-  --text: #eef1fb;
-  --text-muted: #b7bedd;
-  --text-faint: #838bb0; /* mono meta — the quietest text */
-  --border: #232a4d;
-  --border-soft: #161c38;
+  --bg: #060c20; /* deep navy night — the base the sky gradient sits over */
+  --surface: #101d3e; /* a card cut from deep starry blue */
+  --surface-alt: #0a1430; /* nested inputs / wells */
+  --text: #eef2fc;
+  --text-muted: #b3bcdb;
+  --text-faint: #7f89af; /* mono meta — the quietest text */
+  --border: #26315a;
+  --border-soft: #182448;
   --accent: #a98bf0; /* moonlit violet — primary action & your pace */
   --accent-contrast: #0b0a1e;
   --gold: #8fb2ff; /* periwinkle — the buddy's pace & ratings, a cool star */
-  --bar-track: #182046;
+  --bar-track: #1a2650;
   --bar-fill: #a98bf0;
 
-  /* Midnight-blue cabinet over a near-black back panel. */
-  --shelf-wood: linear-gradient(180deg, #1e2547 0%, #141a37 46%, #0b1028 100%);
-  --shelf-panel: #0a0e22;
+  /* Midnight-blue cabinet over a deep-navy back panel. */
+  --shelf-wood: linear-gradient(180deg, #20325c 0%, #16233f 46%, #0c1730 100%);
+  --shelf-panel: #0b1428;
   --shelf-edge-hi: rgba(190, 205, 255, 0.16);
   --shelf-panel-hi: rgba(190, 205, 255, 0.05);
   --shelf-motif: rgba(196, 210, 255, 0.1);
@@ -700,14 +700,30 @@ h1, h2, h3, h4 {
    intercepts a tap nor bleeds past the iPad frame. prefers-reduced-motion (below)
    stills all of it into a calm, fixed starfield. */
 .starry-sky {
+  /* A deep navy night with a brighter blue milky-way glow set off-centre, drawn
+     from the reference hill-station photo. `--sky-dim` scales the faint static
+     stars: full when the moon is dark, near-off when it's lit (moonlight washes
+     the small stars out) — the sky visibly fills with stars the moment you tap
+     the moon off. */
+  --sky-dim: 1;
   background:
-    radial-gradient(120% 78% at 50% 2%, rgba(46, 78, 150, 0.3) 0%, transparent 56%),
-    linear-gradient(180deg, #03040b 0%, #05081a 34%, #08112c 66%, #0a1636 100%);
+    radial-gradient(120% 82% at 60% 24%, rgba(52, 104, 180, 0.32) 0%, rgba(30, 72, 140, 0.14) 42%, transparent 68%),
+    linear-gradient(180deg, #050b20 0%, #08163a 32%, #0a2150 64%, #0b2a5e 100%);
+}
+.starry-sky.is-moonlit {
+  --sky-dim: 0.16;
 }
 .sky-star {
   position: absolute;
   border-radius: 9999px;
   background: currentColor;
+}
+/* Faint static stars — the bulk of the field. Their opacity rides `--sky-dim`,
+   so they fade in/out together as the moon dims and brightens (a slow, calm
+   reveal rather than a snap). */
+.sky-faint {
+  opacity: calc(var(--base-op, 0.5) * var(--sky-dim));
+  transition: opacity 1100ms ease;
 }
 .sky-twinkle {
   animation: sky-twinkle var(--tw-dur, 3.5s) ease-in-out var(--tw-delay, 0s) infinite;
