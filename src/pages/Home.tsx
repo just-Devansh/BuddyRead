@@ -480,7 +480,7 @@ export function Home() {
             crowds the moon. */}
         <div className="flex shrink-0 items-start gap-2">
           {starry ? (
-            <Moon lit={lit} onToggle={() => setLit((v) => !v)} className="-mt-2 w-14 ipad:w-16" />
+            <Moon lit={lit} onToggle={() => setLit((v) => !v)} className="-mr-1 -mt-3 w-28 ipad:w-32" />
           ) : (
             <>
               <Link

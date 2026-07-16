@@ -175,32 +175,32 @@
    periwinkle star for your buddy, gold retired to the sky. */
 .palette-starry,
 .palette-starry.dark {
-  --bg: #120a2e; /* deep night — the base the sky gradient sits over */
-  --surface: #241a45; /* a card floating on the night */
-  --surface-alt: #1a1137; /* nested inputs / wells */
-  --text: #f3eeff;
-  --text-muted: #c3b6e0;
-  --text-faint: #998cc4; /* mono meta — the quietest text */
-  --border: #3b3167;
-  --border-soft: #2c2450;
-  --accent: #a985ec; /* moonlit violet — primary action & your pace */
-  --accent-contrast: #17102e;
+  --bg: #05060f; /* pitch-black night — the base the sky gradient sits over */
+  --surface: #0e1430; /* a card cut from deep starry blue */
+  --surface-alt: #090c1e; /* nested inputs / wells */
+  --text: #eef1fb;
+  --text-muted: #b7bedd;
+  --text-faint: #838bb0; /* mono meta — the quietest text */
+  --border: #232a4d;
+  --border-soft: #161c38;
+  --accent: #a98bf0; /* moonlit violet — primary action & your pace */
+  --accent-contrast: #0b0a1e;
   --gold: #8fb2ff; /* periwinkle — the buddy's pace & ratings, a cool star */
-  --bar-track: #2a2150;
-  --bar-fill: #a985ec;
+  --bar-track: #182046;
+  --bar-fill: #a98bf0;
 
-  /* Midnight-violet cabinet over an indigo back panel. */
-  --shelf-wood: linear-gradient(180deg, #3c2f66 0%, #2a2050 46%, #1b1440 100%);
-  --shelf-panel: #191036;
-  --shelf-edge-hi: rgba(214, 198, 255, 0.18);
-  --shelf-panel-hi: rgba(214, 198, 255, 0.05);
-  --shelf-motif: rgba(210, 196, 255, 0.1);
+  /* Midnight-blue cabinet over a near-black back panel. */
+  --shelf-wood: linear-gradient(180deg, #1e2547 0%, #141a37 46%, #0b1028 100%);
+  --shelf-panel: #0a0e22;
+  --shelf-edge-hi: rgba(190, 205, 255, 0.16);
+  --shelf-panel-hi: rgba(190, 205, 255, 0.05);
+  --shelf-motif: rgba(196, 210, 255, 0.1);
 
-  /* A starlit-silver ladder against the violet wood. */
-  --ladder-metal: #d7d0ef;
+  /* A starlit-silver ladder against the blue wood. */
+  --ladder-metal: #cfd6ef;
   --ladder-hi: #ffffff;
-  --ladder-lo: #8f81b6;
-  --ladder-shadow: rgba(6, 4, 24, 0.62);
+  --ladder-lo: #808bb6;
+  --ladder-shadow: rgba(2, 4, 16, 0.65);
 
   /* Moonlight: a cool, pale violet-white glow. The nook lamp-wash + sparkle
      trail read these tokens, so the moon's pool of light is moonlight, not
@@ -701,8 +701,8 @@ h1, h2, h3, h4 {
    stills all of it into a calm, fixed starfield. */
 .starry-sky {
   background:
-    radial-gradient(125% 85% at 50% -12%, #241653 0%, #180d3a 44%, #120a2e 72%),
-    linear-gradient(180deg, #140b33 0%, #1c1246 40%, #241a52 100%);
+    radial-gradient(120% 78% at 50% 2%, rgba(46, 78, 150, 0.3) 0%, transparent 56%),
+    linear-gradient(180deg, #03040b 0%, #05081a 34%, #08112c 66%, #0a1636 100%);
 }
 .sky-star {
   position: absolute;
@@ -759,15 +759,16 @@ h1, h2, h3, h4 {
 }
 
 /* ---- The Moon (see components/Moon) — the nook lamp's night-time cousin -----
-   Off, it hangs dim and cool; tapped, it brightens to a full silver glow, its
-   craters catching the light, a halo blooming behind it, and (via .lamp-wash in
-   Home, recoloured by the moonlight tokens) a pool of moonlight settling over the
-   cards. Same interaction contract as the lamp — a `moon--lit` class does all the
-   work so reduced-motion can flatten the bloom while keeping the light. */
+   Drawn straight from the design canvas: a smooth cream-to-lilac disc with a soft
+   blurred halo behind it and a wide luminous bloom (box-shadow). Off, it hangs
+   dimmed and cool; tapped, it swells to a full silver glow and (via .lamp-wash in
+   Home, recoloured by the moonlight tokens) a pool of moonlight settles over the
+   cards. The `moon--lit` class does all the work so reduced-motion can still the
+   pulse while keeping the light. */
 .moon {
+  position: relative;
   -webkit-tap-highlight-color: transparent;
-  transition: filter 600ms ease, transform 280ms ease;
-  filter: drop-shadow(0 3px 10px rgb(10 6 30 / 0.5));
+  transition: transform 280ms ease;
 }
 .moon:hover {
   transform: translateY(-1px);
@@ -775,31 +776,41 @@ h1, h2, h3, h4 {
 .moon:active {
   transform: translateY(0) scale(0.97);
 }
-/* The dimming veil over the moon's face — night-coloured, fades off when lit. */
-.moon .moon-dim {
-  fill: #0d0726;
-  opacity: 0.58;
+/* The blurred halo behind the disc. */
+.moon .moon-halo {
+  position: absolute;
+  inset: -34%;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(215, 190, 255, 0.4), transparent 70%);
+  filter: blur(6px);
+  opacity: 0.35;
   transition: opacity 700ms ease;
 }
-.moon .moon-halo {
-  opacity: 0;
-  transform-origin: center;
-  transition: opacity 800ms ease;
-}
-.moon--lit {
-  filter: drop-shadow(0 0 18px rgb(var(--lamp-lit-shadow) / 0.6))
-    drop-shadow(0 6px 22px rgb(var(--lamp-rgb-2) / 0.45));
-}
-.moon--lit .moon-dim {
-  opacity: 0;
+/* The disc itself — cream at the lit crescent, lilac at the far edge. */
+.moon .moon-disc {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 38% 34%, #fdfbff, #ece0ff 58%, #b7a3e6 100%);
+  box-shadow:
+    0 0 22px 5px rgba(150, 130, 210, 0.22),
+    0 0 44px 12px rgba(120, 100, 190, 0.12);
+  filter: saturate(0.85) brightness(0.72);
+  transition: filter 700ms ease, box-shadow 700ms ease;
 }
 .moon--lit .moon-halo {
   opacity: 1;
   animation: moon-pulse 6s ease-in-out infinite;
 }
+.moon--lit .moon-disc {
+  filter: saturate(1) brightness(1);
+  box-shadow:
+    0 0 40px 9px rgba(210, 185, 255, 0.5),
+    0 0 90px 30px rgba(150, 120, 230, 0.24);
+}
 @keyframes moon-pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.95; }
 }
 
 /* Honour the reader who prefers stillness. */
