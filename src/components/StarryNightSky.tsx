@@ -51,20 +51,22 @@ function buildStars(seed: number, count: number): Star[] {
   const r = mulberry32(seed)
   const stars: Star[] = []
   for (let i = 0; i < count; i++) {
-    // ~45% cluster along a soft diagonal milky-way band for depth; the rest
-    // scatter across the upper ~92% so text lower down stays legible.
+    // A dense, even field across the whole width — plus ~30% that thicken a soft
+    // diagonal milky-way band for depth. The even field is what fills the hero
+    // corner-to-corner; `y` is lightly biased upward so the top (the hero) reads
+    // as the busiest part of the sky.
     let x: number
     let y: number
-    if (r() < 0.45) {
+    if (r() < 0.3) {
       const t = r()
-      x = 2 + t * 96 + (r() - 0.5) * 22
-      y = 2 + t * 60 + (r() - 0.5) * 22
+      x = 2 + t * 96 + (r() - 0.5) * 24
+      y = 2 + t * 58 + (r() - 0.5) * 22
     } else {
       x = r() * 100
-      y = r() * 92
+      y = Math.pow(r(), 1.25) * 95
     }
     x = Math.max(0, Math.min(100, x))
-    y = Math.max(0, Math.min(92, y))
+    y = Math.max(0, Math.min(96, y))
 
     // Mostly still points; a minority twinkle; a few bright glowing ones.
     const roll = r()
@@ -96,12 +98,13 @@ function buildStars(seed: number, count: number): Star[] {
  *  travel angle and the streak animates along its own axis, so `angle` alone
  *  aims it up, down, sideways, or diagonally. Staggered on long, slow cycles. */
 const METEORS = [
-  { left: '10%', top: '58px', angle: 28, width: 150, dur: '19s', delay: '2s' },
-  { left: '72%', top: '44px', angle: 123, width: 120, dur: '24s', delay: '9s' },
-  { left: '46%', top: '30px', angle: 205, width: 132, dur: '27s', delay: '15s' },
-  { left: '86%', top: '230px', angle: 250, width: 110, dur: '22s', delay: '21s' },
-  { left: '20%', top: '300px', angle: 340, width: 128, dur: '25s', delay: '31s' },
-  { left: '58%', top: '150px', angle: 78, width: 116, dur: '21s', delay: '38s' },
+  { left: '6%', top: '72px', angle: 12, width: 150, dur: '20s', delay: '2s' }, // ~horizontal, L→R
+  { left: '30%', top: '40px', angle: 48, width: 122, dur: '24s', delay: '8s' }, // down-right diagonal
+  { left: '78%', top: '58px', angle: 145, width: 132, dur: '27s', delay: '14s' }, // down-left diagonal
+  { left: '88%', top: '236px', angle: 212, width: 112, dur: '23s', delay: '20s' }, // up-left
+  { left: '12%', top: '320px', angle: 315, width: 138, dur: '26s', delay: '28s' }, // bottom-left → top-right
+  { left: '60%', top: '300px', angle: 268, width: 116, dur: '22s', delay: '35s' }, // ~vertical, upward
+  { left: '46%', top: '22px', angle: 92, width: 120, dur: '25s', delay: '43s' }, // ~vertical, downward
 ]
 
 const SPARKLES = [
@@ -116,8 +119,10 @@ const SPARKLES = [
 
 export function StarryNightSky() {
   const lit = useMoonlight()
-  // Seeded once per mount; the same seed lays an identical sky every time.
-  const stars = useMemo(() => buildStars(1337, 340), [])
+  // Seeded once per mount; the same seed lays an identical sky every time. A big
+  // count so the dark-moon field reads as an immense hill-station sky; most are
+  // the faint tier that the moon dims away when lit.
+  const stars = useMemo(() => buildStars(1337, 560), [])
 
   return (
     <div
@@ -209,25 +214,26 @@ export function StarryNightSky() {
         </span>
       ))}
 
-      {/* Shooting stars, aimed every which way. */}
+      {/* Shooting stars, aimed every which way. The OUTER wrapper only holds the
+          travel angle; the INNER element runs the translate animation — kept on
+          separate elements so the keyframe's transform can't clobber the rotation
+          (which is exactly what pinned them all left-to-right before). */}
       {METEORS.map((m, i) => (
-        <div
-          key={`met-${i}`}
-          className="sky-meteor absolute"
-          style={{ left: m.left, top: m.top, transform: `rotate(${m.angle}deg)`, ['--met-delay' as string]: m.delay, animationDuration: m.dur }}
-        >
-          <div className="relative h-0.5" style={{ width: `${m.width}px` }}>
-            <div
-              className="absolute right-1 top-0 h-[1.5px] rounded"
-              style={{
-                width: `${m.width}px`,
-                background: 'linear-gradient(90deg, rgba(206,224,255,0) 0%, rgba(206,224,255,.12) 38%, rgba(244,249,255,.9) 100%)',
-              }}
-            />
-            <div
-              className="absolute right-0 -top-[1.5px] h-[5px] w-[5px] rounded-full"
-              style={{ background: '#fdfeff', boxShadow: '0 0 8px 2px rgba(200,222,255,.95), 0 0 18px 5px rgba(140,176,255,.5)' }}
-            />
+        <div key={`met-${i}`} className="absolute" style={{ left: m.left, top: m.top, transform: `rotate(${m.angle}deg)` }}>
+          <div className="sky-meteor" style={{ ['--met-delay' as string]: m.delay, animationDuration: m.dur }}>
+            <div className="relative h-0.5" style={{ width: `${m.width}px` }}>
+              <div
+                className="absolute right-1 top-0 h-[1.5px] rounded"
+                style={{
+                  width: `${m.width}px`,
+                  background: 'linear-gradient(90deg, rgba(206,224,255,0) 0%, rgba(206,224,255,.12) 38%, rgba(244,249,255,.9) 100%)',
+                }}
+              />
+              <div
+                className="absolute right-0 -top-[1.5px] h-[5px] w-[5px] rounded-full"
+                style={{ background: '#fdfeff', boxShadow: '0 0 8px 2px rgba(200,222,255,.95), 0 0 18px 5px rgba(140,176,255,.5)' }}
+              />
+            </div>
           </div>
         </div>
       ))}

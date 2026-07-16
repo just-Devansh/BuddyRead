@@ -792,17 +792,21 @@ h1, h2, h3, h4 {
 .moon:active {
   transform: translateY(0) scale(0.97);
 }
-/* The blurred halo behind the disc. */
+/* The blurred halo behind the disc. Off, it's gone and shrunk in with the disc;
+   lit, it blooms and pulses. */
 .moon .moon-halo {
   position: absolute;
   inset: -34%;
   border-radius: 9999px;
   background: radial-gradient(circle, rgba(215, 190, 255, 0.4), transparent 70%);
   filter: blur(6px);
-  opacity: 0.35;
-  transition: opacity 700ms ease;
+  opacity: 0;
+  transform: scale(0.66);
+  transition: opacity 700ms ease, transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
-/* The disc itself — cream at the lit crescent, lilac at the far edge. */
+/* The disc itself — cream at the lit crescent, lilac at the far edge. It shrinks
+   to a small, dim moon when the light is off and swells to a full glow when on
+   (so tapping it dark hands the sky back to the stars). */
 .moon .moon-disc {
   position: absolute;
   inset: 0;
@@ -811,15 +815,19 @@ h1, h2, h3, h4 {
   box-shadow:
     0 0 22px 5px rgba(150, 130, 210, 0.22),
     0 0 44px 12px rgba(120, 100, 190, 0.12);
-  filter: saturate(0.85) brightness(0.72);
-  transition: filter 700ms ease, box-shadow 700ms ease;
+  filter: saturate(0.8) brightness(0.66);
+  transform: scale(0.62);
+  transition: filter 700ms ease, box-shadow 700ms ease,
+    transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .moon--lit .moon-halo {
   opacity: 1;
+  transform: scale(1);
   animation: moon-pulse 6s ease-in-out infinite;
 }
 .moon--lit .moon-disc {
   filter: saturate(1) brightness(1);
+  transform: scale(1);
   box-shadow:
     0 0 40px 9px rgba(210, 185, 255, 0.5),
     0 0 90px 30px rgba(150, 120, 230, 0.24);
