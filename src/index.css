@@ -162,6 +162,61 @@
   --ladder-shadow: rgba(0, 0, 0, 0.6);
 }
 
+/* ---- Palette: Starry Night (the USP theme) --------------------------------
+   Unlike warm/lavender, this palette is *always night* — a violet, Shinkai-blue
+   sky over the main screens (see components/StarryNightSky) with a tappable moon
+   in place of the nook lamp. Because it's inherently nocturnal, ThemeProvider
+   forces the `.dark` class on <html> whenever it's chosen, so every `.dark`
+   component tweak engages regardless of the reader's light/dark preference (which
+   is preserved and re-applied the moment they leave this palette). Both selectors
+   are listed so `.palette-starry.dark` out-specifies the plain `.dark` block; the
+   pair is placed last so source order settles any remaining ties. Derived from
+   the "2a · anime cut" Claude Design canvas: moonlit violet for you, a cool
+   periwinkle star for your buddy, gold retired to the sky. */
+.palette-starry,
+.palette-starry.dark {
+  --bg: #120a2e; /* deep night — the base the sky gradient sits over */
+  --surface: #241a45; /* a card floating on the night */
+  --surface-alt: #1a1137; /* nested inputs / wells */
+  --text: #f3eeff;
+  --text-muted: #c3b6e0;
+  --text-faint: #998cc4; /* mono meta — the quietest text */
+  --border: #3b3167;
+  --border-soft: #2c2450;
+  --accent: #a985ec; /* moonlit violet — primary action & your pace */
+  --accent-contrast: #17102e;
+  --gold: #8fb2ff; /* periwinkle — the buddy's pace & ratings, a cool star */
+  --bar-track: #2a2150;
+  --bar-fill: #a985ec;
+
+  /* Midnight-violet cabinet over an indigo back panel. */
+  --shelf-wood: linear-gradient(180deg, #3c2f66 0%, #2a2050 46%, #1b1440 100%);
+  --shelf-panel: #191036;
+  --shelf-edge-hi: rgba(214, 198, 255, 0.18);
+  --shelf-panel-hi: rgba(214, 198, 255, 0.05);
+  --shelf-motif: rgba(210, 196, 255, 0.1);
+
+  /* A starlit-silver ladder against the violet wood. */
+  --ladder-metal: #d7d0ef;
+  --ladder-hi: #ffffff;
+  --ladder-lo: #8f81b6;
+  --ladder-shadow: rgba(6, 4, 24, 0.62);
+
+  /* Moonlight: a cool, pale violet-white glow. The nook lamp-wash + sparkle
+     trail read these tokens, so the moon's pool of light is moonlight, not
+     candlelight — the exact same machinery, recoloured. */
+  --lamp-rgb: 214 206 255;
+  --lamp-rgb-2: 150 130 230;
+  --lamp-lit: #ece6ff; /* the moon's line-art, lit */
+  --lamp-lit-shadow: 200 190 255;
+  --lamp-shade-0: rgb(247 244 255);
+  --lamp-shade-1: rgb(220 210 255);
+  --lamp-shade-2: rgb(182 166 236);
+  --lamp-bulb-0: rgba(240, 236, 255, 0.95);
+  --lamp-bulb-1: rgba(200, 188, 255, 0.4);
+  --lamp-bulb-2: rgba(182, 166, 236, 0);
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -634,6 +689,117 @@ h1, h2, h3, h4 {
 .lamp-wash.is-lit {
   opacity: 1;
   animation: lamp-flicker 6s ease-in-out infinite;
+}
+
+/* ---- Starry Night: the sky (see components/StarryNightSky) ----------------
+   A painterly violet night rendered behind the content on the main screens when
+   the Starry palette is chosen. The container paints the sky gradient; JS scatters
+   the stars (seeded, so they don't jump between renders) and CSS animates the
+   twinkle, the drifting cloud-glow, the sparkles, and one slow meteor. The whole
+   layer is pointer-events:none and clipped to the app column, so it never
+   intercepts a tap nor bleeds past the iPad frame. prefers-reduced-motion (below)
+   stills all of it into a calm, fixed starfield. */
+.starry-sky {
+  background:
+    radial-gradient(125% 85% at 50% -12%, #241653 0%, #180d3a 44%, #120a2e 72%),
+    linear-gradient(180deg, #140b33 0%, #1c1246 40%, #241a52 100%);
+}
+.sky-star {
+  position: absolute;
+  border-radius: 9999px;
+  background: currentColor;
+}
+.sky-twinkle {
+  animation: sky-twinkle var(--tw-dur, 3.5s) ease-in-out var(--tw-delay, 0s) infinite;
+}
+@keyframes sky-twinkle {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 1; }
+}
+/* Faint drifting cloud-glow — two soft violet washes crossing slowly. */
+.sky-cloud {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(22px);
+  animation: sky-drift var(--drift-dur, 24s) ease-in-out infinite alternate;
+}
+@keyframes sky-drift {
+  from { transform: translateX(-24px); }
+  to { transform: translateX(32px); }
+}
+.sky-band {
+  animation: sky-glow 9s ease-in-out infinite;
+}
+@keyframes sky-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.88; }
+}
+/* Cross-shaped sparkles (✦ ✧) — the anime touch. */
+.sky-sparkle {
+  position: absolute;
+  line-height: 1;
+  animation: sky-sparkle var(--sp-dur, 5s) ease-in-out var(--sp-delay, 0s) infinite;
+}
+@keyframes sky-sparkle {
+  0%, 100% { transform: scale(0.6); opacity: 0.35; }
+  50% { transform: scale(1); opacity: 1; }
+}
+/* One realistic, slow-falling meteor — head + fading tail — on a long cycle. */
+.sky-meteor {
+  animation: sky-meteor 15s ease-in var(--met-delay, 5s) infinite;
+  will-change: transform, opacity;
+}
+@keyframes sky-meteor {
+  0% { transform: translateX(-40px); opacity: 0; }
+  12% { opacity: 0; }
+  18% { opacity: 1; }
+  34% { opacity: 1; }
+  48% { transform: translateX(320px); opacity: 0; }
+  100% { transform: translateX(320px); opacity: 0; }
+}
+
+/* ---- The Moon (see components/Moon) — the nook lamp's night-time cousin -----
+   Off, it hangs dim and cool; tapped, it brightens to a full silver glow, its
+   craters catching the light, a halo blooming behind it, and (via .lamp-wash in
+   Home, recoloured by the moonlight tokens) a pool of moonlight settling over the
+   cards. Same interaction contract as the lamp — a `moon--lit` class does all the
+   work so reduced-motion can flatten the bloom while keeping the light. */
+.moon {
+  -webkit-tap-highlight-color: transparent;
+  transition: filter 600ms ease, transform 280ms ease;
+  filter: drop-shadow(0 3px 10px rgb(10 6 30 / 0.5));
+}
+.moon:hover {
+  transform: translateY(-1px);
+}
+.moon:active {
+  transform: translateY(0) scale(0.97);
+}
+/* The dimming veil over the moon's face — night-coloured, fades off when lit. */
+.moon .moon-dim {
+  fill: #0d0726;
+  opacity: 0.58;
+  transition: opacity 700ms ease;
+}
+.moon .moon-halo {
+  opacity: 0;
+  transform-origin: center;
+  transition: opacity 800ms ease;
+}
+.moon--lit {
+  filter: drop-shadow(0 0 18px rgb(var(--lamp-lit-shadow) / 0.6))
+    drop-shadow(0 6px 22px rgb(var(--lamp-rgb-2) / 0.45));
+}
+.moon--lit .moon-dim {
+  opacity: 0;
+}
+.moon--lit .moon-halo {
+  opacity: 1;
+  animation: moon-pulse 6s ease-in-out infinite;
+}
+@keyframes moon-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 
 /* Honour the reader who prefers stillness. */

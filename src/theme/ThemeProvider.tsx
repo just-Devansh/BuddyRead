@@ -10,6 +10,7 @@ const STORAGE_KEY = 'buddyread:theme'
 const PALETTE_KEY = 'buddyread:palette'
 const NUMERALS_KEY = 'buddyread:numerals'
 const NUMERAL_OPTIONS: Numerals[] = ['spectral', 'garamond', 'cormorant']
+const PALETTE_OPTIONS: Palette[] = ['warm', 'lavender', 'starry']
 
 function readStoredPreference(): ThemePreference {
   if (typeof localStorage === 'undefined') return 'system'
@@ -21,7 +22,8 @@ function readStoredPreference(): ThemePreference {
 
 function readStoredPalette(): Palette {
   if (typeof localStorage === 'undefined') return 'warm'
-  return localStorage.getItem(PALETTE_KEY) === 'lavender' ? 'lavender' : 'warm'
+  const stored = localStorage.getItem(PALETTE_KEY)
+  return PALETTE_OPTIONS.includes(stored as Palette) ? (stored as Palette) : 'warm'
 }
 
 function readStoredNumerals(): Numerals {
@@ -63,16 +65,24 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const resolved: 'light' | 'dark' =
     preference === 'system' ? (systemDark ? 'dark' : 'light') : preference
 
+  // Starry Night is inherently nocturnal — it forces the dark face on so every
+  // `.dark` component tweak engages, whatever the reader's light/dark preference
+  // (that preference is preserved and re-applies the moment they leave starry).
+  const painted: 'light' | 'dark' = palette === 'starry' ? 'dark' : resolved
+
   // Paint it.
   useEffect(() => {
     const root = document.documentElement
-    root.classList.toggle('dark', resolved === 'dark')
-    root.style.colorScheme = resolved
-  }, [resolved])
+    root.classList.toggle('dark', painted === 'dark')
+    root.style.colorScheme = painted
+  }, [painted])
 
   // Paint the palette — a single class on <html> swaps every accent/lamp token.
+  // Only one palette class is ever present (warm is the tokenless default).
   useEffect(() => {
-    document.documentElement.classList.toggle('palette-lavender', palette === 'lavender')
+    const root = document.documentElement
+    root.classList.toggle('palette-lavender', palette === 'lavender')
+    root.classList.toggle('palette-starry', palette === 'starry')
   }, [palette])
 
   // Paint the numeral font — one `.num-*` class on <html> picks the family +

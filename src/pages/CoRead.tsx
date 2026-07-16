@@ -138,7 +138,9 @@ export function CoRead() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { resolved } = useTheme()
+  const { resolved, palette } = useTheme()
+  // Starry Night is always night, so its keepsake wears the dark face too.
+  const keepsakeMode = palette === 'starry' ? 'dark' : resolved
   const { active, loading } = useReads()
   const { confirm, dialog } = useConfirm()
   const [logging, setLogging] = useState(false)
@@ -346,7 +348,7 @@ export function CoRead() {
                     you={youSide}
                     buddy={buddySide}
                     startedAt={startedAt}
-                    mode={resolved}
+                    mode={keepsakeMode}
                   />
                 </FitToWidth>
               </div>
@@ -482,7 +484,7 @@ export function CoRead() {
               you={youSide}
               buddy={buddySide}
               startedAt={startedAt}
-              defaultMode={resolved}
+              defaultMode={keepsakeMode}
               onClose={() => setSharing(false)}
             />
           )}

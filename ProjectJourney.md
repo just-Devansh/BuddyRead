@@ -567,3 +567,43 @@ On the shelf, a rating rides at the foot of its cover as a dark translucent `★
 - **Why does *Cancel* on the review step still save the stars?** Because by then you've rated *and* tapped *Next* — the stars are a committed decision, and the review is the optional part you're declining. Discarding the rating there would be surprising. The only "record nothing" exits are the ones taken *before* committing: *Do this later*, Back, or the backdrop.
 - **A centred dialog, when the closing ceremony is a bottom sheet?** They're different moments. The closing ceremony is the end of a long shared read — a sheet you reach for, weighty. This is a quick, contained "stars and maybe a line" that flows out of the Add-to-library menu; a centred dialog keeps it light and of a piece with the menu it springs from.
 - **Why no `firestore.rules` change for a whole rating feature?** Because the storage seam was already cut. The verdict fields live on the (owner-written, friend-readable) library doc and were already written on a read's close; rating-while-shelving is just a second writer for the same fields from the same owner. The privacy property — book activity shared, co-reading relationship never — was already paid for.
+
+---
+
+## Chapter — Starry Night: an always-nocturnal theme with a moon to light
+
+The first theme meant to be a *feature*, not a preference. Warm and lavender are two colourways of the same candlelit room; **Starry Night** is a different room — a violet, Shinkai-flavoured night sky drawn across the main screens, with a tappable moon in the corner where the reading lamp used to hang. It's the one theme intended to eventually be worth paying for, so it was built to that bar: painterly, animated, and — the hard constraint from the user — *invisible until chosen*. Nothing about warm or lavender may shift by a pixel.
+
+The design was imported from a Claude Design canvas (`DesignSync.get_file` over the shared project) — specifically its "2a · anime cut" frame: a deep violet gradient, a glowing craterless disc of a moon, cross-shaped sparkles, a slow meteor, drifting cloud-glows. We took the *look* and the palette from it and deliberately ignored its copy and layout, because the rule was to keep every current UI element and string exactly as-is.
+
+### A third palette axis, but one that bends the rules
+
+Palette was already an orthogonal axis (`warm | lavender`), painted by a single class on `<html>` and mirrored to the account by `ThemeSync`. Adding `starry` to the union and a token block in `index.css` was the easy 80%. The interesting 20% is that Starry Night is **inherently nocturnal** — "Starry *Night*" — so it can't politely respect the light/dark toggle the way lavender does. The chosen resolution: when the palette is `starry`, `ThemeProvider` **forces `.dark` on** regardless of the reader's light/dark preference, so every `.dark`-qualified component tweak (card shadows, the walnut→midnight cabinet) engages and the night is consistent. The preference isn't destroyed — it's preserved and re-applies the instant the reader leaves starry. Token precedence is handled by listing `.palette-starry, .palette-starry.dark` last, so the two-class selector out-specifies the plain `.dark` block and source order settles the rest.
+
+### The sky is scenery, not a background-color
+
+The genuinely new architecture is the sky itself (`StarryNightSky`). A flat `--bg` couldn't carry it — it needed layers (gradient, ~76 seeded stars, sparkles, a meteor, cloud-glows, a horizon wash) *and* it had to obey the app's cornerstone rule: **exactly two layouts, and desktop renders the iPad column** — so the sky may never bleed past the centred frame. That ruled out the tempting `position: fixed` viewport starfield (it would spill into the desktop margins and ignore the hairline borders). It's mounted instead as an `absolute inset-0` layer *inside* the `DeviceFrame` column, `overflow-hidden` to clip the meteor, `pointer-events:none` so it never eats a tap, at `z-0` beneath a `z-10` content wrapper. Cards stay opaque and simply float on the night; the sky shows through the generous negative space the design already had. The stars are laid by a seeded mulberry32 PRNG in a `useMemo`, so they hold still across re-renders instead of jumping on every state change.
+
+The sky appears only on the screens the user named as "full treatment" — Home, the co-read/split-card screen, the keepsake moment, Library, Activity — gated in `DeviceFrame` by matching the path's first segment against a small set. You, Settings and the sign-in landing get the palette only (the same violet night, no scenery), exactly as asked.
+
+### The moon replaces the lamp — same contract, new body
+
+The nook lamp (SVG line-art you tap to warm the room, casting a token-driven `.lamp-wash` glow) had a clean interaction contract: `lit` + `onToggle`, with all the lit look in a single `--lit` class so reduced-motion can flatten it. `Moon` is a drop-in on that contract. Off, it hangs dim behind a night-coloured veil; tapped, the veil fades, craters and maria catch the light, a halo blooms and pulses, and — because the moonlight tokens (`--lamp-rgb`, `--lamp-shade-*`…) are the very ones the wash and the hero's sparkle-trail already read — the pool of light over the cards is simply recoloured to moonlight, no new machinery. Home swaps `<Lamp>` for `<Moon>` only under starry; every other theme renders the lamp, untouched. The moon carries deliberate character (a believable scatter of rimmed craters, a soft terminator for roundness) so it reads as a moon, not a disc.
+
+### Two small relocations the theme asked for
+
+The `+` (add a book) sat beside the lamp. With a moon there, crowding it looked wrong, so under starry only it moves to a **floating action** tucked at the column's foot, clear of the moon, glowing against the sky — positioned with a `pointer-events-none` full-width wrapper that re-centres to `max-w-app` so it hugs the column's right edge on every screen size and never bleeds on desktop. And the design's "clear skies" date line was too nice to drop, so it rides above the greeting as a mono eyebrow — starry only, so the other themes' greeting is unchanged.
+
+### Trade-offs & deferrals
+
+- **The exported keepsake artifact keeps its dark-academia face.** The keepsake is a deterministic, shareable image that takes a `mode: 'light' | 'dark'`; under starry it renders in its dark face and sits on the starry screen, but it doesn't (yet) get a bespoke violet-sky variant. Restyling a cross-theme export artifact is a separable piece of work with its own risk, and doing it carelessly would break the "don't touch other themes" rule. Flagged as a fast-follow.
+- **Search and Book detail are palette-only.** They weren't in the user's "full treatment" list, so they get the night colours without the sky. A clean, defensible line; trivially extended later by adding their segments to the set.
+
+### Q&A
+
+- **Why force dark instead of designing a "light starry" face?** Because there's no such thing as a light night sky. Starry Night is a mood, not a colourway; letting it ride the light/dark toggle would produce an incoherent daytime version no one wants. Forcing dark (while preserving the underlying preference) keeps the promise the name makes.
+- **Why an in-column `absolute` sky rather than a fixed, parallaxing one?** The cornerstone: desktop must render the iPad column, framed by hairline borders. A fixed viewport starfield ignores that frame and bleeds into the margins. Clipping the sky to the column costs the parallax but keeps the layout law — a good trade for a PWA that lives portrait on a phone.
+- **How does the sky never intercept a tap or a scroll?** It's `pointer-events:none`, sits at `z-0` under a `z-10` content wrapper, and clips its own animations with `overflow-hidden` so nothing escapes the frame — the same discipline the lamp-wash already used, scaled up to a whole scene.
+
+---
+
