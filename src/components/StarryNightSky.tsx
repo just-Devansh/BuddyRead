@@ -119,13 +119,10 @@ function starEl(s: Star, key: number) {
  *  travel angle; the INNER element runs the translate animation, so the keyframe
  *  can't clobber the rotation (which is what pinned them all L→R before). */
 const METEORS = [
-  { left: '6%', top: '72px', angle: 12, width: 150, dur: '20s', delay: '2s' }, // ~horizontal, L→R
-  { left: '30%', top: '40px', angle: 48, width: 122, dur: '24s', delay: '8s' }, // down-right diagonal
-  { left: '78%', top: '58px', angle: 145, width: 132, dur: '27s', delay: '14s' }, // down-left diagonal
-  { left: '88%', top: '236px', angle: 212, width: 112, dur: '23s', delay: '20s' }, // up-left
-  { left: '12%', top: '320px', angle: 315, width: 138, dur: '26s', delay: '28s' }, // bottom-left → top-right
-  { left: '60%', top: '300px', angle: 268, width: 116, dur: '22s', delay: '35s' }, // ~vertical, upward
-  { left: '46%', top: '22px', angle: 92, width: 120, dur: '25s', delay: '43s' }, // ~vertical, downward
+  { left: '8%', top: '80px', angle: 18, width: 150, dur: '46s', delay: '5s' }, // ~horizontal, L→R
+  { left: '80%', top: '60px', angle: 145, width: 132, dur: '52s', delay: '22s' }, // down-left diagonal
+  { left: '14%', top: '330px', angle: 315, width: 140, dur: '50s', delay: '38s' }, // bottom-left → top-right
+  { left: '58%', top: '300px', angle: 262, width: 118, dur: '56s', delay: '54s' }, // ~vertical, upward
 ]
 
 const SPARKLES = [
