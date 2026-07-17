@@ -34,13 +34,12 @@ export function Moon({
       {/* Moon (lit) */}
       <span className="moon-halo" aria-hidden="true" />
       <span className="moon-disc" aria-hidden="true" />
-      {/* Black hole (unlit) — glow, accretion disk (+ orbiting swirl), lensed
-          ring, the event horizon, then a lone astronaut floating in FRONT of it,
-          reaching toward the hole (painted last so it sits over the black disc). */}
+      {/* Black hole (unlit) — glow, accretion disk, lensed ring, the event
+          horizon, then a lone astronaut floating in FRONT of it (painted last so
+          it sits over the black disc), slowly drawn into the centre. */}
       <span className="bh" aria-hidden="true">
         <span className="bh-glow" />
         <span className="bh-disk" />
-        <span className="bh-swirl" />
         <span className="bh-ring" />
         <span className="bh-hole" />
         <span className="bh-astronaut">

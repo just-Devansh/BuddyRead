@@ -939,42 +939,6 @@ h1, h2, h3, h4 {
   );
   filter: blur(1.4px);
 }
-/* The spin — matter orbiting the hole. The disk element stays put (rotating it
-   would just tumble the ellipse); instead an animated conic gradient sweeps two
-   brighter arcs around inside the same tilted shape, so hot-spots orbit slowly.
-   `@property` lets the `from` angle animate; where it's unsupported the swirl just
-   sits still — a graceful fallback. */
-@property --bh-angle {
-  syntax: '<angle>';
-  inherits: false;
-  initial-value: 0deg;
-}
-.moon .bh-swirl {
-  position: absolute;
-  left: -30%;
-  right: -30%;
-  top: 50%;
-  height: 34%;
-  transform: translateY(-50%) rotate(-10deg);
-  border-radius: 9999px;
-  background: conic-gradient(
-    from var(--bh-angle),
-    transparent 0deg,
-    rgba(255, 244, 255, 0.3) 24deg,
-    transparent 80deg,
-    transparent 168deg,
-    rgba(255, 236, 252, 0.22) 202deg,
-    transparent 258deg
-  );
-  mix-blend-mode: screen;
-  filter: blur(2px);
-  animation: bh-spin 16s linear infinite;
-}
-@keyframes bh-spin {
-  to {
-    --bh-angle: 360deg;
-  }
-}
 /* The lensed light wrapping over the top/bottom — a bright ring around the hole. */
 .moon .bh-ring {
   position: absolute;
@@ -1014,27 +978,31 @@ h1, h2, h3, h4 {
 .moon .bh-astronaut {
   position: absolute;
   left: 50%;
-  top: 60%;
-  width: 54%;
-  height: 54%;
+  top: 50%;
+  width: 46%;
+  height: 46%;
   /* A faint glow so the white figure lifts off the dark hole. */
   filter: drop-shadow(0 0 3px rgba(120, 96, 180, 0.55));
-  animation: bh-pull 30s ease-in infinite;
+  /* ~15s slow pull, then a ~30s empty gap before the next one — 45s total. */
+  animation: bh-pull 45s ease-in infinite;
 }
 .moon .bh-astronaut svg {
   display: block;
   width: 100%;
   height: 100%;
 }
-/* Floating in front of the hole, then slowly drawn in — drifting up and tumbling
-   back-first, shrinking and fading until it vanishes into the horizon, then
-   resets. One long, slow pull every 30s. */
+/* Floating just below/in front of the hole, then slowly drawn straight into its
+   CENTRE — tumbling back-first, shrinking and fading to nothing right at the
+   middle. It's centred on the hole via translate(-50%,-50%); the start pushes it
+   down a touch, the end lands the vanishing point dead-centre. After it's gone,
+   the transform holds through a long empty stretch = the 30s gap. */
 @keyframes bh-pull {
-  0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); opacity: 0; }
-  6% { transform: translate(-50%, -52%) rotate(-3deg) scale(0.99); opacity: 0.96; }
-  50% { transform: translate(-50%, -72%) rotate(-15deg) scale(0.8); opacity: 0.9; }
-  80% { transform: translate(-50%, -104%) rotate(-32deg) scale(0.48); opacity: 0.45; }
-  94%, 100% { transform: translate(-50%, -142%) rotate(-48deg) scale(0.12); opacity: 0; }
+  0% { transform: translate(-50%, -28%) rotate(4deg) scale(1); opacity: 0; }
+  4% { transform: translate(-50%, -30%) rotate(3deg) scale(1); opacity: 0.96; }
+  20% { transform: translate(-50%, -38%) rotate(-12deg) scale(0.72); opacity: 0.85; }
+  30% { transform: translate(-50%, -46%) rotate(-30deg) scale(0.34); opacity: 0.35; }
+  33% { transform: translate(-50%, -50%) rotate(-44deg) scale(0.07); opacity: 0; }
+  34%, 100% { transform: translate(-50%, -50%) rotate(-44deg) scale(0.07); opacity: 0; }
 }
 
 /* Honour the reader who prefers stillness. */
