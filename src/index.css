@@ -704,16 +704,18 @@ h1, h2, h3, h4 {
    ~30% strength and pulls the falloff in tight, so the light stays a soft lilac
    halo close around the moon rather than flooding the hero. */
 .palette-starry .lamp-wash {
+  width: 19rem;
+  height: 19rem;
   background: radial-gradient(
     circle at center,
-    rgb(var(--lamp-rgb) / 0.5) 0%,
-    rgb(var(--lamp-rgb) / 0.2) 15%,
-    rgb(var(--lamp-rgb-2) / 0.07) 30%,
-    transparent 46%
+    rgb(var(--lamp-rgb) / 0.4) 0%,
+    rgb(var(--lamp-rgb) / 0.13) 14%,
+    rgb(var(--lamp-rgb-2) / 0.04) 28%,
+    transparent 42%
   );
 }
 .palette-starry .lamp-wash.is-lit {
-  opacity: 0.3;
+  opacity: 0.16;
 }
 
 /* ---- Starry Night: the sky (see components/StarryNightSky) ----------------
@@ -741,8 +743,8 @@ h1, h2, h3, h4 {
   opacity: 0;
   transition: opacity 1200ms ease;
   background:
-    radial-gradient(120% 82% at 60% 24%, rgba(52, 104, 180, 0.34) 0%, rgba(30, 72, 140, 0.16) 42%, transparent 68%),
-    linear-gradient(180deg, rgba(9, 26, 70, 0.92) 0%, rgba(11, 42, 96, 0.78) 58%, rgba(13, 54, 108, 0.72) 100%);
+    radial-gradient(120% 82% at 60% 24%, rgba(52, 104, 180, 0.22) 0%, rgba(30, 72, 140, 0.1) 42%, transparent 68%),
+    linear-gradient(180deg, rgba(8, 22, 60, 0.7) 0%, rgba(10, 34, 82, 0.58) 58%, rgba(12, 44, 92, 0.52) 100%);
 }
 .starry-sky.is-moonlit .sky-lift {
   opacity: 1;
@@ -895,17 +897,17 @@ h1, h2, h3, h4 {
 .moon--lit .bh {
   opacity: 0;
 }
-/* Ambient warm-lilac glow, softly breathing. */
+/* Ambient warm-lilac glow, softly breathing — kept low so it doesn't bloom. */
 .moon .bh-glow {
   position: absolute;
   inset: -30%;
   border-radius: 9999px;
-  background: radial-gradient(circle, rgba(190, 140, 236, 0.3), transparent 66%);
+  background: radial-gradient(circle, rgba(178, 132, 224, 0.18), transparent 66%);
   filter: blur(8px);
   animation: bh-pulse 5s ease-in-out infinite;
 }
-/* The accretion disk — a bright, tilted band of infalling matter, warm lilac at
-   the core cooling to orchid at its edges. */
+/* The accretion disk — a tilted band of infalling matter, warm lilac at the core
+   cooling to orchid at its edges. Dimmed so it reads as a quiet ember, not a lamp. */
 .moon .bh-disk {
   position: absolute;
   left: -30%;
@@ -916,9 +918,9 @@ h1, h2, h3, h4 {
   border-radius: 9999px;
   background: radial-gradient(
     ellipse at center,
-    #fbf1ff 0%,
-    rgba(226, 182, 246, 0.95) 26%,
-    rgba(196, 132, 224, 0.5) 52%,
+    #efe1f7 0%,
+    rgba(210, 166, 234, 0.72) 26%,
+    rgba(176, 116, 206, 0.34) 52%,
     transparent 74%
   );
   filter: blur(1.4px);
@@ -931,8 +933,8 @@ h1, h2, h3, h4 {
   background: radial-gradient(
     circle,
     transparent 52%,
-    rgba(238, 208, 250, 0.95) 58%,
-    rgba(202, 142, 228, 0.32) 68%,
+    rgba(226, 196, 242, 0.72) 58%,
+    rgba(186, 132, 214, 0.22) 68%,
     transparent 80%
   );
   filter: blur(0.5px);
@@ -944,9 +946,9 @@ h1, h2, h3, h4 {
   border-radius: 9999px;
   background: #0a0512;
   box-shadow:
-    0 0 0 1.5px rgba(244, 214, 252, 0.95),
-    0 0 12px 2px rgba(206, 150, 236, 0.55),
-    0 0 30px 8px rgba(184, 120, 220, 0.28);
+    0 0 0 1.5px rgba(226, 198, 240, 0.82),
+    0 0 12px 2px rgba(188, 136, 220, 0.4),
+    0 0 26px 7px rgba(166, 108, 202, 0.2);
 }
 @keyframes bh-pulse {
   0%, 100% { opacity: 0.72; transform: scale(1); }
