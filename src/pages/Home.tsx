@@ -450,7 +450,21 @@ export function Home() {
 
       {/* Greeting (kept above the wash so the words stay crisp) */}
       <section className="relative z-10 flex items-start justify-between gap-3">
-        <div className="min-w-0 pt-1">
+        {/* The slightest vignette under the hero text — the busy starry ground can
+            eat legibility, so a soft, blurred pool of the night sits behind the
+            words (starry only). Positioned first + text raised above it. */}
+        {starry && (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -left-6 -top-6 h-[150%] w-[78%]"
+            style={{
+              background:
+                'radial-gradient(62% 60% at 30% 42%, rgba(4,6,18,0.6) 0%, rgba(4,6,18,0.3) 44%, transparent 72%)',
+              filter: 'blur(7px)',
+            }}
+          />
+        )}
+        <div className="relative min-w-0 pt-1">
           {/* Under Starry Night, a date line rides above the greeting — the
               "clear skies" flourish from the design, in place of nothing. */}
           {starry && (
@@ -468,7 +482,7 @@ export function Home() {
             lamp. Starry Night hangs a moon in the corner instead — and moves the
             add-a-book button to a floating action below (see the FAB), so nothing
             crowds the moon. */}
-        <div className="flex shrink-0 items-start gap-2">
+        <div className="relative flex shrink-0 items-start gap-2">
           {starry ? (
             <Moon lit={lit} onToggle={toggleLit} className="-mr-1 -mt-3 w-28 ipad:w-32" />
           ) : (

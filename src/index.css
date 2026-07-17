@@ -209,19 +209,20 @@
   --ladder-lo: #7b6a90;
   --ladder-shadow: rgba(0, 0, 0, 0.6);
 
-  /* KEEP starry — Moonlight: a cool, pale violet-white glow. The nook moon-wash +
-     sparkle trail read these tokens, so the moon's pool of light stays moonlight,
-     not candlelight — the exact same machinery, recoloured. */
-  --lamp-rgb: 214 206 255;
-  --lamp-rgb-2: 150 130 230;
-  --lamp-lit: #ece6ff; /* the moon's line-art, lit */
-  --lamp-lit-shadow: 200 190 255;
-  --lamp-shade-0: rgb(247 244 255);
-  --lamp-shade-1: rgb(220 210 255);
-  --lamp-shade-2: rgb(182 166 236);
-  --lamp-bulb-0: rgba(240, 236, 255, 0.95);
-  --lamp-bulb-1: rgba(200, 188, 255, 0.4);
-  --lamp-bulb-2: rgba(182, 166, 236, 0);
+  /* Moonlight glow — lilac, matching Lavender's lamplight (the moon-wash + the
+     hero sparkle-trail read these tokens; the moon's own outer bloom too). The
+     wash itself is dialled right down for starry, just below — the sky is already
+     luminous, so a full pool blows it out. */
+  --lamp-rgb: 198 162 240;
+  --lamp-rgb-2: 150 110 214;
+  --lamp-lit: #a98fd0;
+  --lamp-lit-shadow: 180 140 235;
+  --lamp-shade-0: rgb(232 214 255);
+  --lamp-shade-1: rgb(196 168 238);
+  --lamp-shade-2: rgb(150 116 206);
+  --lamp-bulb-0: rgba(232, 216, 255, 0.95);
+  --lamp-bulb-1: rgba(200, 168, 244, 0.35);
+  --lamp-bulb-2: rgba(190, 158, 240, 0);
 }
 
 @theme inline {
@@ -696,6 +697,23 @@ h1, h2, h3, h4 {
 .lamp-wash.is-lit {
   opacity: 1;
   animation: lamp-flicker 6s ease-in-out infinite;
+}
+
+/* Starry Night: the moon casts a far gentler pool than the lamp. The night sky is
+   already luminous, so a full wash washes the whole screen out. This drops it to
+   ~30% strength and pulls the falloff in tight, so the light stays a soft lilac
+   halo close around the moon rather than flooding the hero. */
+.palette-starry .lamp-wash {
+  background: radial-gradient(
+    circle at center,
+    rgb(var(--lamp-rgb) / 0.5) 0%,
+    rgb(var(--lamp-rgb) / 0.2) 15%,
+    rgb(var(--lamp-rgb-2) / 0.07) 30%,
+    transparent 46%
+  );
+}
+.palette-starry .lamp-wash.is-lit {
+  opacity: 0.3;
 }
 
 /* ---- Starry Night: the sky (see components/StarryNightSky) ----------------
