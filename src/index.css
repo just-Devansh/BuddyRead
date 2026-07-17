@@ -700,30 +700,45 @@ h1, h2, h3, h4 {
    intercepts a tap nor bleeds past the iPad frame. prefers-reduced-motion (below)
    stills all of it into a calm, fixed starfield. */
 .starry-sky {
-  /* A deep navy night with a brighter blue milky-way glow set off-centre, drawn
-     from the reference hill-station photo. `--sky-dim` scales the faint static
-     stars: full when the moon is dark, near-off when it's lit (moonlight washes
-     the small stars out) — the sky visibly fills with stars the moment you tap
-     the moon off. */
+  /* The moon-dark base is near-pitch-black — so when the moon is off the sky
+     goes deep dark and the dense star field blazes across it. The deep-blue
+     "moonlit" look lifts in only when the moon is glowing (see .sky-lift). */
   --sky-dim: 1;
   background:
-    radial-gradient(120% 82% at 60% 24%, rgba(52, 104, 180, 0.32) 0%, rgba(30, 72, 140, 0.14) 42%, transparent 68%),
-    linear-gradient(180deg, #050b20 0%, #08163a 32%, #0a2150 64%, #0b2a5e 100%);
+    radial-gradient(120% 82% at 60% 20%, rgba(26, 46, 96, 0.16) 0%, transparent 62%),
+    linear-gradient(180deg, #01020a 0%, #03081a 44%, #050f2a 100%);
 }
-.starry-sky.is-moonlit {
-  --sky-dim: 0.16;
+/* The moonlit blue wash — sits under the stars, fades up only when the moon is
+   lit (real moonlight lifting the sky out of pitch black). */
+.sky-lift {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1200ms ease;
+  background:
+    radial-gradient(120% 82% at 60% 24%, rgba(52, 104, 180, 0.34) 0%, rgba(30, 72, 140, 0.16) 42%, transparent 68%),
+    linear-gradient(180deg, rgba(9, 26, 70, 0.92) 0%, rgba(11, 42, 96, 0.78) 58%, rgba(13, 54, 108, 0.72) 100%);
+}
+.starry-sky.is-moonlit .sky-lift {
+  opacity: 1;
+}
+/* The faint field dims as ONE layer (a single cheap opacity transition over the
+   whole ~1000-star group) rather than per-star. Full when the moon's dark; a
+   whisper when it's lit — so tapping the moon off fills the sky, tapping it on
+   hands it back to the brightest few. */
+.sky-faint-layer {
+  position: absolute;
+  inset: 0;
+  opacity: var(--sky-dim);
+  transition: opacity 1200ms ease;
+}
+.starry-sky.is-moonlit .sky-faint-layer {
+  opacity: 0.08;
 }
 .sky-star {
   position: absolute;
   border-radius: 9999px;
   background: currentColor;
-}
-/* Faint static stars — the bulk of the field. Their opacity rides `--sky-dim`,
-   so they fade in/out together as the moon dims and brightens (a slow, calm
-   reveal rather than a snap). */
-.sky-faint {
-  opacity: calc(var(--base-op, 0.5) * var(--sky-dim));
-  transition: opacity 1100ms ease;
 }
 .sky-twinkle {
   animation: sky-twinkle var(--tw-dur, 3.5s) ease-in-out var(--tw-delay, 0s) infinite;
@@ -760,9 +775,12 @@ h1, h2, h3, h4 {
   0%, 100% { transform: scale(0.6); opacity: 0.35; }
   50% { transform: scale(1); opacity: 1; }
 }
-/* One realistic, slow-falling meteor — head + fading tail — on a long cycle. */
+/* Realistic slow-falling meteors — head + fading tail — on long cycles. The
+   `backwards` fill is essential: without it, each meteor sits fully visible and
+   frozen during its start-delay (a screen full of static streaks at load);
+   backwards shows the 0% keyframe (opacity:0) through the delay instead. */
 .sky-meteor {
-  animation: sky-meteor 15s ease-in var(--met-delay, 5s) infinite;
+  animation: sky-meteor 15s ease-in var(--met-delay, 5s) infinite backwards;
   will-change: transform, opacity;
 }
 @keyframes sky-meteor {
@@ -811,12 +829,23 @@ h1, h2, h3, h4 {
   position: absolute;
   inset: 0;
   border-radius: 9999px;
-  background: radial-gradient(circle at 38% 34%, #fdfbff, #ece0ff 58%, #b7a3e6 100%);
+  /* Craters/maria layered over the base disc (earlier layers paint on top) — soft
+     grey-violet blotches for personality, without changing the moon's overall
+     read. They scale with the disc, so they hold their place as it swells/shrinks. */
+  background:
+    radial-gradient(circle 13px at 39% 60%, rgba(116, 100, 158, 0.42), rgba(116, 100, 158, 0.12) 58%, transparent 76%),
+    radial-gradient(circle 9px at 66% 64%, rgba(108, 92, 150, 0.4), rgba(108, 92, 150, 0.1) 56%, transparent 74%),
+    radial-gradient(circle 6px at 61% 31%, rgba(116, 100, 158, 0.44), transparent 72%),
+    radial-gradient(circle 4px at 43% 40%, rgba(116, 100, 158, 0.4), transparent 72%),
+    radial-gradient(circle 3px at 54% 22%, rgba(116, 100, 158, 0.4), transparent 72%),
+    radial-gradient(circle 3.5px at 78% 46%, rgba(108, 92, 150, 0.36), transparent 74%),
+    radial-gradient(circle 2.4px at 50% 74%, rgba(116, 100, 158, 0.36), transparent 72%),
+    radial-gradient(circle at 38% 34%, #fdfbff, #ece0ff 58%, #b7a3e6 100%);
   box-shadow:
     0 0 22px 5px rgba(150, 130, 210, 0.22),
     0 0 44px 12px rgba(120, 100, 190, 0.12);
-  filter: saturate(0.8) brightness(0.66);
-  transform: scale(0.62);
+  filter: saturate(0.65) brightness(0.4);
+  transform: scale(0.58);
   transition: filter 700ms ease, box-shadow 700ms ease,
     transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }

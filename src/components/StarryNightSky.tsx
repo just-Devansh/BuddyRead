@@ -2,18 +2,18 @@ import { useMemo } from 'react'
 import { useMoonlight } from '../lib/moonlight'
 
 /**
- * The Starry Night backdrop — a painterly deep-blue sky rendered behind the
- * content on the main screens whenever the Starry palette is chosen (mounted by
- * DeviceFrame). Pure DOM + CSS: the container paints the sky gradient, a seeded
- * RNG scatters the stars once (so they hold still across re-renders), and the
- * animations (twinkle, drift, sparkle, meteor) live in index.css so
- * prefers-reduced-motion can still them into a calm fixed starfield.
+ * The Starry Night backdrop — a deep night sky rendered behind the content on the
+ * main screens whenever the Starry palette is chosen (mounted by DeviceFrame).
+ * Pure DOM + CSS: the container paints the base sky, a seeded RNG scatters a big
+ * star field once (so they hold still across re-renders), and the animations
+ * (twinkle, drift, sparkle, meteor) live in index.css so prefers-reduced-motion
+ * can still them into a calm fixed starfield.
  *
- * A real hill-station sky is mostly *still* points of light with a handful that
- * twinkle — so most stars here are static, a minority twinkle, and a few bright
- * ones glow. The dense faint field is tied to the moon: when the moon is lit its
- * light washes the small stars out (fewer stars); tap it dark and the sky fills
- * in (see `--sky-dim` / `.is-moonlit`).
+ * Most stars are still points; a minority twinkle; a few glow bright. The bulk —
+ * the faint field — lives in one `.sky-faint-layer` whose opacity is dimmed as a
+ * single group by the moon: dark moon → the sky blazes with stars over a
+ * near-pitch-black ground; lit moon → a blue "moonlight" wash lifts up and the
+ * faint field all but vanishes, leaving the brightest few.
  *
  * The whole layer is `pointer-events:none` and clipped to the app column, so it
  * never intercepts a tap and never bleeds past the iPad frame. It does NOT hold
@@ -42,7 +42,7 @@ interface Star {
   tier: Tier
   dur: string
   delay: string
-  baseOpacity: number
+  opacity: number
 }
 
 const STAR_COLORS = ['#f6f8ff', '#cdddff', '#a8c4ff', '#dcecff', '#f3e2ff']
@@ -51,33 +51,32 @@ function buildStars(seed: number, count: number): Star[] {
   const r = mulberry32(seed)
   const stars: Star[] = []
   for (let i = 0; i < count; i++) {
-    // A dense, even field across the whole width — plus ~30% that thicken a soft
-    // diagonal milky-way band for depth. The even field is what fills the hero
-    // corner-to-corner; `y` is lightly biased upward so the top (the hero) reads
-    // as the busiest part of the sky.
+    // A dense, EVEN field across the whole frame — top to bottom, edge to edge —
+    // plus ~25% that thicken a soft diagonal milky-way band. Even coverage is
+    // what makes the dark-moon sky read as stars "everywhere", not a corner.
     let x: number
     let y: number
-    if (r() < 0.3) {
+    if (r() < 0.25) {
       const t = r()
-      x = 2 + t * 96 + (r() - 0.5) * 24
-      y = 2 + t * 58 + (r() - 0.5) * 22
+      x = 2 + t * 96 + (r() - 0.5) * 26
+      y = 1 + t * 62 + (r() - 0.5) * 24
     } else {
       x = r() * 100
-      y = Math.pow(r(), 1.25) * 95
+      y = r() * 100
     }
     x = Math.max(0, Math.min(100, x))
-    y = Math.max(0, Math.min(96, y))
+    y = Math.max(0, Math.min(100, y))
 
-    // Mostly still points; a minority twinkle; a few bright glowing ones.
+    // Mostly still points; ~9% twinkle; ~11% bright (some glowing).
     const roll = r()
-    const tier: Tier = roll < 0.14 ? 'twinkle' : roll < 0.28 ? 'bright' : 'faint'
+    const tier: Tier = roll < 0.09 ? 'twinkle' : roll < 0.2 ? 'bright' : 'faint'
 
-    let size = tier === 'faint' ? 0.5 + r() * 1.1 : 1 + r() * 1.9
+    let size = tier === 'faint' ? 0.5 + r() * 1.2 : 1 + r() * 1.9
     const hue = r()
     const color =
       hue > 0.9 ? STAR_COLORS[4] : hue > 0.7 ? STAR_COLORS[2] : hue > 0.5 ? STAR_COLORS[1] : hue > 0.34 ? STAR_COLORS[3] : STAR_COLORS[0]
-    const glowy = tier === 'bright' && r() > 0.4
-    if (glowy) size += 0.8
+    const glowy = tier === 'bright' && r() > 0.45
+    if (glowy) size += 0.9
 
     stars.push({
       left: `${x.toFixed(2)}%`,
@@ -88,15 +87,37 @@ function buildStars(seed: number, count: number): Star[] {
       tier,
       dur: `${(2.2 + r() * 4.6).toFixed(2)}s`,
       delay: `${(r() * 6).toFixed(2)}s`,
-      baseOpacity: tier === 'faint' ? 0.3 + r() * 0.55 : 0.55 + r() * 0.45,
+      opacity: tier === 'faint' ? 0.45 + r() * 0.5 : 0.6 + r() * 0.4,
     })
   }
   return stars
 }
 
-/** Shooting stars, thrown in every direction — the container is rotated to the
- *  travel angle and the streak animates along its own axis, so `angle` alone
- *  aims it up, down, sideways, or diagonally. Staggered on long, slow cycles. */
+function starEl(s: Star, key: number) {
+  const base: React.CSSProperties = {
+    left: s.left,
+    top: s.top,
+    width: `${s.size.toFixed(2)}px`,
+    height: `${s.size.toFixed(2)}px`,
+    color: s.color,
+    boxShadow: s.glow,
+    opacity: s.opacity,
+  }
+  if (s.tier === 'twinkle') {
+    return (
+      <span
+        key={key}
+        className="sky-star sky-twinkle"
+        style={{ ...base, ['--tw-dur' as string]: s.dur, ['--tw-delay' as string]: s.delay }}
+      />
+    )
+  }
+  return <span key={key} className="sky-star" style={base} />
+}
+
+/** Shooting stars, thrown in every direction — the OUTER wrapper only holds the
+ *  travel angle; the INNER element runs the translate animation, so the keyframe
+ *  can't clobber the rotation (which is what pinned them all L→R before). */
 const METEORS = [
   { left: '6%', top: '72px', angle: 12, width: 150, dur: '20s', delay: '2s' }, // ~horizontal, L→R
   { left: '30%', top: '40px', angle: 48, width: 122, dur: '24s', delay: '8s' }, // down-right diagonal
@@ -120,15 +141,19 @@ const SPARKLES = [
 export function StarryNightSky() {
   const lit = useMoonlight()
   // Seeded once per mount; the same seed lays an identical sky every time. A big
-  // count so the dark-moon field reads as an immense hill-station sky; most are
-  // the faint tier that the moon dims away when lit.
-  const stars = useMemo(() => buildStars(1337, 560), [])
+  // count so the dark-moon field reads as an immense hill-station sky.
+  const stars = useMemo(() => buildStars(1337, 1300), [])
+  const faint = useMemo(() => stars.filter((s) => s.tier === 'faint'), [stars])
+  const others = useMemo(() => stars.filter((s) => s.tier !== 'faint'), [stars])
 
   return (
     <div
       aria-hidden="true"
       className={`starry-sky pointer-events-none absolute inset-0 z-0 overflow-hidden ${lit ? 'is-moonlit' : ''}`}
     >
+      {/* Moonlit blue wash — only lifts up when the moon is glowing. */}
+      <div className="sky-lift" />
+
       {/* Faint milky-way band — a soft diagonal wash the clustered stars sit in. */}
       <div
         className="sky-band absolute"
@@ -136,10 +161,10 @@ export function StarryNightSky() {
           left: '-24%',
           top: '-8%',
           width: '150%',
-          height: '300px',
+          height: '320px',
           transform: 'rotate(-22deg)',
           background:
-            'radial-gradient(ellipse 56% 46% at 52% 46%, rgba(120,170,240,.2), rgba(76,124,206,.09) 48%, transparent 74%)',
+            'radial-gradient(ellipse 56% 46% at 52% 46%, rgba(120,170,240,.16), rgba(76,124,206,.07) 48%, transparent 74%)',
           filter: 'blur(16px)',
         }}
       />
@@ -152,7 +177,7 @@ export function StarryNightSky() {
           top: '20%',
           width: '74%',
           height: '150px',
-          background: 'radial-gradient(ellipse 50% 50% at 50% 50%, rgba(58,110,196,.26), transparent 70%)',
+          background: 'radial-gradient(ellipse 50% 50% at 50% 50%, rgba(58,110,196,.2), transparent 70%)',
           ['--drift-dur' as string]: '22s',
         }}
       />
@@ -163,37 +188,17 @@ export function StarryNightSky() {
           top: '44%',
           width: '80%',
           height: '170px',
-          background: 'radial-gradient(ellipse 50% 50% at 50% 50%, rgba(70,96,200,.18), transparent 70%)',
+          background: 'radial-gradient(ellipse 50% 50% at 50% 50%, rgba(70,96,200,.14), transparent 70%)',
           ['--drift-dur' as string]: '28s',
           animationDirection: 'alternate-reverse',
         }}
       />
 
-      {/* Stars — mostly still, some twinkling, a few glowing bright. */}
-      {stars.map((s, i) => {
-        const base: React.CSSProperties = {
-          left: s.left,
-          top: s.top,
-          width: `${s.size.toFixed(2)}px`,
-          height: `${s.size.toFixed(2)}px`,
-          color: s.color,
-          boxShadow: s.glow,
-        }
-        if (s.tier === 'twinkle') {
-          return (
-            <span
-              key={i}
-              className="sky-star sky-twinkle"
-              style={{ ...base, opacity: s.baseOpacity, ['--tw-dur' as string]: s.dur, ['--tw-delay' as string]: s.delay }}
-            />
-          )
-        }
-        if (s.tier === 'bright') {
-          return <span key={i} className="sky-star" style={{ ...base, opacity: s.baseOpacity }} />
-        }
-        // faint static — its opacity rides --sky-dim (moon-coupled)
-        return <span key={i} className="sky-star sky-faint" style={{ ...base, ['--base-op' as string]: s.baseOpacity }} />
-      })}
+      {/* The faint field — the bulk of the sky, dimmed as one group by the moon. */}
+      <div className="sky-faint-layer">{faint.map((s, i) => starEl(s, i))}</div>
+
+      {/* Bright + twinkling stars — always present, whatever the moon's doing. */}
+      {others.map((s, i) => starEl(s, i))}
 
       {/* Cross-shaped sparkles — the anime flourish. */}
       {SPARKLES.map((sp, i) => (
@@ -214,10 +219,7 @@ export function StarryNightSky() {
         </span>
       ))}
 
-      {/* Shooting stars, aimed every which way. The OUTER wrapper only holds the
-          travel angle; the INNER element runs the translate animation — kept on
-          separate elements so the keyframe's transform can't clobber the rotation
-          (which is exactly what pinned them all left-to-right before). */}
+      {/* Shooting stars, aimed every which way. */}
       {METEORS.map((m, i) => (
         <div key={`met-${i}`} className="absolute" style={{ left: m.left, top: m.top, transform: `rotate(${m.angle}deg)` }}>
           <div className="sky-meteor" style={{ ['--met-delay' as string]: m.delay, animationDuration: m.dur }}>
@@ -241,7 +243,7 @@ export function StarryNightSky() {
       {/* Horizon glow, hugging the foot of the sky. */}
       <div
         className="absolute inset-x-0 bottom-0 h-56"
-        style={{ background: 'linear-gradient(0deg, rgba(46,86,176,.28), rgba(34,60,140,.1) 52%, transparent)' }}
+        style={{ background: 'linear-gradient(0deg, rgba(30,58,120,.22), rgba(24,44,100,.08) 52%, transparent)' }}
       />
     </div>
   )

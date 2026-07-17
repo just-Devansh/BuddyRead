@@ -34,6 +34,12 @@ export function DeviceFrame({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation()
   const starry = palette === 'starry' && isStarryScreen(pathname)
 
+  // The tree shape stays fixed across every route — the sky slot and the content
+  // wrapper are ALWAYS present; only their classes change. (Toggling the tree
+  // shape when crossing the starry↔non-starry boundary remounted the whole route
+  // subtree — which reset RequireAuth's splash timer and reloaded the providers.)
+  // Non-starry, the wrapper is `display:contents`, so it adds no box at all and
+  // the layout is byte-for-byte what it was.
   return (
     <div className="min-h-dvh w-full bg-bg">
       <div
@@ -41,12 +47,10 @@ export function DeviceFrame({ children }: { children: React.ReactNode }) {
           starry ? 'relative isolate' : ''
         }`}
       >
-        {starry && <StarryNightSky />}
-        {starry ? (
-          <div className="relative z-10 flex flex-1 flex-col">{children}</div>
-        ) : (
-          children
-        )}
+        {starry ? <StarryNightSky /> : null}
+        <div className={starry ? 'relative z-10 flex flex-1 flex-col' : 'contents'}>
+          {children}
+        </div>
       </div>
     </div>
   )
