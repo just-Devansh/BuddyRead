@@ -303,7 +303,15 @@ export function CoRead() {
         >
           ‹ Home
         </Link>
-        <Eyebrow>{solo ? 'Reading solo' : 'Reading together'}</Eyebrow>
+        <span
+          className={`font-mono text-xs uppercase tracking-[0.14em] ${
+            starry
+              ? 'rounded-full border border-border-soft/80 bg-surface/70 px-3.5 py-1.5 text-text shadow-[0_8px_20px_-10px_rgba(0,0,0,0.7)] backdrop-blur-md'
+              : 'text-text-muted'
+          }`}
+        >
+          {solo ? 'Reading solo' : 'Reading together'}
+        </span>
         <button
           type="button"
           onClick={() => void leave()}

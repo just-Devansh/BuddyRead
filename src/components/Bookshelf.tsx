@@ -259,7 +259,7 @@ function Shelf({
     <section className="shelf-compartment">
       <div className="mb-3 flex items-baseline justify-between">
         <Eyebrow>{label}</Eyebrow>
-        <span className="font-mono text-[10px] text-text-faint">{items.length}</span>
+        <span className="font-mono text-sm font-medium text-text-muted">{items.length}</span>
       </div>
       {items.length === 0 ? (
         <EmptyShelf hint={hint} owner={owner} />

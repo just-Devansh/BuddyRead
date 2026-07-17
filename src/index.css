@@ -831,58 +831,46 @@ h1, h2, h3, h4 {
 /* ---- Moon — shown when lit ---- */
 .moon .moon-halo {
   position: absolute;
-  inset: -34%;
+  inset: -42%;
   border-radius: 9999px;
-  background: radial-gradient(circle, rgba(215, 190, 255, 0.4), transparent 70%);
-  filter: blur(6px);
+  background: radial-gradient(circle, rgba(202, 172, 251, 0.52) 0%, rgba(168, 138, 234, 0.26) 44%, transparent 72%);
+  filter: blur(7px);
   opacity: 0;
   transition: opacity 800ms ease;
 }
-/* The disc — cream at the lit crescent, lilac at the far edge, with soft craters
-   (earlier gradient layers paint on top of the base). */
+/* The disc — a real full-moon photo (components/Moon sets the background-image),
+   clipped to the circle. The mask feathers the outer edge to nothing so the
+   photo's dark limb never reads as a hard black ring — it dissolves into the
+   lilac halo instead; the ::after screens a lilac rim over the edge so the moon
+   *mixes* into the moonlight rather than sitting on top of it. */
 .moon .moon-disc {
   position: absolute;
   inset: 0;
   border-radius: 9999px;
-  /* A mottled lunar face — broad soft maria, medium craters, a scatter of tiny
-     ones, and a couple of bright ray-specks — layered over the base disc (earlier
-     layers paint on top). Tuned to read like a real full moon while keeping the
-     cream-lilac cast. All scale with the disc. */
-  background:
-    /* bright crater-ray specks */
-    radial-gradient(circle 1.5px at 47% 79%, rgba(255, 253, 255, 0.7), transparent 68%),
-    radial-gradient(circle 1.3px at 67% 29%, rgba(255, 253, 255, 0.6), transparent 68%),
-    /* tiny craters, scattered */
-    radial-gradient(circle 1.7px at 30% 41%, rgba(96, 82, 140, 0.42), transparent 74%),
-    radial-gradient(circle 2px at 61% 47%, rgba(96, 82, 140, 0.42), transparent 74%),
-    radial-gradient(circle 1.6px at 44% 53%, rgba(96, 82, 140, 0.4), transparent 74%),
-    radial-gradient(circle 1.9px at 72% 67%, rgba(96, 82, 140, 0.38), transparent 74%),
-    radial-gradient(circle 1.5px at 52% 65%, rgba(96, 82, 140, 0.38), transparent 74%),
-    radial-gradient(circle 1.4px at 37% 71%, rgba(96, 82, 140, 0.36), transparent 74%),
-    radial-gradient(circle 1.7px at 66% 55%, rgba(96, 82, 140, 0.36), transparent 74%),
-    radial-gradient(circle 1.5px at 26% 55%, rgba(96, 82, 140, 0.36), transparent 74%),
-    radial-gradient(circle 1.3px at 58% 38%, rgba(96, 82, 140, 0.34), transparent 74%),
-    radial-gradient(circle 1.4px at 45% 30%, rgba(96, 82, 140, 0.34), transparent 74%),
-    /* medium craters */
-    radial-gradient(circle 3.8px at 73% 43%, rgba(92, 78, 136, 0.4), transparent 72%),
-    radial-gradient(circle 3.2px at 49% 24%, rgba(92, 78, 136, 0.38), transparent 74%),
-    radial-gradient(circle 4.4px at 56% 73%, rgba(92, 78, 136, 0.36), transparent 72%),
-    radial-gradient(circle 2.8px at 33% 33%, rgba(92, 78, 136, 0.36), transparent 74%),
-    /* broad soft maria */
-    radial-gradient(ellipse 30px 24px at 43% 39%, rgba(108, 94, 148, 0.32), transparent 70%),
-    radial-gradient(ellipse 24px 28px at 58% 33%, rgba(102, 88, 144, 0.3), transparent 72%),
-    radial-gradient(ellipse 22px 18px at 39% 61%, rgba(108, 94, 148, 0.3), transparent 70%),
-    radial-gradient(ellipse 18px 22px at 64% 60%, rgba(102, 88, 144, 0.28), transparent 72%),
-    radial-gradient(ellipse 15px 13px at 29% 46%, rgba(108, 94, 148, 0.26), transparent 72%),
-    radial-gradient(ellipse 14px 12px at 70% 30%, rgba(102, 88, 144, 0.24), transparent 72%),
-    /* base disc */
-    radial-gradient(circle at 38% 34%, #fdfbff, #ece0ff 58%, #b7a3e6 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  -webkit-mask: radial-gradient(circle, #000 80%, rgba(0, 0, 0, 0.4) 91%, transparent 100%);
+  mask: radial-gradient(circle, #000 80%, rgba(0, 0, 0, 0.4) 91%, transparent 100%);
   box-shadow:
     0 0 40px 9px rgba(210, 185, 255, 0.5),
     0 0 90px 30px rgba(150, 120, 230, 0.24);
   opacity: 0;
   transform: scale(0.9);
   transition: opacity 700ms ease, transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.moon .moon-disc::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    transparent 58%,
+    rgba(198, 172, 252, 0.42) 82%,
+    rgba(172, 140, 236, 0.55) 98%
+  );
+  mix-blend-mode: screen;
 }
 .moon--lit {
   filter: drop-shadow(0 0 18px rgb(var(--lamp-lit-shadow) / 0.6))
@@ -967,6 +955,42 @@ h1, h2, h3, h4 {
 @keyframes bh-pulse {
   0%, 100% { opacity: 0.72; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.05); }
+}
+
+/* A lone astronaut floating in FRONT of the hole, reaching toward it, gently
+   pulled — the cinematic Interstellar / Gravity beat. It's painted after the
+   event horizon, so it sits over the black disc (foreground). The motion is a
+   slow, weightless bob toward the hole and back with a hair of sway; the pose
+   (one arm stretched up toward the hole, body angled, legs trailing) carries the
+   "being drawn in". Centre baked in as translate(-50%,-50%). */
+.moon .bh-astronaut {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46%;
+  height: 46%;
+  /* A faint glow so the white figure lifts off the dark hole. */
+  filter: drop-shadow(0 0 3px rgba(120, 96, 180, 0.55));
+  /* ~15s slow pull, then a ~30s empty gap before the next one — 45s total. */
+  animation: bh-pull 45s ease-in infinite;
+}
+.moon .bh-astronaut svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* Floating just below/in front of the hole, then slowly drawn straight into its
+   CENTRE — tumbling back-first, shrinking and fading to nothing right at the
+   middle. It's centred on the hole via translate(-50%,-50%); the start pushes it
+   down a touch, the end lands the vanishing point dead-centre. After it's gone,
+   the transform holds through a long empty stretch = the 30s gap. */
+@keyframes bh-pull {
+  0% { transform: translate(-50%, -28%) rotate(4deg) scale(1); opacity: 0; }
+  4% { transform: translate(-50%, -30%) rotate(3deg) scale(1); opacity: 0.96; }
+  20% { transform: translate(-50%, -38%) rotate(-12deg) scale(0.72); opacity: 0.85; }
+  30% { transform: translate(-50%, -46%) rotate(-30deg) scale(0.34); opacity: 0.35; }
+  33% { transform: translate(-50%, -50%) rotate(-44deg) scale(0.07); opacity: 0; }
+  34%, 100% { transform: translate(-50%, -50%) rotate(-44deg) scale(0.07); opacity: 0; }
 }
 
 /* Honour the reader who prefers stillness. */

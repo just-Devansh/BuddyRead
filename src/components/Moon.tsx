@@ -1,3 +1,6 @@
+import { Astronaut } from './Astronaut'
+import moonImg from '../assets/moon.jpg'
+
 /**
  * The nook's moon — and its dark twin. Lit, it's the moon: a smooth cream-to-lilac
  * disc with craters and a soft halo, casting the lilac moon-wash over the cards.
@@ -29,15 +32,20 @@ export function Moon({
       title={lit ? 'Collapse into a black hole' : 'Bring the moon back'}
       className={`moon ${lit ? 'moon--lit' : ''} block aspect-square shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg ${className}`}
     >
-      {/* Moon (lit) */}
+      {/* Moon (lit) — a real full-moon photo as the disc */}
       <span className="moon-halo" aria-hidden="true" />
-      <span className="moon-disc" aria-hidden="true" />
-      {/* Black hole (unlit) — glow, accretion disk, lensed ring, event horizon */}
+      <span className="moon-disc" aria-hidden="true" style={{ backgroundImage: `url(${moonImg})` }} />
+      {/* Black hole (unlit) — glow, accretion disk, lensed ring, the event
+          horizon, then a lone astronaut floating in FRONT of it (painted last so
+          it sits over the black disc), slowly drawn into the centre. */}
       <span className="bh" aria-hidden="true">
         <span className="bh-glow" />
         <span className="bh-disk" />
         <span className="bh-ring" />
         <span className="bh-hole" />
+        <span className="bh-astronaut">
+          <Astronaut />
+        </span>
       </span>
     </button>
   )
