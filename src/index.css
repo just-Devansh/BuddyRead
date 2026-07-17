@@ -850,8 +850,8 @@ h1, h2, h3, h4 {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  -webkit-mask: radial-gradient(circle, #000 80%, rgba(0, 0, 0, 0.4) 91%, transparent 100%);
-  mask: radial-gradient(circle, #000 80%, rgba(0, 0, 0, 0.4) 91%, transparent 100%);
+  -webkit-mask: radial-gradient(circle, #000 68%, rgba(0, 0, 0, 0.5) 82%, rgba(0, 0, 0, 0.12) 92%, transparent 99%);
+  mask: radial-gradient(circle, #000 68%, rgba(0, 0, 0, 0.5) 82%, rgba(0, 0, 0, 0.12) 92%, transparent 99%);
   box-shadow:
     0 0 40px 9px rgba(210, 185, 255, 0.5),
     0 0 90px 30px rgba(150, 120, 230, 0.24);
@@ -866,9 +866,10 @@ h1, h2, h3, h4 {
   border-radius: 9999px;
   background: radial-gradient(
     circle,
-    transparent 58%,
-    rgba(198, 172, 252, 0.42) 82%,
-    rgba(172, 140, 236, 0.55) 98%
+    transparent 46%,
+    rgba(200, 174, 252, 0.5) 72%,
+    rgba(180, 148, 240, 0.75) 90%,
+    rgba(180, 148, 240, 0.45) 100%
   );
   mix-blend-mode: screen;
 }
