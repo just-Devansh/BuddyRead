@@ -51,15 +51,15 @@ function buildStars(seed: number, count: number): Star[] {
   const r = mulberry32(seed)
   const stars: Star[] = []
   for (let i = 0; i < count; i++) {
-    // A dense, EVEN field across the whole frame — top to bottom, edge to edge —
-    // plus ~25% that thicken a soft diagonal milky-way band. Even coverage is
-    // what makes the dark-moon sky read as stars "everywhere", not a corner.
+    // A dense, even field across the whole frame — plus a cluster gathered up
+    // toward the MOON (upper-right), so the busiest part of the sky sits by the
+    // moon rather than over the hero text on the left.
     let x: number
     let y: number
-    if (r() < 0.25) {
+    if (r() < 0.3) {
       const t = r()
-      x = 2 + t * 96 + (r() - 0.5) * 26
-      y = 1 + t * 62 + (r() - 0.5) * 24
+      x = 46 + t * 54 + (r() - 0.5) * 22 // 46→100 — the right/moon side
+      y = 2 + t * 30 + (r() - 0.5) * 18 // 2→32 — the upper band
     } else {
       x = r() * 100
       y = r() * 100
@@ -125,21 +125,21 @@ const METEORS = [
   { left: '58%', top: '300px', angle: 262, width: 118, dur: '56s', delay: '54s' }, // ~vertical, upward
 ]
 
+// Kept to the right/moon side and lower down — never over the top-left greeting.
 const SPARKLES = [
-  { left: '12%', top: '14%', glyph: '✦', size: 24, color: '#eef4ff', dur: '4.6s', delay: '0.2s' },
-  { left: '73%', top: '9%', glyph: '✦', size: 16, color: '#cfe0ff', dur: '5.4s', delay: '1.1s' },
-  { left: '31%', top: '7%', glyph: '✧', size: 13, color: '#e6f0ff', dur: '3.8s', delay: '0.6s' },
-  { left: '56%', top: '20%', glyph: '✦', size: 18, color: '#cfe0ff', dur: '6s', delay: '2s' },
-  { left: '44%', top: '30%', glyph: '✧', size: 12, color: '#f2f7ff', dur: '4.2s', delay: '1.6s' },
-  { left: '84%', top: '40%', glyph: '✧', size: 14, color: '#cfe0ff', dur: '5.1s', delay: '2.4s' },
-  { left: '22%', top: '44%', glyph: '✦', size: 15, color: '#dbe8ff', dur: '4.8s', delay: '0.9s' },
+  { left: '72%', top: '9%', glyph: '✦', size: 18, color: '#cfe0ff', dur: '5.4s', delay: '1.1s' },
+  { left: '88%', top: '28%', glyph: '✦', size: 15, color: '#eef4ff', dur: '4.6s', delay: '0.2s' },
+  { left: '63%', top: '19%', glyph: '✧', size: 12, color: '#e6f0ff', dur: '3.8s', delay: '0.6s' },
+  { left: '92%', top: '48%', glyph: '✧', size: 13, color: '#cfe0ff', dur: '5.1s', delay: '2.4s' },
+  { left: '55%', top: '40%', glyph: '✦', size: 14, color: '#dbe8ff', dur: '4.8s', delay: '0.9s' },
+  { left: '80%', top: '58%', glyph: '✧', size: 12, color: '#f2f7ff', dur: '4.2s', delay: '1.6s' },
 ]
 
 export function StarryNightSky() {
   const lit = useMoonlight()
   // Seeded once per mount; the same seed lays an identical sky every time. A big
   // count so the dark-moon field reads as an immense hill-station sky.
-  const stars = useMemo(() => buildStars(1337, 1300), [])
+  const stars = useMemo(() => buildStars(1337, 1080), [])
   const faint = useMemo(() => stars.filter((s) => s.tier === 'faint'), [stars])
   const others = useMemo(() => stars.filter((s) => s.tier !== 'faint'), [stars])
 
@@ -196,6 +196,20 @@ export function StarryNightSky() {
 
       {/* Bright + twinkling stars — always present, whatever the moon's doing. */}
       {others.map((s, i) => starEl(s, i))}
+
+      {/* Hero legibility: a soft pool of the deep night over the TOP-LEFT, where
+          the greeting sits, fading out toward the moon and down the page — so the
+          words pop over the field without touching the rest of the sky. Sized in
+          vh so it only ever covers the hero, and painted above the stars so it
+          quiets them there. */}
+      <div
+        className="absolute left-0 top-0 w-full"
+        style={{
+          height: '52vh',
+          background:
+            'radial-gradient(88% 96% at 18% 30%, rgba(2,4,14,0.72) 0%, rgba(2,4,14,0.4) 42%, transparent 72%)',
+        }}
+      />
 
       {/* Cross-shaped sparkles — the anime flourish. */}
       {SPARKLES.map((sp, i) => (
