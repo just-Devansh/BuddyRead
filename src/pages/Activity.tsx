@@ -215,7 +215,11 @@ export function Activity() {
       <h1 className="font-display text-3xl text-text">Activity</h1>
 
       {nothing && (
-        <section className="mt-8 rounded-2xl border border-dashed border-border bg-surface/50 p-10 text-center">
+        <section
+          className={`mt-8 rounded-2xl border border-dashed border-border p-10 text-center ${
+            starry ? 'bg-surface/88 backdrop-blur-md' : 'bg-surface/50'
+          }`}
+        >
           <p className="font-display text-2xl text-text">All quiet</p>
           <p className="mx-auto mt-2 max-w-sm text-pretty leading-relaxed text-text-muted">
             Add a buddy and start a read — requests, replies, pages logged, and
