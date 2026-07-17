@@ -831,15 +831,18 @@ h1, h2, h3, h4 {
 /* ---- Moon — shown when lit ---- */
 .moon .moon-halo {
   position: absolute;
-  inset: -34%;
+  inset: -42%;
   border-radius: 9999px;
-  background: radial-gradient(circle, rgba(215, 190, 255, 0.4), transparent 70%);
-  filter: blur(6px);
+  background: radial-gradient(circle, rgba(202, 172, 251, 0.52) 0%, rgba(168, 138, 234, 0.26) 44%, transparent 72%);
+  filter: blur(7px);
   opacity: 0;
   transition: opacity 800ms ease;
 }
 /* The disc — a real full-moon photo (components/Moon sets the background-image),
-   clipped to the circle, with a soft lilac bloom for the theme's moonlight. */
+   clipped to the circle. The mask feathers the outer edge to nothing so the
+   photo's dark limb never reads as a hard black ring — it dissolves into the
+   lilac halo instead; the ::after screens a lilac rim over the edge so the moon
+   *mixes* into the moonlight rather than sitting on top of it. */
 .moon .moon-disc {
   position: absolute;
   inset: 0;
@@ -847,12 +850,27 @@ h1, h2, h3, h4 {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  -webkit-mask: radial-gradient(circle, #000 80%, rgba(0, 0, 0, 0.4) 91%, transparent 100%);
+  mask: radial-gradient(circle, #000 80%, rgba(0, 0, 0, 0.4) 91%, transparent 100%);
   box-shadow:
     0 0 40px 9px rgba(210, 185, 255, 0.5),
     0 0 90px 30px rgba(150, 120, 230, 0.24);
   opacity: 0;
   transform: scale(0.9);
   transition: opacity 700ms ease, transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.moon .moon-disc::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    transparent 58%,
+    rgba(198, 172, 252, 0.42) 82%,
+    rgba(172, 140, 236, 0.55) 98%
+  );
+  mix-blend-mode: screen;
 }
 .moon--lit {
   filter: drop-shadow(0 0 18px rgb(var(--lamp-lit-shadow) / 0.6))
