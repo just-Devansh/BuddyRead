@@ -1,13 +1,15 @@
 /**
- * The nook's moon — Starry Night's answer to the reading lamp, drawn to match the
- * design canvas: a smooth cream-to-lilac disc with a soft blurred halo and a wide
- * luminous bloom. Off, it hangs dimmed and cool; tapped, it swells to a full
- * silver glow and (via the `.lamp-wash` overlay in Home, recoloured by the
- * moonlight tokens) a pool of moonlight settles over the cards.
+ * The nook's moon — and its dark twin. Lit, it's the moon: a smooth cream-to-lilac
+ * disc with craters and a soft halo, casting the lilac moon-wash over the cards.
+ * Tapped dark, the moon collapses into an Interstellar-style black hole — an amber
+ * accretion disk and a lensed photon ring around a pure-black event horizon — and
+ * the sky fills with stars (the moon no longer washing them out). Tap the black
+ * hole and the moon returns.
  *
- * Same contract as Lamp: `lit` + `onToggle`, with the whole lit look driven by the
- * `moon--lit` class so prefers-reduced-motion can flatten the pulse while keeping
- * the light. Sizing comes from `className` (a width; it's a circle).
+ * Same contract as the old lamp: `lit` + `onToggle`. Both bodies live in the one
+ * button and crossfade via the `moon--lit` class, so prefers-reduced-motion can
+ * flatten the motion while keeping either state legible. Sizing comes from
+ * `className` (a width; it's a circle).
  */
 export function Moon({
   lit,
@@ -23,12 +25,20 @@ export function Moon({
       type="button"
       onClick={onToggle}
       aria-pressed={lit}
-      aria-label={lit ? 'Dim the moon' : 'Light the moon'}
-      title={lit ? 'Dim the moon' : 'Light the moon'}
+      aria-label={lit ? 'Collapse the moon into a black hole' : 'Bring the moon back'}
+      title={lit ? 'Collapse into a black hole' : 'Bring the moon back'}
       className={`moon ${lit ? 'moon--lit' : ''} block aspect-square shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg ${className}`}
     >
+      {/* Moon (lit) */}
       <span className="moon-halo" aria-hidden="true" />
       <span className="moon-disc" aria-hidden="true" />
+      {/* Black hole (unlit) — glow, accretion disk, lensed ring, event horizon */}
+      <span className="bh" aria-hidden="true">
+        <span className="bh-glow" />
+        <span className="bh-disk" />
+        <span className="bh-ring" />
+        <span className="bh-hole" />
+      </span>
     </button>
   )
 }
