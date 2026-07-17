@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { Avatar } from '../components/Avatar'
 import { Lamp } from '../components/Lamp'
-import { Logo } from '../components/Logo'
 import { Moon } from '../components/Moon'
 import { BookCover } from '../components/BookCover'
 import { Eyebrow } from '../components/Eyebrow'
@@ -455,11 +454,9 @@ export function Home() {
           nook lamp is lit. Isolated to .nook so the screen-blend never bleeds. */}
       <div aria-hidden="true" className={`lamp-wash ${lit ? 'is-lit' : ''}`} />
 
-      {/* The hero — the wordmark now heads the home screen (there's no top bar
-          anymore), with the moon/lamp in the corner, then the greeting. */}
+      {/* The hero — the moon/lamp in the corner, then the greeting. */}
       <section className="relative z-10 flex items-start justify-between gap-3">
         <div className="min-w-0 pt-1">
-          <Logo className="mb-5 block text-2xl" />
           {/* Under Starry Night, the date rides above the greeting. */}
           {starry && (
             <p className="mb-2 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-text-faint">
