@@ -5,9 +5,12 @@ export type ThemePreference = 'light' | 'dark' | 'system'
 /**
  * The colour palette, orthogonal to light/dark. 'warm' is the original
  * terracotta-and-gold on parchment/espresso; 'lavender' swaps the accent and the
- * lamplight to a warm plum/lilac. Each palette still has a light and a dark face.
+ * lamplight to a warm plum/lilac (each still has a light and a dark face).
+ * 'starry' is the always-night USP theme — a violet starry sky on the main
+ * screens with a moon in place of the nook lamp; it forces the dark face on
+ * regardless of the light/dark preference.
  */
-export type Palette = 'warm' | 'lavender'
+export type Palette = 'warm' | 'lavender' | 'starry'
 
 /**
  * The font for *value* numbers (ratings, reading pace, counts) — orthogonal to

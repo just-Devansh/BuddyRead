@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { Avatar } from '../components/Avatar'
 import { Lamp } from '../components/Lamp'
+import { Moon } from '../components/Moon'
 import { BookCover } from '../components/BookCover'
 import { Eyebrow } from '../components/Eyebrow'
 import { Ornament } from '../components/Ornament'
 import { ProgressBar } from '../components/ProgressBar'
 import { StarRating } from '../components/StarRating'
 import { useAuth } from '../auth/useAuth'
+import { useTheme } from '../theme/useTheme'
 import { useFriends } from '../friends/useFriends'
 import { useReads } from '../reads/useReads'
 import { useLibrary } from '../library/useLibrary'
@@ -16,6 +18,7 @@ import { fractionFor, otherReader, type Read } from '../lib/reads'
 import { booksOnShelf, type LibraryBook } from '../lib/library'
 import { fetchCircleFeed, type CircleEvent } from '../lib/circle'
 import { pickLine } from '../lib/lines'
+import { setMoonlight, useMoonlight } from '../lib/moonlight'
 
 /** Time-of-day greeting — always an actual greeting, never a goodbye. */
 function greeting(): string {
@@ -27,6 +30,13 @@ function greeting(): string {
 
 function firstName(n: string): string {
   return n.trim().split(' ')[0]
+}
+
+/** "Tue 17 Jul" — the date line above the greeting under Starry Night. */
+function skyDate(): string {
+  return new Date()
+    .toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+    .replace(',', '')
 }
 
 /**
@@ -396,6 +406,8 @@ function CircleEventCard({ event }: { event: CircleEvent }) {
  */
 export function Home() {
   const { user, userDoc } = useAuth()
+  const { palette } = useTheme()
+  const starry = palette === 'starry'
   const { active, loading } = useReads()
   const { friends } = useFriends()
   const { items: myLibrary, loading: libLoading } = useLibrary()
@@ -406,21 +418,10 @@ export function Home() {
   const [fetched, setFetched] = useState<CircleEvent[] | null>(null)
   const [line] = useState(pickLine)
 
-  // The nook lamp — its lit state persists, so the ambience you chose stays.
-  const [lit, setLit] = useState(() => {
-    try {
-      return localStorage.getItem('buddyread:lamp') === 'on'
-    } catch {
-      return false
-    }
-  })
-  useEffect(() => {
-    try {
-      localStorage.setItem('buddyread:lamp', lit ? 'on' : 'off')
-    } catch {
-      // Storage blocked (private mode) — the lamp simply won't be remembered.
-    }
-  }, [lit])
+  // The nook lamp / moon — its lit state is shared (and persisted) via the
+  // moonlight store, so the starry sky can thin its stars when the moon is lit.
+  const lit = useMoonlight()
+  const toggleLit = () => setMoonlight(!lit)
 
   useEffect(() => {
     if (!uid || friends.length === 0) return
@@ -450,27 +451,64 @@ export function Home() {
       {/* Greeting (kept above the wash so the words stay crisp) */}
       <section className="relative z-10 flex items-start justify-between gap-3">
         <div className="min-w-0 pt-1">
+          {/* Under Starry Night, a date line rides above the greeting — the
+              "clear skies" flourish from the design, in place of nothing. */}
+          {starry && (
+            <p className="mb-2 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-text-faint">
+              <span className="text-accent" aria-hidden="true">✦</span>
+              {skyDate()} · clear skies
+            </p>
+          )}
           <p className="font-display text-xl italic text-text-muted">
             {greeting()}, {firstNameOfUser}.
           </p>
           <h1 className="mt-1 font-display text-4xl text-text">Your nook</h1>
         </div>
-        {/* The add-a-book button sits to the left of the corner lamp. */}
+        {/* Warm themes: the add-a-book button sits to the left of the corner
+            lamp. Starry Night hangs a moon in the corner instead — and moves the
+            add-a-book button to a floating action below (see the FAB), so nothing
+            crowds the moon. */}
         <div className="flex shrink-0 items-start gap-2">
-          <Link
-            to="/search"
-            state={{ from: '/home' }}
-            aria-label="Add a book"
-            title="Add a book"
-            className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-accent shadow-[0_8px_20px_-12px_rgba(111,61,48,0.6)] transition-all hover:-translate-y-0.5 hover:border-accent/50 hover:bg-surface-alt active:translate-y-0"
-          >
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-          </Link>
-          <Lamp lit={lit} onToggle={() => setLit((v) => !v)} className="-mt-4 w-12 ipad:w-14" />
+          {starry ? (
+            <Moon lit={lit} onToggle={toggleLit} className="-mr-1 -mt-3 w-28 ipad:w-32" />
+          ) : (
+            <>
+              <Link
+                to="/search"
+                state={{ from: '/home' }}
+                aria-label="Add a book"
+                title="Add a book"
+                className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-accent shadow-[0_8px_20px_-12px_rgba(111,61,48,0.6)] transition-all hover:-translate-y-0.5 hover:border-accent/50 hover:bg-surface-alt active:translate-y-0"
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </Link>
+              <Lamp lit={lit} onToggle={toggleLit} className="-mt-4 w-12 ipad:w-14" />
+            </>
+          )}
         </div>
       </section>
+
+      {/* Starry Night's relocated add-a-book — a floating action tucked at the
+          column's foot, clear of the moon, glowing softly against the sky. */}
+      {starry && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-24 z-30 mx-auto max-w-app px-6">
+          <div className="flex justify-end">
+            <Link
+              to="/search"
+              state={{ from: '/home' }}
+              aria-label="Add a book"
+              title="Add a book"
+              className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-contrast shadow-[0_14px_30px_-10px_rgba(120,90,230,0.75)] outline-none ring-1 ring-inset ring-white/20 transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0 active:scale-95 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+            >
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Hold the dynamic sections until reads load, so the first paint never
           shows the empty layout and then snaps to your reads (the entry flicker). */}

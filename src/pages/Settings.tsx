@@ -28,6 +28,12 @@ const PALETTES: {
     blurb: 'Plum & gold, with a soft lilac lamplight.',
     swatches: ['#7c4f86', '#a8822f', '#b58fe0'],
   },
+  {
+    value: 'starry',
+    name: 'Starry Night',
+    blurb: 'A violet night sky with a moon to light. Always after dark.',
+    swatches: ['#a985ec', '#8fb2ff', '#e6ddff'],
+  },
 ]
 
 /** The numeral fonts on offer, each previewed live in its own face (the
