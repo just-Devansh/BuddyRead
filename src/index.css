@@ -838,45 +838,15 @@ h1, h2, h3, h4 {
   opacity: 0;
   transition: opacity 800ms ease;
 }
-/* The disc — cream at the lit crescent, lilac at the far edge, with soft craters
-   (earlier gradient layers paint on top of the base). */
+/* The disc — a real full-moon photo (components/Moon sets the background-image),
+   clipped to the circle, with a soft lilac bloom for the theme's moonlight. */
 .moon .moon-disc {
   position: absolute;
   inset: 0;
   border-radius: 9999px;
-  /* A mottled lunar face — broad soft maria, medium craters, a scatter of tiny
-     ones, and a couple of bright ray-specks — layered over the base disc (earlier
-     layers paint on top). Tuned to read like a real full moon while keeping the
-     cream-lilac cast. All scale with the disc. */
-  background:
-    /* bright crater-ray specks */
-    radial-gradient(circle 1.5px at 47% 79%, rgba(255, 253, 255, 0.7), transparent 68%),
-    radial-gradient(circle 1.3px at 67% 29%, rgba(255, 253, 255, 0.6), transparent 68%),
-    /* tiny craters, scattered */
-    radial-gradient(circle 1.7px at 30% 41%, rgba(96, 82, 140, 0.42), transparent 74%),
-    radial-gradient(circle 2px at 61% 47%, rgba(96, 82, 140, 0.42), transparent 74%),
-    radial-gradient(circle 1.6px at 44% 53%, rgba(96, 82, 140, 0.4), transparent 74%),
-    radial-gradient(circle 1.9px at 72% 67%, rgba(96, 82, 140, 0.38), transparent 74%),
-    radial-gradient(circle 1.5px at 52% 65%, rgba(96, 82, 140, 0.38), transparent 74%),
-    radial-gradient(circle 1.4px at 37% 71%, rgba(96, 82, 140, 0.36), transparent 74%),
-    radial-gradient(circle 1.7px at 66% 55%, rgba(96, 82, 140, 0.36), transparent 74%),
-    radial-gradient(circle 1.5px at 26% 55%, rgba(96, 82, 140, 0.36), transparent 74%),
-    radial-gradient(circle 1.3px at 58% 38%, rgba(96, 82, 140, 0.34), transparent 74%),
-    radial-gradient(circle 1.4px at 45% 30%, rgba(96, 82, 140, 0.34), transparent 74%),
-    /* medium craters */
-    radial-gradient(circle 3.8px at 73% 43%, rgba(92, 78, 136, 0.4), transparent 72%),
-    radial-gradient(circle 3.2px at 49% 24%, rgba(92, 78, 136, 0.38), transparent 74%),
-    radial-gradient(circle 4.4px at 56% 73%, rgba(92, 78, 136, 0.36), transparent 72%),
-    radial-gradient(circle 2.8px at 33% 33%, rgba(92, 78, 136, 0.36), transparent 74%),
-    /* broad soft maria */
-    radial-gradient(ellipse 30px 24px at 43% 39%, rgba(108, 94, 148, 0.32), transparent 70%),
-    radial-gradient(ellipse 24px 28px at 58% 33%, rgba(102, 88, 144, 0.3), transparent 72%),
-    radial-gradient(ellipse 22px 18px at 39% 61%, rgba(108, 94, 148, 0.3), transparent 70%),
-    radial-gradient(ellipse 18px 22px at 64% 60%, rgba(102, 88, 144, 0.28), transparent 72%),
-    radial-gradient(ellipse 15px 13px at 29% 46%, rgba(108, 94, 148, 0.26), transparent 72%),
-    radial-gradient(ellipse 14px 12px at 70% 30%, rgba(102, 88, 144, 0.24), transparent 72%),
-    /* base disc */
-    radial-gradient(circle at 38% 34%, #fdfbff, #ece0ff 58%, #b7a3e6 100%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   box-shadow:
     0 0 40px 9px rgba(210, 185, 255, 0.5),
     0 0 90px 30px rgba(150, 120, 230, 0.24);
