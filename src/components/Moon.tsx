@@ -42,20 +42,20 @@ export function Moon({
         <span className="bh-ring" />
         <span className="bh-hole" />
         <span className="bh-astronaut">
-          <svg viewBox="0 0 40 52">
-            {/* limbs — reaching arm up toward the hole, other arm + legs trailing */}
-            <g stroke="currentColor" strokeWidth="4.6" strokeLinecap="round" strokeLinejoin="round" fill="none">
-              <path d="M25 22 Q31 14 34.5 6" />
-              <path d="M15.5 22 Q10.5 27 8 33" />
-              <path d="M22 33 Q25.5 40 25 47.5" />
-              <path d="M18 33 Q14 40 12.5 46" />
+          <svg viewBox="0 0 40 54">
+            {/* slim limbs — one arm flung up toward the hole, the rest trailing */}
+            <g stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none">
+              <path d="M24 20 Q30 10 36 2" />
+              <path d="M16 20.5 Q10 25 6.5 31" />
+              <path d="M22 34 Q26 42 25.5 50.5" />
+              <path d="M18 34 Q13.5 42 12 49.5" />
             </g>
             {/* backpack, torso, helmet */}
-            <rect x="12.3" y="17.5" width="15.4" height="15" rx="5.4" fill="currentColor" opacity="0.82" />
-            <rect x="13.6" y="16.5" width="12.8" height="17.5" rx="6" fill="currentColor" />
-            <circle cx="20" cy="10.5" r="7.1" fill="currentColor" />
-            {/* visor */}
-            <ellipse cx="17.9" cy="9.6" rx="2.7" ry="3.3" fill="#0a0512" opacity="0.42" />
+            <rect x="13.4" y="17.5" width="13.2" height="13" rx="4.2" fill="currentColor" opacity="0.8" />
+            <rect x="14.6" y="16.5" width="10.8" height="17.5" rx="5" fill="currentColor" />
+            <circle cx="20" cy="10" r="6.2" fill="currentColor" />
+            {/* a faint catch of light on the visor */}
+            <ellipse cx="18" cy="9.2" rx="2.3" ry="2.9" fill="rgba(212,202,246,0.28)" />
           </svg>
         </span>
       </span>
