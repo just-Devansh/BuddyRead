@@ -17,6 +17,7 @@ import { useBackClose } from '../components/useBackClose'
 import { useConfirm } from '../components/useConfirm'
 import { db } from '../lib/firebase'
 import { useAuth } from '../auth/useAuth'
+import { useTheme } from '../theme/useTheme'
 import { useFriends } from '../friends/useFriends'
 import { useReads } from '../reads/useReads'
 import { logActivity, type ActivityEventDoc, type ActivityItem } from '../lib/activity'
@@ -164,6 +165,10 @@ function describe(
  */
 export function Activity() {
   const { user } = useAuth()
+  const { palette } = useTheme()
+  // Under Starry Night the feed floats on the sky; give it a near-opaque frosted
+  // panel so the log stays legible while a soft blur of stars still shows through.
+  const starry = palette === 'starry'
   const { incoming: friendIn } = useFriends()
   const { incoming: readIn } = useReads()
   const { confirm, dialog } = useConfirm()
@@ -338,7 +343,13 @@ export function Activity() {
       {events.length > 0 && (
         <section className="mt-8">
           <Eyebrow className="mb-1 block">Lately</Eyebrow>
-          <ul>
+          <ul
+            className={
+              starry
+                ? 'rounded-2xl border border-border-soft/70 bg-surface/88 px-4 shadow-[0_12px_34px_-18px_rgba(0,0,0,0.75)] backdrop-blur-md [&>li:first-child]:border-t-0'
+                : ''
+            }
+          >
             {events.map((it) => {
               const isOther = it.actorUid && it.actorUid !== user?.uid
               const { body, quote, mood } = describe(it, !isOther)
