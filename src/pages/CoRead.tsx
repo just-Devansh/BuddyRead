@@ -139,8 +139,9 @@ export function CoRead() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { resolved, palette } = useTheme()
+  const starry = palette === 'starry'
   // Starry Night is always night, so its keepsake wears the dark face too.
-  const keepsakeMode = palette === 'starry' ? 'dark' : resolved
+  const keepsakeMode = starry ? 'dark' : resolved
   const { active, loading } = useReads()
   const { confirm, dialog } = useConfirm()
   const [logging, setLogging] = useState(false)
@@ -156,7 +157,11 @@ export function CoRead() {
       <AppShell>
         <Link
           to="/home"
-          className="font-mono text-[11px] uppercase tracking-[0.1em] text-text-muted transition-colors hover:text-text"
+          className={`font-mono text-[11px] uppercase tracking-[0.1em] ${
+            starry
+              ? 'rounded-full border border-border-soft/80 bg-surface/70 px-3.5 py-1.5 text-text-muted shadow-[0_8px_20px_-10px_rgba(0,0,0,0.7)] backdrop-blur-md transition-[color,border-color,transform] hover:-translate-y-px hover:border-accent/45 hover:text-text active:translate-y-0'
+              : 'text-text-muted transition-colors hover:text-text'
+          }`}
         >
           ‹ Home
         </Link>
@@ -290,7 +295,11 @@ export function CoRead() {
       <div className="flex items-center justify-between">
         <Link
           to="/home"
-          className="font-mono text-[11px] uppercase tracking-[0.1em] text-text-muted transition-colors hover:text-text"
+          className={`font-mono text-[11px] uppercase tracking-[0.1em] ${
+            starry
+              ? 'rounded-full border border-border-soft/80 bg-surface/70 px-3.5 py-1.5 text-text-muted shadow-[0_8px_20px_-10px_rgba(0,0,0,0.7)] backdrop-blur-md transition-[color,border-color,transform] hover:-translate-y-px hover:border-accent/45 hover:text-text active:translate-y-0'
+              : 'text-text-muted transition-colors hover:text-text'
+          }`}
         >
           ‹ Home
         </Link>
@@ -298,7 +307,13 @@ export function CoRead() {
         <button
           type="button"
           onClick={() => void leave()}
-          className="font-mono text-[10px] uppercase tracking-[0.1em] text-text-faint transition-colors hover:text-accent"
+          className={`font-mono text-[10px] uppercase tracking-[0.1em] transition-colors ${
+            // On the starry sky a bare label vanishes — give it a glassy, dark,
+            // curved button so it reads as tappable.
+            starry
+              ? 'rounded-full border border-border-soft/80 bg-surface/70 px-3.5 py-1.5 text-text-muted shadow-[0_8px_20px_-10px_rgba(0,0,0,0.7)] backdrop-blur-md transition-[color,border-color,transform] hover:-translate-y-px hover:border-accent/45 hover:text-accent active:translate-y-0'
+              : 'text-text-faint hover:text-accent'
+          }`}
         >
           {solo ? 'Set aside' : 'Leave'}
         </button>

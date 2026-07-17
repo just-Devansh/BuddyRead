@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useFriends } from '../friends/useFriends'
 import { useReads } from '../reads/useReads'
 import { tapHaptic } from '../lib/haptics'
@@ -72,6 +72,7 @@ const TABS: Tab[] = [
 export function BottomNav() {
   const { incoming } = useFriends()
   const { incoming: incomingReads } = useReads()
+  const { pathname } = useLocation()
 
   const badgeFor = (to: string): number => {
     // Friends no longer has its own tab; its requests surface in Activity too.
@@ -79,54 +80,71 @@ export function BottomNav() {
     return 0
   }
 
+  const renderTab = (tab: Tab) => (
+    <li key={tab.to} className="flex-1">
+      <NavLink
+        to={tab.to}
+        onClick={tapHaptic}
+        className={({ isActive }) =>
+          [
+            'group flex flex-col items-center gap-1 py-2 font-mono text-[9px] uppercase tracking-[0.1em] transition-colors',
+            isActive ? 'text-accent' : 'text-text-muted hover:text-text',
+          ].join(' ')
+        }
+      >
+        {({ isActive }) => (
+          <>
+            {/* The active tab is marked two ways: the accent colour and a soft
+                accent-tinted pill cradling the icon. */}
+            <span
+              className={[
+                'flex h-8 items-center justify-center rounded-xl px-4 transition-all duration-300',
+                isActive
+                  ? 'bg-accent/12 ring-1 ring-inset ring-accent/15'
+                  : 'bg-transparent group-active:bg-accent/5',
+              ].join(' ')}
+            >
+              <span className="relative">
+                {tab.icon}
+                {badgeFor(tab.to) > 0 && (
+                  <span
+                    className="absolute -right-2 -top-1.5 min-w-4 rounded-full bg-accent px-1 text-center font-mono text-[10px] font-semibold leading-4 text-accent-contrast"
+                    aria-label={`${badgeFor(tab.to)} pending`}
+                  >
+                    {badgeFor(tab.to)}
+                  </span>
+                )}
+              </span>
+            </span>
+            {tab.label}
+          </>
+        )}
+      </NavLink>
+    </li>
+  )
+
   return (
     <nav className="sticky bottom-0 z-10 border-t border-border-soft bg-bg/90 backdrop-blur">
       <ul className="mx-auto flex max-w-md items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)]">
-        {TABS.map((tab) => (
-          <li key={tab.to} className="flex-1">
-            <NavLink
-              to={tab.to}
-              onClick={tapHaptic}
-              className={({ isActive }) =>
-                [
-                  'group flex flex-col items-center gap-1 py-2 font-mono text-[9px] uppercase tracking-[0.1em] transition-colors',
-                  isActive ? 'text-accent' : 'text-text-muted hover:text-text',
-                ].join(' ')
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  {/* The active tab is now marked two ways at once: the warm
-                      accent colour (as before) and a soft accent-tinted pill
-                      cradling the icon, so the current screen is obvious at a
-                      glance. The pill uses the themed accent at low opacity, so
-                      it stays gentle on both parchment and espresso. */}
-                  <span
-                    className={[
-                      'flex h-8 items-center justify-center rounded-xl px-4 transition-all duration-300',
-                      isActive
-                        ? 'bg-accent/12 ring-1 ring-inset ring-accent/15'
-                        : 'bg-transparent group-active:bg-accent/5',
-                    ].join(' ')}
-                  >
-                    <span className="relative">
-                      {tab.icon}
-                      {badgeFor(tab.to) > 0 && (
-                        <span
-                          className="absolute -right-2 -top-1.5 min-w-4 rounded-full bg-accent px-1 text-center font-mono text-[10px] font-semibold leading-4 text-accent-contrast"
-                          aria-label={`${badgeFor(tab.to)} pending`}
-                        >
-                          {badgeFor(tab.to)}
-                        </span>
-                      )}
-                    </span>
-                  </span>
-                  {tab.label}
-                </>
-              )}
-            </NavLink>
-          </li>
-        ))}
+        {TABS.slice(0, 2).map(renderTab)}
+
+        {/* The add-a-book action, docked dead-centre and raised above the bar. */}
+        <li className="flex flex-1 justify-center">
+          <Link
+            to="/search"
+            state={{ from: pathname }}
+            onClick={tapHaptic}
+            aria-label="Add a book"
+            title="Add a book"
+            className="relative -top-3.5 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-contrast shadow-[0_12px_26px_-8px_rgba(0,0,0,0.55)] ring-4 ring-bg outline-none transition-transform duration-200 hover:-translate-y-0.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+          >
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </Link>
+        </li>
+
+        {TABS.slice(2).map(renderTab)}
       </ul>
     </nav>
   )

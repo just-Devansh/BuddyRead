@@ -332,12 +332,18 @@ function verbFor(e: CircleEvent): string {
  * No "read together" CTA lives here — that belongs on the book and a friend's
  * profile, not stamped on every passing update.
  */
-function CircleEventCard({ event }: { event: CircleEvent }) {
+function CircleEventCard({ event, starry }: { event: CircleEvent; starry: boolean }) {
   const { actor, book } = event
   // Up to two authors so the line stays a line; the rest is implied by "et al."
   const authorLine = book.authors?.slice(0, 2).join(', ')
   return (
-    <div className="flex items-start gap-3.5 rounded-xl border border-border-soft bg-surface/40 px-3.5 py-3">
+    <div
+      className={`flex items-start gap-3.5 rounded-xl border border-border-soft px-3.5 py-3 ${
+        // Starry: a touch more opaque + a light frost so text stays legible over
+        // the sky, but still translucent enough to keep the glassy feel.
+        starry ? 'bg-surface/60 backdrop-blur-sm' : 'bg-surface/40'
+      }`}
+    >
       <Link
         to={`/book/${book.id}`}
         state={{ from: '/home' }}
@@ -448,7 +454,7 @@ export function Home() {
           nook lamp is lit. Isolated to .nook so the screen-blend never bleeds. */}
       <div aria-hidden="true" className={`lamp-wash ${lit ? 'is-lit' : ''}`} />
 
-      {/* Greeting (kept above the wash so the words stay crisp) */}
+      {/* The hero — the moon/lamp in the corner, then the greeting. */}
       <section className="relative z-10 flex items-start justify-between gap-3">
         <div className="min-w-0 pt-1">
           {/* Under Starry Night, the date rides above the greeting. */}
@@ -469,51 +475,16 @@ export function Home() {
           )}
           <h1 className="mt-1 font-display text-4xl text-text">Your nook</h1>
         </div>
-        {/* Warm themes: the add-a-book button sits to the left of the corner
-            lamp. Starry Night hangs a moon in the corner instead — and moves the
-            add-a-book button to a floating action below (see the FAB), so nothing
-            crowds the moon. */}
-        <div className="flex shrink-0 items-start gap-2">
+        {/* The corner light — a moon under Starry Night, the reading lamp
+            otherwise. The add-a-book button now lives docked in the bottom nav. */}
+        <div className="flex shrink-0 items-start">
           {starry ? (
-            <Moon lit={lit} onToggle={toggleLit} className="-mr-1 -mt-3 w-28 ipad:w-32" />
+            <Moon lit={lit} onToggle={toggleLit} className="-mr-1 -mt-2 w-28 ipad:w-32" />
           ) : (
-            <>
-              <Link
-                to="/search"
-                state={{ from: '/home' }}
-                aria-label="Add a book"
-                title="Add a book"
-                className="mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-accent shadow-[0_8px_20px_-12px_rgba(111,61,48,0.6)] transition-all hover:-translate-y-0.5 hover:border-accent/50 hover:bg-surface-alt active:translate-y-0"
-              >
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-              </Link>
-              <Lamp lit={lit} onToggle={toggleLit} className="-mt-4 w-12 ipad:w-14" />
-            </>
+            <Lamp lit={lit} onToggle={toggleLit} className="-mt-3 w-12 ipad:w-14" />
           )}
         </div>
       </section>
-
-      {/* Starry Night's relocated add-a-book — a floating action tucked at the
-          column's foot, clear of the moon, glowing softly against the sky. */}
-      {starry && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-24 z-30 mx-auto max-w-app px-6">
-          <div className="flex justify-end">
-            <Link
-              to="/search"
-              state={{ from: '/home' }}
-              aria-label="Add a book"
-              title="Add a book"
-              className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-contrast shadow-[0_14px_30px_-10px_rgba(120,90,230,0.75)] outline-none ring-1 ring-inset ring-white/20 transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0 active:scale-95 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-            >
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-            </Link>
-          </div>
-        </div>
-      )}
 
       {/* Hold the dynamic sections until reads load, so the first paint never
           shows the empty layout and then snaps to your reads (the entry flicker). */}
@@ -568,7 +539,7 @@ export function Home() {
                 <ul className="space-y-2.5">
                   {feed.map((e) => (
                     <li key={e.id}>
-                      <CircleEventCard event={e} />
+                      <CircleEventCard event={e} starry={starry} />
                     </li>
                   ))}
                 </ul>

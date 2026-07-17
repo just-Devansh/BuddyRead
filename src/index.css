@@ -546,16 +546,6 @@ h1, h2, h3, h4 {
     inset 0 2px 7px rgba(0, 0, 0, 0.6),
     inset 0 -1px 0 var(--shelf-panel-hi);
 }
-/* The library ladder: leans against the cabinet's right side, its top resting on
-   whichever shelf most recently took a book. Purely ornamental — pointer-events
-   are off so it never intercepts a tap, a scroll, or a drag. */
-.library-ladder {
-  position: absolute;
-  right: 16px;
-  z-index: 5;
-  pointer-events: none;
-  filter: drop-shadow(0 5px 8px var(--ladder-shadow));
-}
 .shelf-book {
   transition: transform 200ms cubic-bezier(0.2, 0.7, 0.2, 1);
 }
@@ -704,16 +694,18 @@ h1, h2, h3, h4 {
    ~30% strength and pulls the falloff in tight, so the light stays a soft lilac
    halo close around the moon rather than flooding the hero. */
 .palette-starry .lamp-wash {
+  width: 19rem;
+  height: 19rem;
   background: radial-gradient(
     circle at center,
-    rgb(var(--lamp-rgb) / 0.5) 0%,
-    rgb(var(--lamp-rgb) / 0.2) 15%,
-    rgb(var(--lamp-rgb-2) / 0.07) 30%,
-    transparent 46%
+    rgb(var(--lamp-rgb) / 0.4) 0%,
+    rgb(var(--lamp-rgb) / 0.13) 14%,
+    rgb(var(--lamp-rgb-2) / 0.04) 28%,
+    transparent 42%
   );
 }
 .palette-starry .lamp-wash.is-lit {
-  opacity: 0.3;
+  opacity: 0.16;
 }
 
 /* ---- Starry Night: the sky (see components/StarryNightSky) ----------------
@@ -741,8 +733,8 @@ h1, h2, h3, h4 {
   opacity: 0;
   transition: opacity 1200ms ease;
   background:
-    radial-gradient(120% 82% at 60% 24%, rgba(52, 104, 180, 0.34) 0%, rgba(30, 72, 140, 0.16) 42%, transparent 68%),
-    linear-gradient(180deg, rgba(9, 26, 70, 0.92) 0%, rgba(11, 42, 96, 0.78) 58%, rgba(13, 54, 108, 0.72) 100%);
+    radial-gradient(120% 82% at 60% 24%, rgba(52, 104, 180, 0.22) 0%, rgba(30, 72, 140, 0.1) 42%, transparent 68%),
+    linear-gradient(180deg, rgba(8, 22, 60, 0.7) 0%, rgba(10, 34, 82, 0.58) 58%, rgba(12, 44, 92, 0.52) 100%);
 }
 .starry-sky.is-moonlit .sky-lift {
   opacity: 1;
@@ -817,13 +809,13 @@ h1, h2, h3, h4 {
   100% { transform: translateX(320px); opacity: 0; }
 }
 
-/* ---- The Moon (see components/Moon) — the nook lamp's night-time cousin -----
-   Drawn straight from the design canvas: a smooth cream-to-lilac disc with a soft
-   blurred halo behind it and a wide luminous bloom (box-shadow). Off, it hangs
-   dimmed and cool; tapped, it swells to a full silver glow and (via .lamp-wash in
-   Home, recoloured by the moonlight tokens) a pool of moonlight settles over the
-   cards. The `moon--lit` class does all the work so reduced-motion can still the
-   pulse while keeping the light. */
+/* ---- The Moon ⇄ the black hole (see components/Moon) -----------------------
+   Two bodies sharing one tap-target. Lit, it's the moon — a smooth cream-to-lilac
+   disc with craters and a soft halo, casting the lilac moon-wash over the cards.
+   Tapped dark, the moon collapses into an Interstellar-style black hole: an amber
+   accretion disk and a lensed photon ring around a pure-black event horizon, while
+   the sky fills with stars (the moon no longer washing them out). The `moon--lit`
+   class crossfades the two; reduced-motion keeps both, just still. */
 .moon {
   position: relative;
   -webkit-tap-highlight-color: transparent;
@@ -835,8 +827,8 @@ h1, h2, h3, h4 {
 .moon:active {
   transform: translateY(0) scale(0.97);
 }
-/* The blurred halo behind the disc. Off, it's gone and shrunk in with the disc;
-   lit, it blooms and pulses. */
+
+/* ---- Moon — shown when lit ---- */
 .moon .moon-halo {
   position: absolute;
   inset: -34%;
@@ -844,51 +836,137 @@ h1, h2, h3, h4 {
   background: radial-gradient(circle, rgba(215, 190, 255, 0.4), transparent 70%);
   filter: blur(6px);
   opacity: 0;
-  transform: scale(0.66);
-  transition: opacity 700ms ease, transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition: opacity 800ms ease;
 }
-/* The disc itself — cream at the lit crescent, lilac at the far edge. It shrinks
-   to a small, dim moon when the light is off and swells to a full glow when on
-   (so tapping it dark hands the sky back to the stars). */
+/* The disc — cream at the lit crescent, lilac at the far edge, with soft craters
+   (earlier gradient layers paint on top of the base). */
 .moon .moon-disc {
   position: absolute;
   inset: 0;
   border-radius: 9999px;
-  /* Craters/maria layered over the base disc (earlier layers paint on top) — soft
-     grey-violet blotches for personality, without changing the moon's overall
-     read. They scale with the disc, so they hold their place as it swells/shrinks. */
+  /* A mottled lunar face — broad soft maria, medium craters, a scatter of tiny
+     ones, and a couple of bright ray-specks — layered over the base disc (earlier
+     layers paint on top). Tuned to read like a real full moon while keeping the
+     cream-lilac cast. All scale with the disc. */
   background:
-    radial-gradient(circle 13px at 39% 60%, rgba(116, 100, 158, 0.42), rgba(116, 100, 158, 0.12) 58%, transparent 76%),
-    radial-gradient(circle 9px at 66% 64%, rgba(108, 92, 150, 0.4), rgba(108, 92, 150, 0.1) 56%, transparent 74%),
-    radial-gradient(circle 6px at 61% 31%, rgba(116, 100, 158, 0.44), transparent 72%),
-    radial-gradient(circle 4px at 43% 40%, rgba(116, 100, 158, 0.4), transparent 72%),
-    radial-gradient(circle 3px at 54% 22%, rgba(116, 100, 158, 0.4), transparent 72%),
-    radial-gradient(circle 3.5px at 78% 46%, rgba(108, 92, 150, 0.36), transparent 74%),
-    radial-gradient(circle 2.4px at 50% 74%, rgba(116, 100, 158, 0.36), transparent 72%),
+    /* bright crater-ray specks */
+    radial-gradient(circle 1.5px at 47% 79%, rgba(255, 253, 255, 0.7), transparent 68%),
+    radial-gradient(circle 1.3px at 67% 29%, rgba(255, 253, 255, 0.6), transparent 68%),
+    /* tiny craters, scattered */
+    radial-gradient(circle 1.7px at 30% 41%, rgba(96, 82, 140, 0.42), transparent 74%),
+    radial-gradient(circle 2px at 61% 47%, rgba(96, 82, 140, 0.42), transparent 74%),
+    radial-gradient(circle 1.6px at 44% 53%, rgba(96, 82, 140, 0.4), transparent 74%),
+    radial-gradient(circle 1.9px at 72% 67%, rgba(96, 82, 140, 0.38), transparent 74%),
+    radial-gradient(circle 1.5px at 52% 65%, rgba(96, 82, 140, 0.38), transparent 74%),
+    radial-gradient(circle 1.4px at 37% 71%, rgba(96, 82, 140, 0.36), transparent 74%),
+    radial-gradient(circle 1.7px at 66% 55%, rgba(96, 82, 140, 0.36), transparent 74%),
+    radial-gradient(circle 1.5px at 26% 55%, rgba(96, 82, 140, 0.36), transparent 74%),
+    radial-gradient(circle 1.3px at 58% 38%, rgba(96, 82, 140, 0.34), transparent 74%),
+    radial-gradient(circle 1.4px at 45% 30%, rgba(96, 82, 140, 0.34), transparent 74%),
+    /* medium craters */
+    radial-gradient(circle 3.8px at 73% 43%, rgba(92, 78, 136, 0.4), transparent 72%),
+    radial-gradient(circle 3.2px at 49% 24%, rgba(92, 78, 136, 0.38), transparent 74%),
+    radial-gradient(circle 4.4px at 56% 73%, rgba(92, 78, 136, 0.36), transparent 72%),
+    radial-gradient(circle 2.8px at 33% 33%, rgba(92, 78, 136, 0.36), transparent 74%),
+    /* broad soft maria */
+    radial-gradient(ellipse 30px 24px at 43% 39%, rgba(108, 94, 148, 0.32), transparent 70%),
+    radial-gradient(ellipse 24px 28px at 58% 33%, rgba(102, 88, 144, 0.3), transparent 72%),
+    radial-gradient(ellipse 22px 18px at 39% 61%, rgba(108, 94, 148, 0.3), transparent 70%),
+    radial-gradient(ellipse 18px 22px at 64% 60%, rgba(102, 88, 144, 0.28), transparent 72%),
+    radial-gradient(ellipse 15px 13px at 29% 46%, rgba(108, 94, 148, 0.26), transparent 72%),
+    radial-gradient(ellipse 14px 12px at 70% 30%, rgba(102, 88, 144, 0.24), transparent 72%),
+    /* base disc */
     radial-gradient(circle at 38% 34%, #fdfbff, #ece0ff 58%, #b7a3e6 100%);
-  box-shadow:
-    0 0 22px 5px rgba(150, 130, 210, 0.22),
-    0 0 44px 12px rgba(120, 100, 190, 0.12);
-  filter: saturate(0.65) brightness(0.4);
-  transform: scale(0.58);
-  transition: filter 700ms ease, box-shadow 700ms ease,
-    transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-.moon--lit .moon-halo {
-  opacity: 1;
-  transform: scale(1);
-  animation: moon-pulse 6s ease-in-out infinite;
-}
-.moon--lit .moon-disc {
-  filter: saturate(1) brightness(1);
-  transform: scale(1);
   box-shadow:
     0 0 40px 9px rgba(210, 185, 255, 0.5),
     0 0 90px 30px rgba(150, 120, 230, 0.24);
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 700ms ease, transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.moon--lit {
+  filter: drop-shadow(0 0 18px rgb(var(--lamp-lit-shadow) / 0.6))
+    drop-shadow(0 6px 22px rgb(var(--lamp-rgb-2) / 0.45));
+}
+.moon--lit .moon-halo {
+  opacity: 1;
+  animation: moon-pulse 6s ease-in-out infinite;
+}
+.moon--lit .moon-disc {
+  opacity: 1;
+  transform: scale(1);
 }
 @keyframes moon-pulse {
   0%, 100% { opacity: 0.55; }
   50% { opacity: 0.95; }
+}
+
+/* ---- Black hole — shown when NOT lit ---- */
+.moon .bh {
+  position: absolute;
+  inset: 0;
+  opacity: 1;
+  transition: opacity 800ms ease;
+}
+.moon--lit .bh {
+  opacity: 0;
+}
+/* Ambient warm-lilac glow, softly breathing — kept low so it doesn't bloom. */
+.moon .bh-glow {
+  position: absolute;
+  inset: -30%;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(178, 132, 224, 0.18), transparent 66%);
+  filter: blur(8px);
+  animation: bh-pulse 5s ease-in-out infinite;
+}
+/* The accretion disk — a tilted band of infalling matter, warm lilac at the core
+   cooling to orchid at its edges. Dimmed so it reads as a quiet ember, not a lamp. */
+.moon .bh-disk {
+  position: absolute;
+  left: -30%;
+  right: -30%;
+  top: 50%;
+  height: 34%;
+  transform: translateY(-50%) rotate(-10deg);
+  border-radius: 9999px;
+  background: radial-gradient(
+    ellipse at center,
+    #efe1f7 0%,
+    rgba(210, 166, 234, 0.72) 26%,
+    rgba(176, 116, 206, 0.34) 52%,
+    transparent 74%
+  );
+  filter: blur(1.4px);
+}
+/* The lensed light wrapping over the top/bottom — a bright ring around the hole. */
+.moon .bh-ring {
+  position: absolute;
+  inset: 14%;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    transparent 52%,
+    rgba(226, 196, 242, 0.72) 58%,
+    rgba(186, 132, 214, 0.22) 68%,
+    transparent 80%
+  );
+  filter: blur(0.5px);
+}
+/* The event horizon — pure black, ringed by the crisp photon sphere. */
+.moon .bh-hole {
+  position: absolute;
+  inset: 26%;
+  border-radius: 9999px;
+  background: #0a0512;
+  box-shadow:
+    0 0 0 1.5px rgba(226, 198, 240, 0.82),
+    0 0 12px 2px rgba(188, 136, 220, 0.4),
+    0 0 26px 7px rgba(166, 108, 202, 0.2);
+}
+@keyframes bh-pulse {
+  0%, 100% { opacity: 0.72; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
 }
 
 /* Honour the reader who prefers stillness. */

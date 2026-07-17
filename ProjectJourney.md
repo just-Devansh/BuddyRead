@@ -607,3 +607,25 @@ The `+` (add a book) sat beside the lamp. With a moon there, crowding it looked 
 
 ---
 
+
+---
+
+## Chapter — Starry Night, refined: the moon becomes a black hole
+
+The Starry theme kept earning polish once it was real, and this chapter gathers that arc — the kind of iteration that only surfaces on a device, in the dark, at arm's length.
+
+**The moon ⇄ the black hole.** The off-state started as a dimmed, shrunken moon. It read as "broken moon," not "night." The fix turned the toggle into two bodies sharing one tap-target: lit, it's the moon (a mottled cream-lilac disc — broad soft *maria*, medium craters, a scatter of tiny ones and a couple of bright ray-specks, all layered radial-gradients tuned against a photo of a real full moon); tapped dark, the moon **collapses into an Interstellar-style black hole** — a warm-lilac accretion disk and a lensed photon ring around a pure-black event horizon, softly breathing — and the sky fills with stars. The two crossfade via one `moon--lit` class, pure CSS. It's the theme's signature gesture now.
+
+**One palette, split down the middle.** The instinct was to make Starry a full colourway, but the sky wanted to be its own thing while the app-in-hand wanted to feel designed, not just dark. So the palette splits: the **sky, stars and moon** are Starry's own (navy base, the moonlight-glow tokens, hard-coded sky/moon colours), but every **surface the reader touches** — cards, buttons, inputs, the log/close sheets, the library cabinet — borrows **Lavender's dark tokens** (plum, orchid, gold). The result reads as Lavender floating on a starlit sky, and it fell out of the token architecture almost for free.
+
+**Legibility, again and again.** A starfield behind text is murder on contrast, and each screen needed its own answer. The Home hero got a `vh`-sized pool of night over the top-left, fading toward the moon, with the star *cluster* re-anchored up by the moon so the busiest sky sits away from the words. The Activity "Lately" feed — bare text on hairline dividers — got a near-opaque frosted-glass panel (stars still shimmer faintly behind it, so it keeps the theme). The circle cards got a gentle opacity bump; the co-read `‹ Home` and `Set aside` controls, which dissolved into the sky, got glassy dark chips so they read as tappable. The lesson: on an immersive background, every text-on-nothing element is a latent bug.
+
+**The moonlight had to back off.** Reusing the lamp-wash machinery for moonlight was elegant, but at lamp strength it flooded the whole screen. Starry overrides it to a small, faint, tight-falloff lilac pool — the light is a *hint* near the moon, not a room being lit. Same for the moon-on blue "sky-lift": dialled down so lighting the moon lifts the night only gently out of pitch black.
+
+**Two structural calls.** The floating `+` looked stranded, so the add-a-book action moved to a **raised button docked dead-centre in the bottom nav** — a cleaner, always-available home for it across every screen. And the decorative **library ladder was pulled entirely**: it was fiddly (a measured, resize-observed SVG leaning on the newest shelf), crowded the mobile cabinet, and earned its removal — the shelf reads better without it.
+
+### Q&A
+
+- **Why force the off-state to be a black hole rather than just a darker moon?** Because "dim moon" reads as a rendering glitch, while "the moon collapsed into a black hole" is a *deliberate*, delightful gesture — and it gives the moonlight/star coupling a story: the light is gone because the moon is gone.
+- **Why borrow Lavender's surfaces instead of designing Starry ones?** The sky is the star of the show; the surfaces just need to be legible and handsome without competing. Lavender's plum/orchid already is, and reusing it keeps one fewer token set to maintain. It also makes the two "night" themes feel related, not rival.
+- **A frosted panel on Activity but a soft vignette on Home — why not the same fix?** Different content. Home's hero is a few large words with lots of negative space, so a directional darkening is enough and keeps the sky open. Activity is dense rows of small text where the sky wins every time — that needs an actual surface to sit on.
