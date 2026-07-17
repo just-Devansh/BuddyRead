@@ -32,10 +32,12 @@ export function Moon({
       {/* Moon (lit) */}
       <span className="moon-halo" aria-hidden="true" />
       <span className="moon-disc" aria-hidden="true" />
-      {/* Black hole (unlit) — glow, accretion disk, lensed ring, event horizon */}
+      {/* Black hole (unlit) — glow, accretion disk (+ orbiting swirl), lensed
+          ring, event horizon */}
       <span className="bh" aria-hidden="true">
         <span className="bh-glow" />
         <span className="bh-disk" />
+        <span className="bh-swirl" />
         <span className="bh-ring" />
         <span className="bh-hole" />
       </span>
