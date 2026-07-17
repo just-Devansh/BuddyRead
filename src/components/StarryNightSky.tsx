@@ -45,7 +45,9 @@ interface Star {
   opacity: number
 }
 
-const STAR_COLORS = ['#f6f8ff', '#cdddff', '#a8c4ff', '#dcecff', '#f3e2ff']
+// Cool whites and blues, threaded with a little lilac so the field relates to
+// the moon's glow and the violet surfaces rather than reading as flatly blue.
+const STAR_COLORS = ['#f7f8ff', '#cdddff', '#a9c2ff', '#e7dcff', '#f6e8f6']
 
 function buildStars(seed: number, count: number): Star[] {
   const r = mulberry32(seed)
@@ -126,13 +128,14 @@ const METEORS = [
 ]
 
 // Kept to the right/moon side and lower down — never over the top-left greeting.
+// Lilac-white — they cluster by the moon, so they glow the moon's colour.
 const SPARKLES = [
-  { left: '72%', top: '9%', glyph: '✦', size: 18, color: '#cfe0ff', dur: '5.4s', delay: '1.1s' },
-  { left: '88%', top: '28%', glyph: '✦', size: 15, color: '#eef4ff', dur: '4.6s', delay: '0.2s' },
-  { left: '63%', top: '19%', glyph: '✧', size: 12, color: '#e6f0ff', dur: '3.8s', delay: '0.6s' },
-  { left: '92%', top: '48%', glyph: '✧', size: 13, color: '#cfe0ff', dur: '5.1s', delay: '2.4s' },
-  { left: '55%', top: '40%', glyph: '✦', size: 14, color: '#dbe8ff', dur: '4.8s', delay: '0.9s' },
-  { left: '80%', top: '58%', glyph: '✧', size: 12, color: '#f2f7ff', dur: '4.2s', delay: '1.6s' },
+  { left: '72%', top: '9%', glyph: '✦', size: 18, color: '#efe6ff', dur: '5.4s', delay: '1.1s' },
+  { left: '88%', top: '28%', glyph: '✦', size: 15, color: '#f5efff', dur: '4.6s', delay: '0.2s' },
+  { left: '63%', top: '19%', glyph: '✧', size: 12, color: '#e8dcff', dur: '3.8s', delay: '0.6s' },
+  { left: '92%', top: '48%', glyph: '✧', size: 13, color: '#e6dcff', dur: '5.1s', delay: '2.4s' },
+  { left: '55%', top: '40%', glyph: '✦', size: 14, color: '#ded0ff', dur: '4.8s', delay: '0.9s' },
+  { left: '80%', top: '58%', glyph: '✧', size: 12, color: '#f2ecff', dur: '4.2s', delay: '1.6s' },
 ]
 
 export function StarryNightSky() {
@@ -161,7 +164,7 @@ export function StarryNightSky() {
           height: '320px',
           transform: 'rotate(-22deg)',
           background:
-            'radial-gradient(ellipse 56% 46% at 52% 46%, rgba(120,170,240,.16), rgba(76,124,206,.07) 48%, transparent 74%)',
+            'radial-gradient(ellipse 56% 46% at 52% 46%, rgba(138,152,240,.16), rgba(104,110,214,.07) 48%, transparent 74%)',
           filter: 'blur(16px)',
         }}
       />
@@ -174,7 +177,7 @@ export function StarryNightSky() {
           top: '20%',
           width: '74%',
           height: '150px',
-          background: 'radial-gradient(ellipse 50% 50% at 50% 50%, rgba(58,110,196,.2), transparent 70%)',
+          background: 'radial-gradient(ellipse 50% 50% at 50% 50%, rgba(80,100,208,.2), transparent 70%)',
           ['--drift-dur' as string]: '22s',
         }}
       />
@@ -185,7 +188,7 @@ export function StarryNightSky() {
           top: '44%',
           width: '80%',
           height: '170px',
-          background: 'radial-gradient(ellipse 50% 50% at 50% 50%, rgba(70,96,200,.14), transparent 70%)',
+          background: 'radial-gradient(ellipse 50% 50% at 50% 50%, rgba(128,94,210,.16), transparent 70%)',
           ['--drift-dur' as string]: '28s',
           animationDirection: 'alternate-reverse',
         }}
@@ -221,7 +224,7 @@ export function StarryNightSky() {
             top: sp.top,
             fontSize: `${sp.size}px`,
             color: sp.color,
-            textShadow: '0 0 10px rgba(190,214,255,.85), 0 0 22px rgba(150,180,255,.5)',
+            textShadow: '0 0 10px rgba(210,190,255,.85), 0 0 22px rgba(174,148,246,.5)',
             ['--sp-dur' as string]: sp.dur,
             ['--sp-delay' as string]: sp.delay,
           }}
@@ -251,10 +254,22 @@ export function StarryNightSky() {
         </div>
       ))}
 
-      {/* Horizon glow, hugging the foot of the sky. */}
+      {/* Horizon glow, hugging the foot of the sky — a violet-blue lift so it
+          reads as the same light the moon casts, not a separate blue. */}
       <div
         className="absolute inset-x-0 bottom-0 h-56"
-        style={{ background: 'linear-gradient(0deg, rgba(30,58,120,.22), rgba(24,44,100,.08) 52%, transparent)' }}
+        style={{ background: 'linear-gradient(0deg, rgba(64,52,128,.22), rgba(44,40,102,.08) 52%, transparent)' }}
+      />
+
+      {/* A whisper of an edge-frame — the sky darkens at the left/right margins so
+          the content column feels held, echoing the DeviceFrame's hairline edges.
+          Painted last, over the field, so only the sky (not the cards) is framed. */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            'linear-gradient(90deg, rgba(2,4,12,0.42) 0%, transparent 10%, transparent 90%, rgba(2,4,12,0.42) 100%)',
+        }}
       />
     </div>
   )

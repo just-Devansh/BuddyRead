@@ -454,6 +454,14 @@ h1, h2, h3, h4 {
     0 4px 12px -8px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 224, 180, 0.06);
 }
+/* Starry Night: the top sheen is moonlight, not candlelight — cool lilac, so the
+   hero belongs to the night sky it floats on. */
+.palette-starry .read-hero {
+  box-shadow:
+    0 26px 46px -22px rgba(0, 0, 0, 0.72),
+    0 4px 12px -8px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(216, 198, 255, 0.1);
+}
 @media (hover: hover) {
   .read-hero:hover {
     transform: translateY(-3px);
@@ -467,6 +475,12 @@ h1, h2, h3, h4 {
       0 34px 54px -24px rgba(0, 0, 0, 0.72),
       0 6px 16px -8px rgba(0, 0, 0, 0.52),
       inset 0 1px 0 rgba(255, 224, 180, 0.06);
+  }
+  .palette-starry .read-hero:hover {
+    box-shadow:
+      0 34px 54px -24px rgba(0, 0, 0, 0.75),
+      0 6px 16px -8px rgba(0, 0, 0, 0.52),
+      inset 0 1px 0 rgba(216, 198, 255, 0.1);
   }
 }
 
@@ -487,6 +501,9 @@ h1, h2, h3, h4 {
 }
 .dark .log-stage {
   box-shadow: inset 0 1px 0 rgba(255, 224, 180, 0.05);
+}
+.palette-starry .log-stage {
+  box-shadow: inset 0 1px 0 rgba(216, 198, 255, 0.09);
 }
 
 
