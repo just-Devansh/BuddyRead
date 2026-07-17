@@ -246,7 +246,7 @@ function Ladder({ top, height }: { top: number; height: number }) {
 
   return (
     <svg
-      className="library-ladder"
+      className="library-ladder hidden ipad:block"
       style={{ top }}
       width={W}
       height={H}

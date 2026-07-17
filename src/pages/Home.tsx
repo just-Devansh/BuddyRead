@@ -451,17 +451,22 @@ export function Home() {
       {/* Greeting (kept above the wash so the words stay crisp) */}
       <section className="relative z-10 flex items-start justify-between gap-3">
         <div className="min-w-0 pt-1">
-          {/* Under Starry Night, a date line rides above the greeting — the
-              "clear skies" flourish from the design, in place of nothing. */}
+          {/* Under Starry Night, the date rides above the greeting. */}
           {starry && (
             <p className="mb-2 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-text-faint">
               <span className="text-accent" aria-hidden="true">✦</span>
-              {skyDate()} · clear skies
+              {skyDate()}
             </p>
           )}
-          <p className="font-display text-xl italic text-text-muted">
-            {greeting()}, {firstNameOfUser}.
-          </p>
+          {starry ? (
+            <p className="truncate font-display text-xl italic text-text-muted">
+              Hiiiii {firstNameOfUser}
+            </p>
+          ) : (
+            <p className="font-display text-xl italic text-text-muted">
+              {greeting()}, {firstNameOfUser}.
+            </p>
+          )}
           <h1 className="mt-1 font-display text-4xl text-text">Your nook</h1>
         </div>
         {/* Warm themes: the add-a-book button sits to the left of the corner

@@ -163,58 +163,66 @@
 }
 
 /* ---- Palette: Starry Night (the USP theme) --------------------------------
-   Unlike warm/lavender, this palette is *always night* — a violet, Shinkai-blue
+   Unlike warm/lavender, this palette is *always night* — a deep-blue, Shinkai
    sky over the main screens (see components/StarryNightSky) with a tappable moon
    in place of the nook lamp. Because it's inherently nocturnal, ThemeProvider
    forces the `.dark` class on <html> whenever it's chosen, so every `.dark`
    component tweak engages regardless of the reader's light/dark preference (which
    is preserved and re-applied the moment they leave this palette). Both selectors
    are listed so `.palette-starry.dark` out-specifies the plain `.dark` block; the
-   pair is placed last so source order settles any remaining ties. Derived from
-   the "2a · anime cut" Claude Design canvas: moonlit violet for you, a cool
-   periwinkle star for your buddy, gold retired to the sky. */
+   pair is placed last so source order settles any remaining ties.
+
+   A deliberate split: the SKY, STARS and MOON are Starry Night's own (the navy
+   base, the moonlight-glow tokens below); the SURFACES the reader actually touches
+   — cards, buttons, inputs, the log/close sheets, the library cabinet — borrow the
+   LAVENDER dark palette (plum surfaces, orchid accent, warm gold), so the app you
+   hold feels like Lavender while it floats on a starlit sky. */
 .palette-starry,
 .palette-starry.dark {
-  --bg: #060c20; /* deep navy night — the base the sky gradient sits over */
-  --surface: #101d3e; /* a card cut from deep starry blue */
-  --surface-alt: #0a1430; /* nested inputs / wells */
-  --text: #eef2fc;
-  --text-muted: #b3bcdb;
-  --text-faint: #7f89af; /* mono meta — the quietest text */
-  --border: #26315a;
-  --border-soft: #182448;
-  --accent: #a98bf0; /* moonlit violet — primary action & your pace */
-  --accent-contrast: #0b0a1e;
-  --gold: #8fb2ff; /* periwinkle — the buddy's pace & ratings, a cool star */
-  --bar-track: #1a2650;
-  --bar-fill: #a98bf0;
+  --bg: #060c20; /* KEEP starry: deep navy night, the base behind the sky */
 
-  /* Midnight-blue cabinet over a deep-navy back panel. */
-  --shelf-wood: linear-gradient(180deg, #20325c 0%, #16233f 46%, #0c1730 100%);
-  --shelf-panel: #0b1428;
-  --shelf-edge-hi: rgba(190, 205, 255, 0.16);
-  --shelf-panel-hi: rgba(190, 205, 255, 0.05);
-  --shelf-motif: rgba(196, 210, 255, 0.1);
+  /* Surfaces + accents borrowed from Lavender (dark face): plum cards, orchid
+     accent, warm gold — the parts the reader touches read as Lavender. */
+  --surface: #221b2c; /* lavender plum card */
+  --surface-alt: #16101d; /* nested inputs / wells (a touch deeper for the night) */
+  --text: #e7ddef;
+  --text-muted: #9a8aa8;
+  --text-faint: #786a86; /* mono meta — the quietest text */
+  --border: #382f47;
+  --border-soft: #2f283b;
+  --accent: #b487cc; /* lavender orchid — primary action & your pace */
+  --accent-contrast: #18141f;
+  --gold: #c7a24e; /* lavender gold — the buddy's pace & ratings */
+  --bar-track: #2f283b;
+  --bar-fill: #b487cc;
 
-  /* A starlit-silver ladder against the blue wood. */
-  --ladder-metal: #cfd6ef;
+  /* Library cabinet — Lavender's aubergine walnut, over a plum-black panel. */
+  --shelf-wood: linear-gradient(180deg, #574255 0%, #40304a 46%, #2b2035 100%);
+  --shelf-panel: #130f1a;
+  --shelf-edge-hi: rgba(226, 210, 246, 0.16);
+  --shelf-panel-hi: rgba(226, 210, 246, 0.05);
+  --shelf-motif: rgba(217, 200, 234, 0.11);
+
+  /* Ladder — Lavender's white enamel. */
+  --ladder-metal: #ece5f5;
   --ladder-hi: #ffffff;
-  --ladder-lo: #808bb6;
-  --ladder-shadow: rgba(2, 4, 16, 0.65);
+  --ladder-lo: #7b6a90;
+  --ladder-shadow: rgba(0, 0, 0, 0.6);
 
-  /* Moonlight: a cool, pale violet-white glow. The nook lamp-wash + sparkle
-     trail read these tokens, so the moon's pool of light is moonlight, not
-     candlelight — the exact same machinery, recoloured. */
-  --lamp-rgb: 214 206 255;
-  --lamp-rgb-2: 150 130 230;
-  --lamp-lit: #ece6ff; /* the moon's line-art, lit */
-  --lamp-lit-shadow: 200 190 255;
-  --lamp-shade-0: rgb(247 244 255);
-  --lamp-shade-1: rgb(220 210 255);
-  --lamp-shade-2: rgb(182 166 236);
-  --lamp-bulb-0: rgba(240, 236, 255, 0.95);
-  --lamp-bulb-1: rgba(200, 188, 255, 0.4);
-  --lamp-bulb-2: rgba(182, 166, 236, 0);
+  /* Moonlight glow — lilac, matching Lavender's lamplight (the moon-wash + the
+     hero sparkle-trail read these tokens; the moon's own outer bloom too). The
+     wash itself is dialled right down for starry, just below — the sky is already
+     luminous, so a full pool blows it out. */
+  --lamp-rgb: 198 162 240;
+  --lamp-rgb-2: 150 110 214;
+  --lamp-lit: #a98fd0;
+  --lamp-lit-shadow: 180 140 235;
+  --lamp-shade-0: rgb(232 214 255);
+  --lamp-shade-1: rgb(196 168 238);
+  --lamp-shade-2: rgb(150 116 206);
+  --lamp-bulb-0: rgba(232, 216, 255, 0.95);
+  --lamp-bulb-1: rgba(200, 168, 244, 0.35);
+  --lamp-bulb-2: rgba(190, 158, 240, 0);
 }
 
 @theme inline {
@@ -689,6 +697,23 @@ h1, h2, h3, h4 {
 .lamp-wash.is-lit {
   opacity: 1;
   animation: lamp-flicker 6s ease-in-out infinite;
+}
+
+/* Starry Night: the moon casts a far gentler pool than the lamp. The night sky is
+   already luminous, so a full wash washes the whole screen out. This drops it to
+   ~30% strength and pulls the falloff in tight, so the light stays a soft lilac
+   halo close around the moon rather than flooding the hero. */
+.palette-starry .lamp-wash {
+  background: radial-gradient(
+    circle at center,
+    rgb(var(--lamp-rgb) / 0.5) 0%,
+    rgb(var(--lamp-rgb) / 0.2) 15%,
+    rgb(var(--lamp-rgb-2) / 0.07) 30%,
+    transparent 46%
+  );
+}
+.palette-starry .lamp-wash.is-lit {
+  opacity: 0.3;
 }
 
 /* ---- Starry Night: the sky (see components/StarryNightSky) ----------------
