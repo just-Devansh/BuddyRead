@@ -895,17 +895,17 @@ h1, h2, h3, h4 {
 .moon--lit .bh {
   opacity: 0;
 }
-/* Ambient lilac-blue glow, softly breathing. */
+/* Ambient warm-lilac glow, softly breathing. */
 .moon .bh-glow {
   position: absolute;
   inset: -30%;
   border-radius: 9999px;
-  background: radial-gradient(circle, rgba(148, 140, 245, 0.3), transparent 66%);
+  background: radial-gradient(circle, rgba(190, 140, 236, 0.3), transparent 66%);
   filter: blur(8px);
   animation: bh-pulse 5s ease-in-out infinite;
 }
-/* The accretion disk — a bright, tilted band of infalling matter, lilac at the
-   core cooling to periwinkle blue at its edges. */
+/* The accretion disk — a bright, tilted band of infalling matter, warm lilac at
+   the core cooling to orchid at its edges. */
 .moon .bh-disk {
   position: absolute;
   left: -30%;
@@ -916,9 +916,9 @@ h1, h2, h3, h4 {
   border-radius: 9999px;
   background: radial-gradient(
     ellipse at center,
-    #f4efff 0%,
-    rgba(200, 178, 250, 0.95) 26%,
-    rgba(128, 158, 255, 0.5) 52%,
+    #fbf1ff 0%,
+    rgba(226, 182, 246, 0.95) 26%,
+    rgba(196, 132, 224, 0.5) 52%,
     transparent 74%
   );
   filter: blur(1.4px);
@@ -931,8 +931,8 @@ h1, h2, h3, h4 {
   background: radial-gradient(
     circle,
     transparent 52%,
-    rgba(216, 202, 255, 0.95) 58%,
-    rgba(136, 160, 255, 0.32) 68%,
+    rgba(238, 208, 250, 0.95) 58%,
+    rgba(202, 142, 228, 0.32) 68%,
     transparent 80%
   );
   filter: blur(0.5px);
@@ -942,11 +942,11 @@ h1, h2, h3, h4 {
   position: absolute;
   inset: 26%;
   border-radius: 9999px;
-  background: #030312;
+  background: #0a0512;
   box-shadow:
-    0 0 0 1.5px rgba(222, 212, 255, 0.95),
-    0 0 12px 2px rgba(160, 150, 248, 0.55),
-    0 0 30px 8px rgba(122, 146, 255, 0.28);
+    0 0 0 1.5px rgba(244, 214, 252, 0.95),
+    0 0 12px 2px rgba(206, 150, 236, 0.55),
+    0 0 30px 8px rgba(184, 120, 220, 0.28);
 }
 @keyframes bh-pulse {
   0%, 100% { opacity: 0.72; transform: scale(1); }
