@@ -33,12 +33,30 @@ export function Moon({
       <span className="moon-halo" aria-hidden="true" />
       <span className="moon-disc" aria-hidden="true" />
       {/* Black hole (unlit) — glow, accretion disk (+ orbiting swirl), lensed
-          ring, event horizon */}
+          ring, a lone astronaut being pulled in, then the event horizon (painted
+          last so it swallows the astronaut). */}
       <span className="bh" aria-hidden="true">
         <span className="bh-glow" />
         <span className="bh-disk" />
         <span className="bh-swirl" />
         <span className="bh-ring" />
+        <span className="bh-astronaut">
+          <svg viewBox="0 0 24 34" fill="currentColor">
+            {/* backpack */}
+            <rect x="6.4" y="12.5" width="11.2" height="10.5" rx="3.4" opacity="0.85" />
+            {/* limbs */}
+            <rect x="2.6" y="13" width="4" height="10" rx="2" />
+            <rect x="17.4" y="13" width="4" height="10" rx="2" />
+            <rect x="7.7" y="22" width="3.8" height="10.5" rx="1.9" />
+            <rect x="12.5" y="22" width="3.8" height="10.5" rx="1.9" />
+            {/* torso */}
+            <rect x="6.6" y="12" width="10.8" height="13" rx="4.4" />
+            {/* helmet */}
+            <circle cx="12" cy="7" r="5.6" />
+            {/* visor sheen */}
+            <ellipse cx="10.4" cy="6.2" rx="2.1" ry="2.7" fill="#0a0512" opacity="0.35" />
+          </svg>
+        </span>
         <span className="bh-hole" />
       </span>
     </button>
