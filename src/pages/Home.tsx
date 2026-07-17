@@ -479,7 +479,7 @@ export function Home() {
             otherwise. The add-a-book button now lives docked in the bottom nav. */}
         <div className="flex shrink-0 items-start">
           {starry ? (
-            <Moon lit={lit} onToggle={toggleLit} className="-mr-1 -mt-1 w-[5.5rem] ipad:w-28" />
+            <Moon lit={lit} onToggle={toggleLit} className="-mr-1 -mt-2 w-28 ipad:w-32" />
           ) : (
             <Lamp lit={lit} onToggle={toggleLit} className="-mt-3 w-12 ipad:w-14" />
           )}
