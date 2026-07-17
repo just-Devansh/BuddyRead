@@ -163,48 +163,55 @@
 }
 
 /* ---- Palette: Starry Night (the USP theme) --------------------------------
-   Unlike warm/lavender, this palette is *always night* — a violet, Shinkai-blue
+   Unlike warm/lavender, this palette is *always night* — a deep-blue, Shinkai
    sky over the main screens (see components/StarryNightSky) with a tappable moon
    in place of the nook lamp. Because it's inherently nocturnal, ThemeProvider
    forces the `.dark` class on <html> whenever it's chosen, so every `.dark`
    component tweak engages regardless of the reader's light/dark preference (which
    is preserved and re-applied the moment they leave this palette). Both selectors
    are listed so `.palette-starry.dark` out-specifies the plain `.dark` block; the
-   pair is placed last so source order settles any remaining ties. Derived from
-   the "2a · anime cut" Claude Design canvas: moonlit violet for you, a cool
-   periwinkle star for your buddy, gold retired to the sky. */
+   pair is placed last so source order settles any remaining ties.
+
+   A deliberate split: the SKY, STARS and MOON are Starry Night's own (the navy
+   base, the moonlight-glow tokens below); the SURFACES the reader actually touches
+   — cards, buttons, inputs, the log/close sheets, the library cabinet — borrow the
+   LAVENDER dark palette (plum surfaces, orchid accent, warm gold), so the app you
+   hold feels like Lavender while it floats on a starlit sky. */
 .palette-starry,
 .palette-starry.dark {
-  --bg: #060c20; /* deep navy night — the base the sky gradient sits over */
-  --surface: #101d3e; /* a card cut from deep starry blue */
-  --surface-alt: #0a1430; /* nested inputs / wells */
-  --text: #eef2fc;
-  --text-muted: #b3bcdb;
-  --text-faint: #7f89af; /* mono meta — the quietest text */
-  --border: #26315a;
-  --border-soft: #182448;
-  --accent: #a98bf0; /* moonlit violet — primary action & your pace */
-  --accent-contrast: #0b0a1e;
-  --gold: #8fb2ff; /* periwinkle — the buddy's pace & ratings, a cool star */
-  --bar-track: #1a2650;
-  --bar-fill: #a98bf0;
+  --bg: #060c20; /* KEEP starry: deep navy night, the base behind the sky */
 
-  /* Midnight-blue cabinet over a deep-navy back panel. */
-  --shelf-wood: linear-gradient(180deg, #20325c 0%, #16233f 46%, #0c1730 100%);
-  --shelf-panel: #0b1428;
-  --shelf-edge-hi: rgba(190, 205, 255, 0.16);
-  --shelf-panel-hi: rgba(190, 205, 255, 0.05);
-  --shelf-motif: rgba(196, 210, 255, 0.1);
+  /* Surfaces + accents borrowed from Lavender (dark face): plum cards, orchid
+     accent, warm gold — the parts the reader touches read as Lavender. */
+  --surface: #221b2c; /* lavender plum card */
+  --surface-alt: #16101d; /* nested inputs / wells (a touch deeper for the night) */
+  --text: #e7ddef;
+  --text-muted: #9a8aa8;
+  --text-faint: #786a86; /* mono meta — the quietest text */
+  --border: #382f47;
+  --border-soft: #2f283b;
+  --accent: #b487cc; /* lavender orchid — primary action & your pace */
+  --accent-contrast: #18141f;
+  --gold: #c7a24e; /* lavender gold — the buddy's pace & ratings */
+  --bar-track: #2f283b;
+  --bar-fill: #b487cc;
 
-  /* A starlit-silver ladder against the blue wood. */
-  --ladder-metal: #cfd6ef;
+  /* Library cabinet — Lavender's aubergine walnut, over a plum-black panel. */
+  --shelf-wood: linear-gradient(180deg, #574255 0%, #40304a 46%, #2b2035 100%);
+  --shelf-panel: #130f1a;
+  --shelf-edge-hi: rgba(226, 210, 246, 0.16);
+  --shelf-panel-hi: rgba(226, 210, 246, 0.05);
+  --shelf-motif: rgba(217, 200, 234, 0.11);
+
+  /* Ladder — Lavender's white enamel. */
+  --ladder-metal: #ece5f5;
   --ladder-hi: #ffffff;
-  --ladder-lo: #808bb6;
-  --ladder-shadow: rgba(2, 4, 16, 0.65);
+  --ladder-lo: #7b6a90;
+  --ladder-shadow: rgba(0, 0, 0, 0.6);
 
-  /* Moonlight: a cool, pale violet-white glow. The nook lamp-wash + sparkle
-     trail read these tokens, so the moon's pool of light is moonlight, not
-     candlelight — the exact same machinery, recoloured. */
+  /* KEEP starry — Moonlight: a cool, pale violet-white glow. The nook moon-wash +
+     sparkle trail read these tokens, so the moon's pool of light stays moonlight,
+     not candlelight — the exact same machinery, recoloured. */
   --lamp-rgb: 214 206 255;
   --lamp-rgb-2: 150 130 230;
   --lamp-lit: #ece6ff; /* the moon's line-art, lit */

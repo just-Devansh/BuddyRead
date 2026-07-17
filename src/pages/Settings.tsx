@@ -31,8 +31,8 @@ const PALETTES: {
   {
     value: 'starry',
     name: 'Starry Night',
-    blurb: 'A violet night sky with a moon to light. Always after dark.',
-    swatches: ['#a985ec', '#8fb2ff', '#e6ddff'],
+    blurb: 'Lavender cards adrift on a starlit sky, with a moon to light. Always after dark.',
+    swatches: ['#0b2a5e', '#b487cc', '#c7a24e'],
   },
 ]
 
